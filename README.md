@@ -32,6 +32,7 @@ USAGE
 <!-- commands -->
 * [`io-ops hello [FILE]`](#io-ops-hello-file)
 * [`io-ops help [COMMAND]`](#io-ops-help-command)
+* [`io-ops users:list [FILE]`](#io-ops-userslist-file)
 
 ## `io-ops hello [FILE]`
 
@@ -69,4 +70,20 @@ OPTIONS
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.1.6/src/commands/help.ts)_
+
+## `io-ops users:list [FILE]`
+
+describe the command here
+
+```
+USAGE
+  $ io-ops users:list [FILE]
+
+OPTIONS
+  -f, --force
+  -h, --help       show CLI help
+  -n, --name=name  name to print
+```
+
+_See code: [src/commands/users/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.1/src/commands/users/list.ts)_
 <!-- commandsstop -->
