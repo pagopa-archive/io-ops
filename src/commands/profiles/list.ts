@@ -2,7 +2,7 @@ import * as cosmos from "@azure/cosmos";
 import { Command, flags } from "@oclif/command";
 import cli from "cli-ux";
 
-import { getCosmosEndpoint, getCosmosConnection } from "../../utils/azure";
+import { getCosmosConnection } from "../../utils/azure";
 
 export default class ProfilesList extends Command {
   static description = "Lists all profiles";

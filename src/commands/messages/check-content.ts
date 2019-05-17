@@ -5,12 +5,13 @@ import cli from "cli-ux";
 import { FiscalCode } from "italia-ts-commons/lib/strings";
 
 import {
-  getCosmosConnection,
+  config,
   getCosmosEndpoint,
+  getCosmosReadonlyKey,
   getStorageConnection
 } from "../../utils/azure";
 
-export default class MessagesCheck extends Command {
+export default class MessagesCheckContent extends Command {
   public static description = "Checks validity of messages";
 
   // tslint:disable-next-line:readonly-array
@@ -26,7 +27,7 @@ export default class MessagesCheck extends Command {
   };
 
   public run = async () => {
-    const { args, flags: parsedFlags } = this.parse(MessagesCheck);
+    const { args, flags: parsedFlags } = this.parse(MessagesCheckContent);
 
     const fiscalCodeOrErrors = FiscalCode.decode(args.fiscalCode);
 
@@ -39,26 +40,28 @@ export default class MessagesCheck extends Command {
 
     try {
       cli.action.start("Retrieving credentials");
-      const { endpoint, key } = await getCosmosConnection(
-        "agid-rg-test",
-        "agid-cosmosdb-test"
-      );
-      const storageConnection = await getStorageConnection("agidstoragetest");
+      const [endpoint, key, storageConnection] = await Promise.all([
+        getCosmosEndpoint(config.resourceGroup, config.cosmosName),
+        getCosmosReadonlyKey(config.resourceGroup, config.cosmosName),
+        getStorageConnection(config.storageName)
+      ]);
       cli.action.stop();
 
       const blobService = storage.createBlobService(storageConnection);
 
       const doesBlobExist = (id: string) =>
         new Promise<storage.BlobService.BlobResult>((resolve, reject) =>
-          blobService.doesBlobExist("message-content", id, (err, blobResult) =>
-            err ? reject(err) : resolve(blobResult)
+          blobService.doesBlobExist(
+            config.storageMessagesContainer,
+            id,
+            (err, blobResult) => (err ? reject(err) : resolve(blobResult))
           )
         );
+      const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
+      const database = await client.database(config.cosmosDatabaseName);
+      const container = database.container(config.cosmosMessagesContainer);
 
       cli.action.start("Querying messages...");
-      const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
-      const database = await client.database("agid-documentdb-test");
-      const container = database.container("messages");
       const response = await container.items.query(
         {
           parameters: [{ name: "@fiscalCode", value: fiscalCode }],
@@ -95,11 +98,16 @@ export default class MessagesCheck extends Command {
       cli.table(
         validated,
         {
-          hasContent: {
-            header: "hasContent"
+          fiscalCode: {
+            get: () => fiscalCode,
+            header: "fiscalCode"
           },
           id: {
             header: "id"
+          },
+          // tslint:disable-next-line:object-literal-sort-keys
+          hasContent: {
+            header: "hasContent"
           },
           isPending: {
             header: "isPending"

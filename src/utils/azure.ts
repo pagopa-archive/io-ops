@@ -1,5 +1,14 @@
 import * as execa from "execa";
 
+export const config = {
+  cosmosDatabaseName: "agid-documentdb-test",
+  cosmosMessagesContainer: "messages",
+  cosmosName: "agid-cosmosdb-test",
+  resourceGroup: "agid-rg-test",
+  storageMessagesContainer: "message-content",
+  storageName: "agidstoragetest"
+};
+
 export const getCosmosEndpoint = async (resourceGroup: string, name: string) =>
   (await execa(
     `az cosmosdb show -g ${resourceGroup} -n ${name} --query documentEndpoint -o tsv`
