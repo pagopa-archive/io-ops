@@ -32,7 +32,8 @@ USAGE
 <!-- commands -->
 * [`io-ops hello [FILE]`](#io-ops-hello-file)
 * [`io-ops help [COMMAND]`](#io-ops-help-command)
-* [`io-ops users:list [FILE]`](#io-ops-userslist-file)
+* [`io-ops messages:check FISCALCODE`](#io-ops-messagescheck-fiscalcode)
+* [`io-ops profiles:list`](#io-ops-profileslist)
 
 ## `io-ops hello [FILE]`
 
@@ -71,19 +72,43 @@ OPTIONS
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.1.6/src/commands/help.ts)_
 
-## `io-ops users:list [FILE]`
+## `io-ops messages:check FISCALCODE`
 
-describe the command here
+Checks validity of messages
 
 ```
 USAGE
-  $ io-ops users:list [FILE]
+  $ io-ops messages:check FISCALCODE
 
 OPTIONS
-  -f, --force
-  -h, --help       show CLI help
-  -n, --name=name  name to print
+  -x, --extended     show extra columns
+  --columns=columns  only show provided columns (comma-separated)
+  --csv              output is csv format
+  --filter=filter    filter property by partial string matching, ex: name=foo
+  --no-header        hide table header from output
+  --no-truncate      do not truncate output to fit screen
+  --sort=sort        property to sort by (prepend '-' for descending)
 ```
 
-_See code: [src/commands/users/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.1/src/commands/users/list.ts)_
+_See code: [src/commands/messages/check.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.1/src/commands/messages/check.ts)_
+
+## `io-ops profiles:list`
+
+Lists all profiles
+
+```
+USAGE
+  $ io-ops profiles:list
+
+OPTIONS
+  -x, --extended     show extra columns
+  --columns=columns  only show provided columns (comma-separated)
+  --csv              output is csv format
+  --filter=filter    filter property by partial string matching, ex: name=foo
+  --no-header        hide table header from output
+  --no-truncate      do not truncate output to fit screen
+  --sort=sort        property to sort by (prepend '-' for descending)
+```
+
+_See code: [src/commands/profiles/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.1/src/commands/profiles/list.ts)_
 <!-- commandsstop -->
