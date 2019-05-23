@@ -32,7 +32,8 @@ USAGE
 <!-- commands -->
 * [`io-ops hello [FILE]`](#io-ops-hello-file)
 * [`io-ops help [COMMAND]`](#io-ops-help-command)
-* [`io-ops messages:check FISCALCODE`](#io-ops-messagescheck-fiscalcode)
+* [`io-ops messages:check-content`](#io-ops-messagescheck-content)
+* [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
 * [`io-ops profiles:list`](#io-ops-profileslist)
 
 ## `io-ops hello [FILE]`
@@ -72,13 +73,28 @@ OPTIONS
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.1.6/src/commands/help.ts)_
 
-## `io-ops messages:check FISCALCODE`
+## `io-ops messages:check-content`
 
 Checks validity of messages
 
 ```
 USAGE
-  $ io-ops messages:check FISCALCODE
+  $ io-ops messages:check-content
+
+OPTIONS
+  -i, --input=input        Input file (CSV, with path as first column) - defaults to stdin
+  -p, --parallel=parallel  [default: 1] Number of parallel workers to run
+```
+
+_See code: [src/commands/messages/check-content.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.1/src/commands/messages/check-content.ts)_
+
+## `io-ops messages:list FISCALCODE`
+
+List messages for a fiscalCode
+
+```
+USAGE
+  $ io-ops messages:list FISCALCODE
 
 OPTIONS
   -x, --extended     show extra columns
@@ -90,7 +106,7 @@ OPTIONS
   --sort=sort        property to sort by (prepend '-' for descending)
 ```
 
-_See code: [src/commands/messages/check.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.1/src/commands/messages/check.ts)_
+_See code: [src/commands/messages/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.1/src/commands/messages/list.ts)_
 
 ## `io-ops profiles:list`
 

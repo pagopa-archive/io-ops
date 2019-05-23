@@ -66,14 +66,13 @@ export default class MessagesList extends Command {
       cli.table(
         result,
         {
-          fiscalCode: {
-            get: () => fiscalCode,
-            header: "fiscalCode"
-          },
-          id: {
-            header: "id"
+          path: {
+            // tslint:disable-next-line:no-any
+            get: (row: any) => `${fiscalCode}/${row.id}`,
+            header: "path"
           },
           isPending: {
+            extended: true,
             header: "isPending"
           }
         },

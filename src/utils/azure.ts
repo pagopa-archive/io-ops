@@ -22,6 +22,11 @@ export const getCosmosReadonlyKey = async (
     `az cosmosdb list-keys -g ${resourceGroup} -n ${name} --query primaryReadonlyMasterKey -o tsv`
   )).stdout;
 
+export const getCosmosWriteKey = async (resourceGroup: string, name: string) =>
+  (await execa(
+    `az cosmosdb list-keys -g ${resourceGroup} -n ${name} --query primaryMasterKey -o tsv`
+  )).stdout;
+
 export const getCosmosConnection = async (
   resourceGroup: string,
   name: string

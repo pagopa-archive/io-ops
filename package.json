@@ -14,8 +14,11 @@
     "@oclif/plugin-help": "^2",
     "azure-storage": "^2.10.3",
     "cli-ux": "^5.2.1",
+    "csv-parse": "^4.4.1",
     "execa": "sindresorhus/execa#0d39fdffeb053215a56a631db8d2cf32ea119a95",
+    "io-ts": "^1.8.6",
     "italia-ts-commons": "^5.1.3",
+    "stream-transform": "^2.0.0",
     "tslib": "^1"
   },
   "devDependencies": {

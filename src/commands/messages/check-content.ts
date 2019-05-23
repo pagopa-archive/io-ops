@@ -2,7 +2,11 @@ import * as cosmos from "@azure/cosmos";
 import { Command, flags } from "@oclif/command";
 import * as storage from "azure-storage";
 import cli from "cli-ux";
+import * as parse from "csv-parse";
+import * as fs from "fs";
+import * as t from "io-ts";
 import { FiscalCode } from "italia-ts-commons/lib/strings";
+import * as transform from "stream-transform";
 
 import {
   config,
@@ -10,33 +14,38 @@ import {
   getCosmosReadonlyKey,
   getStorageConnection
 } from "../../utils/azure";
+import { parseMessagePath } from "../../utils/parser";
 
 export default class MessagesCheckContent extends Command {
   public static description = "Checks validity of messages";
 
   // tslint:disable-next-line:readonly-array
-  public static args = [
-    {
-      name: "fiscalCode",
-      required: true
-    }
-  ];
+  public static args = [];
 
   public static flags = {
-    ...cli.table.flags()
+    input: flags.string({
+      char: "i",
+      description:
+        "Input file (CSV, with path as first column) - defaults to stdin"
+    }),
+    parallel: flags.integer({
+      char: "p",
+      default: 1,
+      description: "Number of parallel workers to run"
+    })
   };
 
   public run = async () => {
     const { args, flags: parsedFlags } = this.parse(MessagesCheckContent);
 
-    const fiscalCodeOrErrors = FiscalCode.decode(args.fiscalCode);
+    const inputStream = parsedFlags.input
+      ? fs.createReadStream(parsedFlags.input)
+      : process.stdin;
 
-    if (fiscalCodeOrErrors.isLeft()) {
-      this.error("Invalid fiscalCode");
-      return;
-    }
-
-    const fiscalCode = fiscalCodeOrErrors.value;
+    const parser = parse({
+      trim: true,
+      skip_empty_lines: true
+    });
 
     try {
       cli.action.start("Retrieving credentials");
@@ -57,67 +66,34 @@ export default class MessagesCheckContent extends Command {
             (err, blobResult) => (err ? reject(err) : resolve(blobResult))
           )
         );
-      const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
-      const database = await client.database(config.cosmosDatabaseName);
-      const container = database.container(config.cosmosMessagesContainer);
+      // const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
+      // const database = await client.database(config.cosmosDatabaseName);
+      // const container = database.container(config.cosmosMessagesContainer);
 
-      cli.action.start("Querying messages...");
-      const response = await container.items.query(
+      const transformer = transform(
         {
-          parameters: [{ name: "@fiscalCode", value: fiscalCode }],
-          query:
-            "SELECT c.id, c.createdAt, c.isPending FROM c WHERE c.fiscalCode = @fiscalCode"
+          parallel: parsedFlags.parallel
         },
-        {
-          enableCrossPartitionQuery: true
-        }
-      );
-      const result = (await response.toArray()).result;
-      cli.action.stop();
+        (record, cb) =>
+          (async () => {
+            const { path, messageId } = parseMessagePath(record[0]);
 
-      if (result === undefined) {
-        this.error("No result");
-        return;
-      }
+            const hasContent = (await doesBlobExist(`${messageId}.json`))
+              .exists;
 
-      const messages: ReadonlyArray<{
-        id: string;
-        createdAt: string;
-        isPending?: boolean;
-      }> = result;
+            return `${path},${hasContent === true}\n`;
+          })()
+            .then(_ => cb(null, _))
+            .catch(() => cb(null, undefined)) // skip invalid lines
+      );
 
-      cli.action.start("Validating message content...");
-      const validated = await Promise.all(
-        messages.map(async message => ({
-          ...message,
-          hasContent:
-            (await doesBlobExist(`${message.id}.json`)).exists === true
-        }))
-      );
-      cli.action.stop();
-      cli.table(
-        validated,
-        {
-          fiscalCode: {
-            get: () => fiscalCode,
-            header: "fiscalCode"
-          },
-          id: {
-            header: "id"
-          },
-          // tslint:disable-next-line:object-literal-sort-keys
-          hasContent: {
-            header: "hasContent"
-          },
-          isPending: {
-            header: "isPending"
-          }
-        },
-        {
-          printLine: this.log,
-          ...parsedFlags // parsed flags
-        }
-      );
+      process.stdout.write("path,hasContent\n");
+      inputStream
+        .pipe(parser)
+        .pipe(transformer)
+        .pipe(process.stdout);
+
+      await new Promise((res, rej) => parser.on("end", res));
     } catch (e) {
       this.error(e);
     }
