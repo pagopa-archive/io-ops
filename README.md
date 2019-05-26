@@ -21,7 +21,7 @@ $ npm install -g io-ops
 $ io-ops COMMAND
 running command...
 $ io-ops (-v|--version|version)
-io-ops/0.0.1 darwin-x64 node-v10.13.0
+io-ops/0.0.2 darwin-x64 node-v10.13.0
 $ io-ops --help [COMMAND]
 USAGE
   $ io-ops COMMAND
@@ -32,6 +32,7 @@ USAGE
 <!-- commands -->
 * [`io-ops hello [FILE]`](#io-ops-hello-file)
 * [`io-ops help [COMMAND]`](#io-ops-help-command)
+* [`io-ops messages:attributes`](#io-ops-messagesattributes)
 * [`io-ops messages:check-content`](#io-ops-messagescheck-content)
 * [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
 * [`io-ops profiles:list`](#io-ops-profileslist)
@@ -54,7 +55,7 @@ EXAMPLE
   hello world from ./src/hello.ts!
 ```
 
-_See code: [src/commands/hello.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.1/src/commands/hello.ts)_
+_See code: [src/commands/hello.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.2/src/commands/hello.ts)_
 
 ## `io-ops help [COMMAND]`
 
@@ -73,6 +74,22 @@ OPTIONS
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.1.6/src/commands/help.ts)_
 
+## `io-ops messages:attributes`
+
+Update message attributes
+
+```
+USAGE
+  $ io-ops messages:attributes
+
+OPTIONS
+  -i, --input=input                   (required) Input file (CSV, with path as first column)
+  -p, --parallel=parallel             [default: 1] Number of parallel workers to run
+  --isPending=(true|false|undefined)  Set 'isPending' flag
+```
+
+_See code: [src/commands/messages/attributes.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.2/src/commands/messages/attributes.ts)_
+
 ## `io-ops messages:check-content`
 
 Checks validity of messages
@@ -86,7 +103,7 @@ OPTIONS
   -p, --parallel=parallel  [default: 1] Number of parallel workers to run
 ```
 
-_See code: [src/commands/messages/check-content.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.1/src/commands/messages/check-content.ts)_
+_See code: [src/commands/messages/check-content.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.2/src/commands/messages/check-content.ts)_
 
 ## `io-ops messages:list FISCALCODE`
 
@@ -106,7 +123,7 @@ OPTIONS
   --sort=sort        property to sort by (prepend '-' for descending)
 ```
 
-_See code: [src/commands/messages/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.1/src/commands/messages/list.ts)_
+_See code: [src/commands/messages/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.2/src/commands/messages/list.ts)_
 
 ## `io-ops profiles:list`
 
@@ -126,5 +143,5 @@ OPTIONS
   --sort=sort        property to sort by (prepend '-' for descending)
 ```
 
-_See code: [src/commands/profiles/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.1/src/commands/profiles/list.ts)_
+_See code: [src/commands/profiles/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.2/src/commands/profiles/list.ts)_
 <!-- commandsstop -->
