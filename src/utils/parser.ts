@@ -1,5 +1,4 @@
 import * as t from "io-ts";
-import { FiscalCode } from "italia-ts-commons/lib/strings";
 
 export const parseMessagePath = (
   value: unknown
@@ -14,7 +13,8 @@ export const parseMessagePath = (
   const parts = path.split("/");
   if (
     parts.length !== 2 ||
-    !parts[0].match(/\w{16}/ || !parts[1].match(/\w{26}/))
+    !parts[0].match(/\w{16}/) ||
+    !parts[1].match(/\w{26}/)
   ) {
     throw Error(`Invalid path [${path}]`);
   }
