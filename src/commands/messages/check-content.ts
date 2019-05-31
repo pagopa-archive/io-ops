@@ -1,11 +1,8 @@
-import * as cosmos from "@azure/cosmos";
 import { Command, flags } from "@oclif/command";
 import * as storage from "azure-storage";
 import cli from "cli-ux";
 import * as parse from "csv-parse";
 import * as fs from "fs";
-import * as t from "io-ts";
-import { FiscalCode } from "italia-ts-commons/lib/strings";
 import * as transform from "stream-transform";
 
 import {
