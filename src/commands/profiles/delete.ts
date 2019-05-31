@@ -21,7 +21,7 @@ export default class ProfileDelete extends Command {
     const fiscalCodeOrErrors = FiscalCode.decode(args.fiscalCode);
 
     if (fiscalCodeOrErrors.isLeft()) {
-      this.error("provide a valid fiscalCode");
+      this.error("provide a valid fiscal code");
       return;
     }
     const fiscalCode = fiscalCodeOrErrors.value;
@@ -34,7 +34,6 @@ export default class ProfileDelete extends Command {
       );
       cli.action.stop();
 
-      cli.action.start("Querying profiles...");
       const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
       const database = client.database("agid-documentdb-test");
       const containerProfile = database.container("profiles");
@@ -45,17 +44,19 @@ export default class ProfileDelete extends Command {
       const containerNotificationStatus = database.container(
         "notification-status"
       );
+
+      cli.action.start("Querying profiles...");
       // first we check if the required profile exists
       const response = containerProfile.items.query({
         parameters: [{ name: "@fiscalCode", value: fiscalCode }],
         query: "SELECT VALUE COUNT(1) FROM c WHERE c.fiscalCode = @fiscalCode"
       });
       const result = (await response.toArray()).result;
-
       cli.action.stop();
+
       // profile doesn't exist
       if (result === undefined || result[0] === 0) {
-        this.error(`No profile found with cf ${fiscalCode}`);
+        this.error(`No profile found with fiscal code ${fiscalCode}`);
         return;
       }
       cli.log("A valid profile found!");
