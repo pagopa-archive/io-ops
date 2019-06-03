@@ -201,7 +201,7 @@ export default class ProfileDelete extends Command {
     cli.action.start(`Deleting ${items.length} items from ${container.id}`);
     for (const item of items) {
       deletedItems++;
-      // DELETE here -> await container.item(item.id).delete(item);
+      // DELETE here -> await container.item(item.id).delete();
     }
     cli.action.stop();
     return deletedItems;
