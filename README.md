@@ -160,6 +160,13 @@ Delete a profile
 ```
 USAGE
   $ io-ops profiles:delete FISCALCODE
+
+OPTIONS
+  -a, --all           delete items from all containers
+  -m, --message       delete items from message container
+  -n, --notification  delete items from notification container
+  -p, --profile       delete items from profile container
+  -s, --service       delete items from service container
 ```
 
 _See code: [src/commands/profiles/delete.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/profiles/delete.ts)_
