@@ -1,10 +1,15 @@
 import * as cosmos from "@azure/cosmos";
 import { Command, flags } from "@oclif/command";
+import * as storage from "azure-storage";
 import cli from "cli-ux";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { FiscalCode } from "italia-ts-commons/lib/strings";
 
-import { getCosmosConnection } from "../../utils/azure";
+import {
+  config,
+  getCosmosConnection,
+  getStorageConnection
+} from "../../utils/azure";
 
 type Containers =
   | "profiles"
@@ -28,6 +33,7 @@ type DeleteOp = {
   query: string;
   queryParameters: cosmos.SqlParameter[];
   queryOptions?: cosmos.FeedOptions;
+  deleteBlobs: boolean;
 };
 
 export default class ProfileDelete extends Command {
@@ -96,13 +102,22 @@ export default class ProfileDelete extends Command {
       { name: "@recipientFiscalCode", value: fiscalCode }
     ];
 
+    // retrive local azure credianial
+    cli.action.start("Retrieving cosmosdb credentials");
+    const [connection, storageConnection] = await Promise.all([
+      getCosmosConnection("agid-rg-test", "agid-cosmosdb-test"),
+      getStorageConnection(config.storageName)
+    ]);
+    cli.action.stop();
+
     // define all delete operations
     const deleteOps: ReadonlyArray<DeleteOp> = [
       {
         containerName: "profiles",
         query: selectFromFiscalCode,
         queryParameters: paramsFromFiscalCode,
-        relatedOps: []
+        relatedOps: [],
+        deleteBlobs: false
       },
       {
         containerName: "messages",
@@ -112,7 +127,8 @@ export default class ProfileDelete extends Command {
           {
             containerName: "message-status"
           }
-        ]
+        ],
+        deleteBlobs: true
       },
       {
         containerName: "notifications",
@@ -123,13 +139,15 @@ export default class ProfileDelete extends Command {
           {
             containerName: "notification-status"
           }
-        ]
+        ],
+        deleteBlobs: false
       },
       {
         containerName: "sender-services",
         query: selectFromRecipientFiscalCode,
         queryParameters: paramsFromRecipientFiscalCode,
-        relatedOps: []
+        relatedOps: [],
+        deleteBlobs: false
       }
     ];
 
@@ -155,15 +173,11 @@ export default class ProfileDelete extends Command {
     if (deleteOpsToProcess.length === 0) {
       cli.error("please specify at least 1 container");
     }
-    // retrive local azure credianial
-    cli.action.start("Retrieving cosmosdb credentials");
-    const { endpoint, key } = await getCosmosConnection(
-      "agid-rg-test",
-      "agid-cosmosdb-test"
-    );
-    cli.action.stop();
 
-    const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
+    const client = new cosmos.CosmosClient({
+      endpoint: connection.endpoint,
+      auth: { key: connection.key }
+    });
     const database = client.database("agid-documentdb-test");
 
     // tslint:disable-next-line: no-let
@@ -171,7 +185,11 @@ export default class ProfileDelete extends Command {
     const deleteOperations = (ops: ReadonlyArray<DeleteOp>) => {
       return ops.reduce((p, file) => {
         return p.then(async () => {
-          const deleteResult = await this.processDeleteOpt(database, file);
+          const deleteResult = await this.processDeleteOpt(
+            database,
+            storageConnection,
+            file
+          );
           if (deleteResult.isSome()) {
             countDeleteItems += deleteResult.value;
           }
@@ -194,15 +212,18 @@ export default class ProfileDelete extends Command {
     container: cosmos.Container
   ): Promise<number> {
     // tslint:disable-next-line: no-let
-    let deletedItems = 0;
     if (items === undefined) {
-      return deletedItems;
+      return 0;
     }
     cli.action.start(`Deleting ${items.length} items from ${container.id}`);
-    for (const item of items) {
-      deletedItems++;
-      // DELETE here -> await container.item(item.id).delete();
-    }
+    // tslint:disable-next-line: prefer-const
+    let deletedItems = 0;
+    await items.reduce((p, currentOp) => {
+      return p.then(async () => {
+        //await currentOp.delete();
+        deletedItems++;
+      });
+    }, Promise.resolve()); // initial
     cli.action.stop();
     return deletedItems;
   }
@@ -242,6 +263,7 @@ export default class ProfileDelete extends Command {
    */
   private async processDeleteOpt(
     database: cosmos.Database,
+    storageConnection: string,
     deleteOp: DeleteOp
   ): Promise<Option<number>> {
     try {
@@ -278,7 +300,7 @@ export default class ProfileDelete extends Command {
         const deleteOperations = (ops: ReadonlyArray<DeleteOpInner>) => {
           return ops.reduce((p, currentOp) => {
             return p.then(async () => {
-              deleteInnerItems = await this.processInnerDeleteOpt(
+              deleteInnerItems += await this.processInnerDeleteOpt(
                 database,
                 itemsList,
                 currentOp
@@ -288,10 +310,50 @@ export default class ProfileDelete extends Command {
         };
         await deleteOperations(deleteOp.relatedOps);
       }
+      if (deleteOp.deleteBlobs) {
+        const confirmInner = await cli.confirm(
+          `Are you sure to delete items in message-content storage?`
+        );
+        if (confirmInner) {
+          deleteInnerItems += await this.processDeleteBlobOpt(
+            storageConnection,
+            itemsList
+          );
+        }
+      }
+
       return some(deleteItems + deleteInnerItems);
     } catch (error) {
-      this.error(error.body);
+      this.error(error);
       return none;
     }
+  }
+
+  private async processDeleteBlobOpt(
+    storageConnection: string,
+    items: ReadonlyArray<cosmos.Item>
+  ): Promise<number> {
+    const blobService = storage.createBlobService(storageConnection);
+    const doesBlobExist = (id: string) =>
+      new Promise<storage.BlobService.BlobResult>((resolve, reject) =>
+        blobService.doesBlobExist(
+          config.storageMessagesContainer,
+          id,
+          (err, blobResult) => (err ? reject(err) : resolve(blobResult))
+        )
+      );
+    // tslint:disable-next-line: no-let
+    let deletedBlobItems = 0;
+    await items.reduce((p, item) => {
+      return p.then(async () => {
+        const blobExist = await doesBlobExist(`${item.id}.json`);
+        // DELETE HERE
+        deletedBlobItems += blobExist.exists ? 1 : 0;
+      });
+    }, Promise.resolve()); // initial
+    if (deletedBlobItems > 0) {
+      cli.log(`${deletedBlobItems} blob items successfully deleted`);
+    }
+    return deletedBlobItems;
   }
 }
