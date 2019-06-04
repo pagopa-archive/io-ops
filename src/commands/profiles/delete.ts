@@ -185,14 +185,9 @@ export default class ProfileDelete extends Command {
     const deleteOperations = (ops: ReadonlyArray<DeleteOp>) => {
       return ops.reduce((p, file) => {
         return p.then(async () => {
-          const deleteResult = await this.processDeleteOpt(
-            database,
-            storageConnection,
-            file
+          (await this.processDeleteOpt(database, storageConnection, file)).map(
+            d => (countDeleteItems += d)
           );
-          if (deleteResult.isSome()) {
-            countDeleteItems += deleteResult.value;
-          }
         });
       }, Promise.resolve()); // initial
     };
