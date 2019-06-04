@@ -216,7 +216,7 @@ export default class ProfileDelete extends Command {
       return 0;
     }
     cli.action.start(`Deleting ${items.length} items from ${container.id}`);
-    // tslint:disable-next-line: prefer-const
+    // tslint:disable-next-line: no-let
     let deletedItems = 0;
     await items.reduce((p, currentOp) => {
       return p.then(async () => {
