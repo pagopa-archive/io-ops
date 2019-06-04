@@ -198,7 +198,7 @@ export default class ProfileDelete extends Command {
     };
     await deleteOperations(deleteOpsToProcess);
     if (countDeleteItems > 0) {
-      cli.log(`${countDeleteItems} items successfully deleted`);
+      cli.log(`${countDeleteItems} total items successfully deleted`);
     }
   }
 
