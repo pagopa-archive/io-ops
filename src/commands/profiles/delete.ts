@@ -152,8 +152,8 @@ export default class ProfileDelete extends Command {
     ];
 
     // define the delete operation set from given inputs
-    // if all flag is enabled all above defined option will be procecess
-    // otherwhise only that operations specified in given flags
+    // if all flag is enabled all above defined options will be procecess
+    // otherwhise only operations specified in the given flags
     const deleteOpsToProcess = flags.all
       ? deleteOps
       : deleteOps.filter(x => {
