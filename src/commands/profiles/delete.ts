@@ -10,6 +10,7 @@ import {
   getCosmosConnection,
   getStorageConnection
 } from "../../utils/azure";
+import { sequential } from "../../utils/promise";
 
 type Containers =
   | "profiles"
@@ -102,7 +103,7 @@ export default class ProfileDelete extends Command {
       { name: "@recipientFiscalCode", value: fiscalCode }
     ];
 
-    // retrive local azure credianial
+    // retrive azure credentials
     cli.action.start("Retrieving cosmosdb credentials");
     const [connection, storageConnection] = await Promise.all([
       getCosmosConnection("agid-rg-test", "agid-cosmosdb-test"),
@@ -171,54 +172,56 @@ export default class ProfileDelete extends Command {
           }
         });
     if (deleteOpsToProcess.length === 0) {
-      cli.error("please specify at least 1 container");
+      cli.error("please specify at least one container");
     }
 
+    // init the cosmos client
     const client = new cosmos.CosmosClient({
       endpoint: connection.endpoint,
       auth: { key: connection.key }
     });
+
     const database = client.database("agid-documentdb-test");
 
-    // tslint:disable-next-line: no-let
-    let countDeleteItems = 0;
-    const deleteOperations = (ops: ReadonlyArray<DeleteOp>) => {
-      return ops.reduce((p, file) => {
-        return p.then(async () => {
-          (await this.processDeleteOpt(database, storageConnection, file)).map(
-            d => (countDeleteItems += d)
-          );
-        });
-      }, Promise.resolve()); // initial
-    };
-    await deleteOperations(deleteOpsToProcess);
+    // apply processDeleteOpt to each delete operation
+    const results = await sequential(
+      deleteOpsToProcess,
+      item => this.processDeleteOpt(database, storageConnection, item),
+      []
+    );
+    const countDeleteItems = results.reduce((acc, current) => {
+      return acc + current.fold(0, x => x);
+    }, 0);
+
     if (countDeleteItems > 0) {
       cli.log(`${countDeleteItems} total items successfully deleted`);
+    } else {
+      cli.log(`no items are been deleted`);
     }
   }
 
   /**
    * delete the given items from the given container
-   * @param items the cosmos Items to delete
+   * @param items the cosmos items to delete
    * @param container the continer where items are placed
    */
   private async deleteItems(
     items: ReadonlyArray<cosmos.Item> | undefined,
     container: cosmos.Container
   ): Promise<number> {
-    // tslint:disable-next-line: no-let
     if (items === undefined) {
       return 0;
     }
     cli.action.start(`Deleting ${items.length} items from ${container.id}`);
-    // tslint:disable-next-line: no-let
-    let deletedItems = 0;
-    await items.reduce((p, currentOp) => {
-      return p.then(async () => {
-        //await currentOp.delete();
-        deletedItems++;
-      });
-    }, Promise.resolve()); // initial
+    const results = await sequential(
+      items,
+      async _ => {
+        // await currentOp.delete();
+        return 1;
+      },
+      []
+    );
+    const deletedItems = results.reduce((acc, curr) => acc + curr, 0);
     cli.action.stop();
     return deletedItems;
   }
@@ -247,7 +250,6 @@ export default class ProfileDelete extends Command {
         return await this.deleteItems(innerItems, innerContainer);
       }
     }
-
     return 0;
   }
 
@@ -265,7 +267,9 @@ export default class ProfileDelete extends Command {
       cli.action.start(
         `Selecting items from "${deleteOp.containerName}" container...`
       );
+      // get the container of the delete operation
       const container = database.container(deleteOp.containerName);
+      // query the container
       const response = container.items.query(
         {
           parameters: deleteOp.queryParameters,
@@ -287,24 +291,22 @@ export default class ProfileDelete extends Command {
       if (!confirm) {
         return none;
       }
+      // we have some elements to delete
       const deleteItems = await this.deleteItems(itemsList, container);
+
       // tslint:disable-next-line: no-let
       let deleteInnerItems = 0;
       // check if there are some related operations to process
       if (deleteOp.relatedOps.length > 0) {
-        const deleteOperations = (ops: ReadonlyArray<DeleteOpInner>) => {
-          return ops.reduce((p, currentOp) => {
-            return p.then(async () => {
-              deleteInnerItems += await this.processInnerDeleteOpt(
-                database,
-                itemsList,
-                currentOp
-              );
-            });
-          }, Promise.resolve()); // initial
-        };
-        await deleteOperations(deleteOp.relatedOps);
+        // apply processInnerDeleteOpt to each deleteOp.relatedOps items
+        const results = await sequential(
+          deleteOp.relatedOps,
+          item => this.processInnerDeleteOpt(database, itemsList, item),
+          []
+        );
+        deleteInnerItems = results.reduce((acc, curr) => acc + curr, 0);
       }
+      // check if we have to delete blobs too
       if (deleteOp.deleteBlobs) {
         const confirmInner = await cli.confirm(
           `Are you sure to delete items in message-content storage?`
@@ -337,15 +339,16 @@ export default class ProfileDelete extends Command {
           (err, blobResult) => (err ? reject(err) : resolve(blobResult))
         )
       );
-    // tslint:disable-next-line: no-let
-    let deletedBlobItems = 0;
-    await items.reduce((p, item) => {
-      return p.then(async () => {
+    const results = await sequential(
+      items,
+      async item => {
+        // DELETE BLOB HERE
         const blobExist = await doesBlobExist(`${item.id}.json`);
-        // DELETE HERE
-        deletedBlobItems += blobExist.exists ? 1 : 0;
-      });
-    }, Promise.resolve()); // initial
+        return blobExist.exists ? 1 : 0;
+      },
+      [0]
+    );
+    const deletedBlobItems = results.reduce((acc, curr) => acc + curr, 0);
     if (deletedBlobItems > 0) {
       cli.log(`${deletedBlobItems} blob items successfully deleted`);
     }
