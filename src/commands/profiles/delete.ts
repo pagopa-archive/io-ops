@@ -157,8 +157,8 @@ export default class ProfileDelete extends Command {
     // otherwhise only operations specified in the given flags
     const deleteOpsToProcess = flags.all
       ? deleteOps
-      : deleteOps.filter(x => {
-          switch (x.containerName) {
+      : deleteOps.filter(_ => {
+          switch (_.containerName) {
             case "messages":
             case "message-status":
               return flags.message;
