@@ -206,7 +206,7 @@ export default class ProfileDelete extends Command {
    * @param container the continer where items are placed
    */
   private async deleteItems(
-    items: ReadonlyArray<cosmos.Item> | undefined,
+    items: ReadonlyArray<cosmos.Item>,
     container: cosmos.Container
   ): Promise<number> {
     if (items === undefined) {
