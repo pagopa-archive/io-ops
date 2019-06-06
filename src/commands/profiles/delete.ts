@@ -188,7 +188,7 @@ export default class ProfileDelete extends Command {
       this.processDeleteOpt(database, storageConnection, item)
     );
     const countDeleteItems = results.reduce(
-      (acc, current) => acc + current.fold(0, x => x),
+      (acc, current) => acc + current.getOrElse(0),
       0
     );
 
