@@ -215,11 +215,17 @@ export default class ProfileDelete extends Command {
     cli.action.start(`Deleting ${items.length} items from ${container.id}`);
     const results = await sequential(
       items,
-      async _ => {
-        // await currentOp.delete();
-        return 1;
+      async currentOp => {
+        try {
+          const item = container.item(currentOp.id);
+          await item.delete();
+          return 1;
+        } catch (e) {
+          cli.log(e.body);
+          return 0;
+        }
       },
-      []
+      [0]
     );
     const deletedItems = results.reduce((acc, curr) => acc + curr, 0);
     cli.action.stop();
@@ -321,7 +327,7 @@ export default class ProfileDelete extends Command {
 
       return some(deleteItems + deleteInnerItems);
     } catch (error) {
-      this.error(error);
+      this.error(error.body);
       return none;
     }
   }
@@ -344,7 +350,12 @@ export default class ProfileDelete extends Command {
       async item => {
         // DELETE BLOB HERE
         const blobExist = await doesBlobExist(`${item.id}.json`);
-        return blobExist.exists ? 1 : 0;
+        if (blobExist.exists) {
+          await item.delete();
+          await cli.anykey();
+          return 1;
+        }
+        return 0;
       },
       [0]
     );
