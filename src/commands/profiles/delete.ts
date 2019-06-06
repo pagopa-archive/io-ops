@@ -10,7 +10,7 @@ import {
   getCosmosConnection,
   getStorageConnection
 } from "../../utils/azure";
-import { sequential } from "../../utils/promise";
+import { sequential, sequentialSum } from "../../utils/promise";
 
 type Containers =
   | "profiles"
@@ -184,14 +184,13 @@ export default class ProfileDelete extends Command {
     const database = client.database("agid-documentdb-test");
 
     // apply processDeleteOpt to each delete operation
-    const results = await sequential(
-      deleteOpsToProcess,
-      item => this.processDeleteOpt(database, storageConnection, item),
-      []
+    const results = await sequential(deleteOpsToProcess, item =>
+      this.processDeleteOpt(database, storageConnection, item)
     );
-    const countDeleteItems = results.reduce((acc, current) => {
-      return acc + current.fold(0, x => x);
-    }, 0);
+    const countDeleteItems = results.reduce(
+      (acc, current) => acc + current.fold(0, x => x),
+      0
+    );
 
     if (countDeleteItems > 0) {
       cli.log(`${countDeleteItems} total items successfully deleted`);
@@ -213,21 +212,18 @@ export default class ProfileDelete extends Command {
       return 0;
     }
     cli.action.start(`Deleting ${items.length} items from ${container.id}`);
-    const results = await sequential(
+    const deletedItems = await sequentialSum(
       items,
-      async currentOp => {
-        try {
-          const item = container.item(currentOp.id);
-          await item.delete();
-          return 1;
-        } catch (e) {
-          cli.log(e.body);
-          return 0;
-        }
-      },
-      [0]
+      async currentOp =>
+        await container
+          .item(currentOp.id)
+          .delete()
+          .then(_ => 1)
+          .catch(e => {
+            cli.log(e);
+            return 0;
+          })
     );
-    const deletedItems = results.reduce((acc, curr) => acc + curr, 0);
     cli.action.stop();
     return deletedItems;
   }
@@ -305,12 +301,9 @@ export default class ProfileDelete extends Command {
       // check if there are some related operations to process
       if (deleteOp.relatedOps.length > 0) {
         // apply processInnerDeleteOpt to each deleteOp.relatedOps items
-        const results = await sequential(
-          deleteOp.relatedOps,
-          item => this.processInnerDeleteOpt(database, itemsList, item),
-          []
+        deleteInnerItems = await sequentialSum(deleteOp.relatedOps, item =>
+          this.processInnerDeleteOpt(database, itemsList, item)
         );
-        deleteInnerItems = results.reduce((acc, curr) => acc + curr, 0);
       }
       // check if we have to delete blobs too
       if (deleteOp.deleteBlobs) {
@@ -324,7 +317,6 @@ export default class ProfileDelete extends Command {
           );
         }
       }
-
       return some(deleteItems + deleteInnerItems);
     } catch (error) {
       this.error(error.body);
@@ -345,21 +337,14 @@ export default class ProfileDelete extends Command {
           (err, blobResult) => (err ? reject(err) : resolve(blobResult))
         )
       );
-    const results = await sequential(
-      items,
-      async item => {
-        // DELETE BLOB HERE
-        const blobExist = await doesBlobExist(`${item.id}.json`);
-        if (blobExist.exists) {
-          await item.delete();
-          await cli.anykey();
-          return 1;
-        }
-        return 0;
-      },
-      [0]
-    );
-    const deletedBlobItems = results.reduce((acc, curr) => acc + curr, 0);
+    const deletedBlobItems = await sequentialSum(items, async item => {
+      // DELETE BLOB HERE
+      const blobExist = await doesBlobExist(`${item.id}.json`);
+      if (blobExist.exists) {
+        return item.delete().then(_ => 1);
+      }
+      return 0;
+    });
     if (deletedBlobItems > 0) {
       cli.log(`${deletedBlobItems} blob items successfully deleted`);
     }
