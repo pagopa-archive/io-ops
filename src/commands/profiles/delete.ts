@@ -10,7 +10,7 @@ import {
   getCosmosConnection,
   getStorageConnection
 } from "../../utils/azure";
-import { sequential, sequentialSum } from "../../utils/promise";
+import { sequentialSum } from "../../utils/promise";
 
 type Containers =
   | "profiles"
@@ -175,7 +175,7 @@ export default class ProfileDelete extends Command {
       cli.error("please specify at least one container");
     }
 
-    // init the cosmos client
+    // init cosmos client
     const client = new cosmos.CosmosClient({
       endpoint: connection.endpoint,
       auth: { key: connection.key }
@@ -184,19 +184,17 @@ export default class ProfileDelete extends Command {
     const database = client.database("agid-documentdb-test");
 
     // apply processDeleteOpt to each delete operation
-    const results = await sequential(deleteOpsToProcess, item =>
-      this.processDeleteOpt(database, storageConnection, item)
-    );
-    const countDeleteItems = results.reduce(
-      (acc, current) => acc + current.getOrElse(0),
-      0
+    const countDeleteItems = await sequentialSum(deleteOpsToProcess, item =>
+      this.processDeleteOpt(database, storageConnection, item).then(_ =>
+        _.getOrElse(0)
+      )
     );
 
-    if (countDeleteItems > 0) {
-      cli.log(`${countDeleteItems} total items successfully deleted`);
-    } else {
-      cli.log(`no items are been deleted`);
-    }
+    cli.log(
+      countDeleteItems > 0
+        ? `${countDeleteItems} total items successfully deleted`
+        : `no items are been deleted`
+    );
   }
 
   /**
@@ -208,9 +206,6 @@ export default class ProfileDelete extends Command {
     items: ReadonlyArray<cosmos.Item>,
     container: cosmos.Container
   ): Promise<number> {
-    if (items === undefined) {
-      return 0;
-    }
     cli.action.start(`Deleting ${items.length} items from ${container.id}`);
     const deletedItems = await sequentialSum(
       items,
@@ -280,7 +275,7 @@ export default class ProfileDelete extends Command {
         deleteOp.queryOptions
       );
       const { result: itemsList } = await response.toArray();
-      if (itemsList === undefined) {
+      if (itemsList === undefined || itemsList.length === 0) {
         cli.action.stop(`No items found in ${deleteOp.containerName}...`);
         return none;
       }
