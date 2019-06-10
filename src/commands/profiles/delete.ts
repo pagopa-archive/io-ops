@@ -312,10 +312,16 @@ export default class ProfileDelete extends Command {
           `Are you sure to delete items in message-content storage?`
         );
         if (confirmInner) {
-          deleteInnerItems += await this.processDeleteBlobOpt(
+          const deletedBlobItems = await this.processDeleteBlobOpt(
             storageConnection,
             itemsList
           );
+          cli.log(
+            deletedBlobItems > 0
+              ? `${deletedBlobItems} blob items successfully deleted`
+              : `no blob items are been deleted`
+          );
+          deleteInnerItems += deletedBlobItems;
         }
       }
       return some(deleteItems + deleteInnerItems);
@@ -329,7 +335,9 @@ export default class ProfileDelete extends Command {
     storageConnection: string,
     items: ReadonlyArray<cosmos.Item>
   ): Promise<number> {
+    // get the blob service
     const blobService = storage.createBlobService(storageConnection);
+    // a function to check if a blob with the giving id exists or not
     const doesBlobExist = (id: string) =>
       new Promise<storage.BlobService.BlobResult>((resolve, reject) =>
         blobService.doesBlobExist(
@@ -338,16 +346,14 @@ export default class ProfileDelete extends Command {
           (err, blobResult) => (err ? reject(err) : resolve(blobResult))
         )
       );
-    const deletedBlobItems = await sequentialSum(items, async item => {
+    // iterate over items and for each item (giving the item id) check if
+    // the corresponding blob exists. If yes, delete it
+    return await sequentialSum(items, async item => {
       const blobExist = await doesBlobExist(`${item.id}.json`);
       if (blobExist.exists) {
         return item.delete().then(_ => 1);
       }
       return 0;
     });
-    if (deletedBlobItems > 0) {
-      cli.log(`${deletedBlobItems} blob items successfully deleted`);
-    }
-    return deletedBlobItems;
   }
 }
