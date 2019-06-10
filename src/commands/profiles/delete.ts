@@ -338,7 +338,7 @@ export default class ProfileDelete extends Command {
   ): Promise<number> {
     // get the blob service
     const blobService = storage.createBlobService(storageConnection);
-    // a function to check if a blob with the giving id exists or not
+    // a function to check if a blob item exists
     const doesBlobExist = (id: string) =>
       new Promise<storage.BlobService.BlobResult>((resolve, reject) =>
         blobService.doesBlobExist(
@@ -347,12 +347,22 @@ export default class ProfileDelete extends Command {
           (err, blobResult) => (err ? reject(err) : resolve(blobResult))
         )
       );
-    // iterate over items and for each item (giving the item id) check if
+    // a function to mark a blob item for deletion (The blob is later deleted during cosmos garbage collection)
+    const deleteBlob = (id: string) =>
+      new Promise<storage.ServiceResponse>((resolve, reject) =>
+        blobService.deleteBlob(
+          config.storageMessagesContainer,
+          id,
+          (err, response) => (err ? reject(err) : resolve(response))
+        )
+      );
+    // iterate over items and for each item (giving item id) check if
     // the corresponding blob exists. If yes, delete it
     return await sequentialSum(items, async item => {
-      const blobExist = await doesBlobExist(`${item.id}.json`);
+      const blobId = `${item.id}.json`;
+      const blobExist = await doesBlobExist(blobId);
       if (blobExist.exists) {
-        return item.delete().then(_ => 1);
+        return (await deleteBlob(blobId)).isSuccessful ? 1 : 0;
       }
       return 0;
     });
