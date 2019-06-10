@@ -103,7 +103,7 @@ export default class ProfileDelete extends Command {
       { name: "@recipientFiscalCode", value: fiscalCode }
     ];
 
-    // retrive azure credentials
+    // retrieve azure credentials
     cli.action.start("Retrieving cosmosdb credentials");
     const [connection, storageConnection] = await Promise.all([
       getCosmosConnection("agid-rg-test", "agid-cosmosdb-test"),
@@ -207,17 +207,15 @@ export default class ProfileDelete extends Command {
     container: cosmos.Container
   ): Promise<number> {
     cli.action.start(`Deleting ${items.length} items from ${container.id}`);
-    const deletedItems = await sequentialSum(
-      items,
-      async currentOp =>
-        await container
-          .item(currentOp.id)
-          .delete()
-          .then(_ => 1)
-          .catch(e => {
-            cli.log(e);
-            return 0;
-          })
+    const deletedItems = await sequentialSum(items, currentOp =>
+      container
+        .item(currentOp.id)
+        .delete()
+        .then(_ => 1)
+        .catch(e => {
+          cli.log(e);
+          return 0;
+        })
     );
     cli.action.stop();
     return deletedItems;
@@ -228,10 +226,10 @@ export default class ProfileDelete extends Command {
    * return the number of delete items
    * e.g.: messages delete operation: it deletes items from "messages" container.
    * It also has a related delete operation: this operation has its own container "messages-status".
-   * This function iterates over "messages" items (relatedItems) and retrives the related ones (giving message id)
+   * This function iterates over "messages" items (relatedItems) and retrieves the related ones (giving message id)
    * from "message-status" container. Then, it deletes them
    * @param database the cosmos database where the container is placed
-   * @param relatedItems the items to retrive from container specified in deleteOp
+   * @param relatedItems the items to retrieve from container specified in deleteOp
    * @param deleteOp the delete operation
    */
   private async processInnerDeleteOpt(
@@ -239,9 +237,9 @@ export default class ProfileDelete extends Command {
     relatedItems: ReadonlyArray<cosmos.Item>,
     deleteOp: DeleteOpRelated
   ): Promise<number> {
-    // get the container of the delete related operation
+    // get the container of the related delete operation
     const relatedContainer = database.container(deleteOp.containerName);
-    // ritrive items from the container giving the message id
+    // retrieve items from the container giving the message id
     const items = relatedItems.map(m => relatedContainer.item(m.id));
     // check if there are items to delete
     if (items.length > 0) {
@@ -282,7 +280,7 @@ export default class ProfileDelete extends Command {
     );
     const { result: itemsList } = await response.toArray();
     if (itemsList === undefined || itemsList.length === 0) {
-      cli.action.stop(`No items found in ${deleteOp.containerName}...`);
+      cli.action.stop(`No items found in ${deleteOp.containerName}`);
       return none;
     }
     cli.action.stop();
