@@ -171,6 +171,7 @@ export default class ProfileDelete extends Command {
               return flags.service;
           }
         });
+        
     if (deleteOpsToProcess.length === 0) {
       cli.error("please specify at least one container");
     }
