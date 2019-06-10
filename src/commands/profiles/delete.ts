@@ -295,7 +295,6 @@ export default class ProfileDelete extends Command {
     }
     // user confirms to proceed to delete
     try {
-      // we have some elements to delete
       const deleteItems = await this.deleteItems(itemsList, container);
 
       // tslint:disable-next-line: no-let
@@ -309,10 +308,10 @@ export default class ProfileDelete extends Command {
       }
       // check if we have to delete blobs too
       if (deleteOp.deleteBlobs) {
-        const confirmInner = await cli.confirm(
+        const confirmBlobDeletion = await cli.confirm(
           `Are you sure to delete items in message-content storage?`
         );
-        if (confirmInner) {
+        if (confirmBlobDeletion) {
           const deletedBlobItems = await this.processDeleteBlobOpt(
             storageConnection,
             itemsList
