@@ -193,7 +193,7 @@ export default class ProfileDelete extends Command {
     cli.log(
       deletedItemsCount > 0
         ? `${deletedItemsCount} items successfully deleted`
-        : `no items are been deleted`
+        : `no items have been deleted`
     );
   }
 
