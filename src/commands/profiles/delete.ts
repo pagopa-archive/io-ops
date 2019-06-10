@@ -20,7 +20,7 @@ type Containers =
   | "notification-status"
   | "sender-services";
 
-type DeleteOpInner = { containerName: string };
+type DeleteOpRelated = { containerName: string };
 /**
  * define a delete operation
  * a delete operation should have or not related delete operations
@@ -30,7 +30,7 @@ type DeleteOpInner = { containerName: string };
  */
 type DeleteOp = {
   containerName: Containers;
-  relatedOps: ReadonlyArray<DeleteOpInner>;
+  relatedOps: ReadonlyArray<DeleteOpRelated>;
   query: string;
   queryParameters: cosmos.SqlParameter[];
   queryOptions?: cosmos.FeedOptions;
@@ -184,15 +184,15 @@ export default class ProfileDelete extends Command {
     const database = client.database("agid-documentdb-test");
 
     // apply processDeleteOpt to each delete operation
-    const countDeleteItems = await sequentialSum(deleteOpsToProcess, item =>
+    const deletedItemsCount = await sequentialSum(deleteOpsToProcess, item =>
       this.processDeleteOpt(database, storageConnection, item).then(_ =>
         _.getOrElse(0)
       )
     );
 
     cli.log(
-      countDeleteItems > 0
-        ? `${countDeleteItems} total items successfully deleted`
+      deletedItemsCount > 0
+        ? `${deletedItemsCount} items successfully deleted`
         : `no items are been deleted`
     );
   }
@@ -226,6 +226,10 @@ export default class ProfileDelete extends Command {
   /**
    * for each item in relatedItems take the item contained in deleteOp container and delete them,
    * return the number of delete items
+   * e.g.: messages delete operation: it deletes items from "messages" container.
+   * It also has a related delete operation: this operation has its own container "messages-status".
+   * This function iterates over "messages" items (relatedItems) and retrives the related ones (giving message id)
+   * from "message-status" container. Then, it deletes them
    * @param database the cosmos database where the container is placed
    * @param relatedItems the items to retrive from container specified in deleteOp
    * @param deleteOp the delete operation
@@ -233,18 +237,21 @@ export default class ProfileDelete extends Command {
   private async processInnerDeleteOpt(
     database: cosmos.Database,
     relatedItems: ReadonlyArray<cosmos.Item>,
-    deleteOp: DeleteOpInner
+    deleteOp: DeleteOpRelated
   ): Promise<number> {
-    const innerContainer = database.container(deleteOp.containerName);
-    const innerItems = relatedItems.map(m => innerContainer.item(m.id));
-    if (innerItems.length > 0) {
+    // get the container of the delete related operation
+    const relatedContainer = database.container(deleteOp.containerName);
+    // ritrive items from the container giving the message id
+    const items = relatedItems.map(m => relatedContainer.item(m.id));
+    // check if there are items to delete
+    if (items.length > 0) {
       const confirmInner = await cli.confirm(
-        `${innerItems.length} items found in "${
+        `${items.length} items found in "${
           deleteOp.containerName
         }" container! Are you sure you want to proceed to delete?`
       );
       if (confirmInner) {
-        return await this.deleteItems(innerItems, innerContainer);
+        return await this.deleteItems(items, relatedContainer);
       }
     }
     return 0;
@@ -260,34 +267,35 @@ export default class ProfileDelete extends Command {
     storageConnection: string,
     deleteOp: DeleteOp
   ): Promise<Option<number>> {
+    cli.action.start(
+      `Selecting items from "${deleteOp.containerName}" container...`
+    );
+    // get the container of the delete operation
+    const container = database.container(deleteOp.containerName);
+    // query the container
+    const response = container.items.query(
+      {
+        parameters: deleteOp.queryParameters,
+        query: deleteOp.query
+      },
+      deleteOp.queryOptions
+    );
+    const { result: itemsList } = await response.toArray();
+    if (itemsList === undefined || itemsList.length === 0) {
+      cli.action.stop(`No items found in ${deleteOp.containerName}...`);
+      return none;
+    }
+    cli.action.stop();
+    const confirm = await cli.confirm(
+      `${itemsList.length} items found in "${
+        deleteOp.containerName
+      }" container! Are you sure you want to proceed to delete?`
+    );
+    if (!confirm) {
+      return none;
+    }
+    // user confirms to proceed to delete
     try {
-      cli.action.start(
-        `Selecting items from "${deleteOp.containerName}" container...`
-      );
-      // get the container of the delete operation
-      const container = database.container(deleteOp.containerName);
-      // query the container
-      const response = container.items.query(
-        {
-          parameters: deleteOp.queryParameters,
-          query: deleteOp.query
-        },
-        deleteOp.queryOptions
-      );
-      const { result: itemsList } = await response.toArray();
-      if (itemsList === undefined || itemsList.length === 0) {
-        cli.action.stop(`No items found in ${deleteOp.containerName}...`);
-        return none;
-      }
-      cli.action.stop();
-      const confirm = await cli.confirm(
-        `${itemsList.length} items found in "${
-          deleteOp.containerName
-        }" container! Are you sure you want to proceed to delete?`
-      );
-      if (!confirm) {
-        return none;
-      }
       // we have some elements to delete
       const deleteItems = await this.deleteItems(itemsList, container);
 
@@ -333,7 +341,6 @@ export default class ProfileDelete extends Command {
         )
       );
     const deletedBlobItems = await sequentialSum(items, async item => {
-      // DELETE BLOB HERE
       const blobExist = await doesBlobExist(`${item.id}.json`);
       if (blobExist.exists) {
         return item.delete().then(_ => 1);
