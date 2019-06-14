@@ -171,7 +171,7 @@ export default class ProfileDelete extends Command {
               return flags.service;
           }
         });
-        
+
     if (deleteOpsToProcess.length === 0) {
       cli.error("please specify at least one container");
     }
@@ -295,36 +295,28 @@ export default class ProfileDelete extends Command {
     }
     // user confirms to proceed to delete
     try {
-      const deleteItems = await this.deleteItems(itemsList, container);
+      const deleteItemsCount = await this.deleteItems(itemsList, container);
 
-      // tslint:disable-next-line: no-let
-      let deleteInnerItems = 0;
-      // check if there are some related operations to process
-      if (deleteOp.relatedOps.length > 0) {
-        // apply processInnerDeleteOpt to each deleteOp.relatedOps items
-        deleteInnerItems = await sequentialSum(deleteOp.relatedOps, item =>
+      // apply processInnerDeleteOpt to each deleteOp.relatedOps items
+      const deleteInnerItems = () =>
+        sequentialSum(deleteOp.relatedOps, item =>
           this.processInnerDeleteOpt(database, itemsList, item)
         );
-      }
-      // check if we have to delete blobs too
-      if (deleteOp.deleteBlobs) {
-        const confirmBlobDeletion = await cli.confirm(
+      const deleteInnerItemsCount =
+        deleteOp.relatedOps.length > 0 ? await deleteInnerItems() : 0;
+
+      // check if we have to delete blobs too, if yes ask if user wants to delete
+      const confirmDeleteMessageContent =
+        deleteOp.deleteBlobs &&
+        (await cli.confirm(
           `Are you sure to delete items in message-content storage?`
-        );
-        if (confirmBlobDeletion) {
-          const deletedBlobItems = await this.processDeleteBlobOpt(
-            storageConnection,
-            itemsList
-          );
-          cli.log(
-            deletedBlobItems > 0
-              ? `${deletedBlobItems} blob items successfully deleted`
-              : `no blob items are been deleted`
-          );
-          deleteInnerItems += deletedBlobItems;
-        }
-      }
-      return some(deleteItems + deleteInnerItems);
+        ));
+      const deleteMessageContentCount = confirmDeleteMessageContent
+        ? await this.processDeleteBlobOpt(storageConnection, itemsList)
+        : 0;
+      return some(
+        deleteInnerItemsCount + deleteItemsCount + deleteMessageContentCount
+      );
     } catch (error) {
       this.error(error.body);
       return none;
@@ -360,10 +352,9 @@ export default class ProfileDelete extends Command {
     return await sequentialSum(items, async item => {
       const blobId = `${item.id}.json`;
       const blobExist = await doesBlobExist(blobId);
-      if (blobExist.exists) {
-        return (await deleteBlob(blobId)).isSuccessful ? 1 : 0;
-      }
-      return 0;
+      return blobExist.exists && (await deleteBlob(blobId)).isSuccessful
+        ? 1
+        : 0;
     });
   }
 }
