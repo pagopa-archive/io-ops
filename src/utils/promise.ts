@@ -13,6 +13,12 @@ export function sequential<T, R>(
   );
 }
 
+/**
+ * applies asyncFunc to each item and returns a promise with the sum
+ * of all returned values
+ * @param items
+ * @param asyncFunc
+ */
 export async function sequentialSum<T>(
   items: ReadonlyArray<T>,
   asyncFunc: (item: T) => Promise<number>
