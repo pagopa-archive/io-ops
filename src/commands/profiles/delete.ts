@@ -351,8 +351,8 @@ export default class ProfileDelete extends Command {
     // the corresponding blob exists. If yes, delete it
     return await sequentialSum(items, async item => {
       const blobId = `${item.id}.json`;
-      const blobExist = await doesBlobExist(blobId);
-      return blobExist.exists && (await deleteBlob(blobId)).isSuccessful
+      const blobExistResponse = await doesBlobExist(blobId);
+      return blobExistResponse.exists && (await deleteBlob(blobId)).isSuccessful
         ? 1
         : 0;
     });
