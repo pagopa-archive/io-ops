@@ -47,15 +47,23 @@ export const getStorageConnection = async (name: string) =>
  * hasCosmosConnection checks if the host has az cli installed and resouceGroup and name
  * are valid inputs for cosmosdb
  */
-export const hasCosmosConnection = (resourceGroup: string, name: string) => {
+export const hasCosmosConnection = async (
+  resourceGroup: string,
+  name: string
+) => {
   try {
-    execa.sync(
+    const successExitCode = "SUCCESS";
+    const documentEndpoint = await execa(
       `az cosmosdb show -g ${resourceGroup} -n ${name} --query documentEndpoint -o tsv`
     );
-    execa.sync(
+    const primaryReadonlyMasterKey = execa.sync(
       `az cosmosdb list-keys -g ${resourceGroup} -n ${name} --query primaryReadonlyMasterKey -o tsv`
     );
-    return true;
+
+    return (
+      documentEndpoint.exitCodeName === successExitCode &&
+      primaryReadonlyMasterKey.exitCodeName === successExitCode
+    );
   } catch (e) {
     return false;
   }
