@@ -3,13 +3,11 @@ import { Command, flags } from "@oclif/command";
 import cli from "cli-ux";
 import * as parse from "csv-parse";
 import * as fs from "fs";
-import * as t from "io-ts";
 import * as transform from "stream-transform";
 
 import {
   config,
   getCosmosEndpoint,
-  getCosmosReadonlyKey,
   getCosmosWriteKey
 } from "../../utils/azure";
 import { parseMessagePath } from "../../utils/parser";
@@ -42,6 +40,7 @@ export default class MessagesAttributes extends Command {
       this.exit();
     }
 
+    // tslint:disable-next-line: no-inferred-empty-object-type
     const messageDelta = [
       {
         key: "isPending",
@@ -95,7 +94,7 @@ export default class MessagesAttributes extends Command {
       cli.action.stop();
 
       const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
-      const database = await client.database(config.cosmosDatabaseName);
+      const database = client.database(config.cosmosDatabaseName);
       const container = database.container(config.cosmosMessagesContainer);
 
       const updateMessage = async (fiscalCode: string, messageId: string) => {
@@ -133,7 +132,7 @@ export default class MessagesAttributes extends Command {
         .pipe(transformer)
         .pipe(process.stdout);
 
-      await new Promise((res, rej) => parser.on("end", res));
+      await new Promise((res, _) => parser.on("end", res));
     } catch (e) {
       this.error(e);
     }
