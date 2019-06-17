@@ -38,6 +38,17 @@ export const getCosmosConnection = async (
   return { endpoint, key };
 };
 
+export const getCosmosWriteConnection = async (
+  resourceGroup: string,
+  name: string
+) => {
+  const [endpoint, key] = await Promise.all([
+    getCosmosEndpoint(resourceGroup, name),
+    getCosmosWriteKey(resourceGroup, name)
+  ]);
+  return { endpoint, key };
+};
+
 export const getStorageConnection = async (name: string) =>
   (await execa(
     `az storage account show-connection-string --name ${name} --output tsv`

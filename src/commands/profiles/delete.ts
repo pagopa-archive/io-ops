@@ -7,7 +7,7 @@ import { FiscalCode } from "italia-ts-commons/lib/strings";
 
 import {
   config,
-  getCosmosConnection,
+  getCosmosWriteConnection,
   getStorageConnection
 } from "../../utils/azure";
 import { sequentialSum } from "../../utils/promise";
@@ -20,7 +20,10 @@ type Containers =
   | "notification-status"
   | "sender-services";
 
-type DeleteOpRelated = { containerName: string };
+type Container = {
+  containerName: Containers;
+  partitionKey: (item: any) => string;
+};
 /**
  * define a delete operation
  * a delete operation should have or not related delete operations
@@ -29,16 +32,15 @@ type DeleteOpRelated = { containerName: string };
  * because items from "message-status" can be retrieved starting from "message" items
  */
 type DeleteOp = {
-  containerName: Containers;
-  relatedOps: ReadonlyArray<DeleteOpRelated>;
+  relatedOps: ReadonlyArray<Container>;
   query: string;
   queryParameters: cosmos.SqlParameter[];
   queryOptions?: cosmos.FeedOptions;
   deleteBlobs: boolean;
-};
+} & Container;
 
 export default class ProfileDelete extends Command {
-  static description = "Delete a profile";
+  public static description = "Delete a profile";
 
   public static flags = {
     all: flags.boolean({
@@ -81,8 +83,8 @@ export default class ProfileDelete extends Command {
     }
   ];
 
-  async run() {
-    const { args, flags } = this.parse(ProfileDelete);
+  public async run(): Promise<void> {
+    const { args, flags: parsedFlags } = this.parse(ProfileDelete);
     const fiscalCodeOrErrors = FiscalCode.decode(args.fiscalCode);
     if (fiscalCodeOrErrors.isLeft()) {
       this.error("provide a valid fiscal code");
@@ -106,15 +108,18 @@ export default class ProfileDelete extends Command {
     // retrieve azure credentials
     cli.action.start("Retrieving cosmosdb credentials");
     const [connection, storageConnection] = await Promise.all([
-      getCosmosConnection("agid-rg-test", "agid-cosmosdb-test"),
+      getCosmosWriteConnection("agid-rg-test", "agid-cosmosdb-test"),
       getStorageConnection(config.storageName)
     ]);
     cli.action.stop();
 
+    const fiscalCodePartitionKey = "/fiscalCode";
+    const messageIdPartitionKey = "/messageId";
     // define all delete operations
     const deleteOps: ReadonlyArray<DeleteOp> = [
       {
         containerName: "profiles",
+        partitionKey: i => i.fiscalCode,
         query: selectFromFiscalCode,
         queryParameters: paramsFromFiscalCode,
         relatedOps: [],
@@ -122,29 +127,34 @@ export default class ProfileDelete extends Command {
       },
       {
         containerName: "messages",
+        partitionKey: i => i.fiscalCode,
         query: selectFromFiscalCode,
         queryParameters: paramsFromFiscalCode,
         relatedOps: [
           {
-            containerName: "message-status"
+            containerName: "message-status",
+            partitionKey: i => i.messageId
           }
         ],
         deleteBlobs: true
       },
       {
         containerName: "notifications",
+        partitionKey: i => i.messageId,
         query: selectFromFiscalCode,
         queryParameters: paramsFromFiscalCode,
         queryOptions: { enableCrossPartitionQuery: true },
         relatedOps: [
           {
-            containerName: "notification-status"
+            containerName: "notification-status",
+            partitionKey: i => i.notificationId
           }
         ],
         deleteBlobs: false
       },
       {
         containerName: "sender-services",
+        partitionKey: i => i.recipientFiscalCode,
         query: selectFromRecipientFiscalCode,
         queryParameters: paramsFromRecipientFiscalCode,
         relatedOps: [],
@@ -155,20 +165,20 @@ export default class ProfileDelete extends Command {
     // define the delete operation set from given inputs
     // if all flag is enabled all above defined options will be procecess
     // otherwhise only operations specified in the given flags
-    const deleteOpsToProcess = flags.all
+    const deleteOpsToProcess = parsedFlags.all
       ? deleteOps
       : deleteOps.filter(_ => {
           switch (_.containerName) {
             case "messages":
             case "message-status":
-              return flags.message;
+              return parsedFlags.message;
             case "notifications":
             case "notification-status":
-              return flags.notification;
+              return parsedFlags.notification;
             case "profiles":
-              return flags.profile;
+              return parsedFlags.profile;
             case "sender-services":
-              return flags.service;
+              return parsedFlags.service;
           }
         });
 
@@ -205,19 +215,24 @@ export default class ProfileDelete extends Command {
    */
   private async deleteItems(
     items: ReadonlyArray<cosmos.Item>,
-    container: cosmos.Container
+    container: cosmos.Container,
+    partitionKey: (item: any) => string
   ): Promise<number> {
     cli.action.start(`Deleting ${items.length} items from ${container.id}`);
-    const deletedItems = await sequentialSum(items, currentOp =>
-      container
-        .item(currentOp.id)
-        .delete()
+    const deletedItems = await sequentialSum(items, async currentOp => {
+      console.log("container:" + currentOp.container.id);
+      console.log("values:" + Object.keys(currentOp));
+      const result = container
+        .item(currentOp.id, partitionKey(currentOp))
+        .delete({ partitionKey: "/messageId" })
         .then(_ => 1)
         .catch(e => {
           cli.log(e);
           return 0;
-        })
-    );
+        });
+      await cli.anykey();
+      return result;
+    });
     cli.action.stop();
     return deletedItems;
   }
@@ -236,12 +251,15 @@ export default class ProfileDelete extends Command {
   private async processInnerDeleteOpt(
     database: cosmos.Database,
     relatedItems: ReadonlyArray<cosmos.Item>,
-    deleteOp: DeleteOpRelated
+    deleteOp: Container
   ): Promise<number> {
     // get the container of the related delete operation
     const relatedContainer = database.container(deleteOp.containerName);
     // retrieve items from the container giving the message id
-    const items = relatedItems.map(m => relatedContainer.item(m.id));
+    const items = relatedItems.map(m => {
+      console.log(Object.keys(m));
+      return relatedContainer.item(m.id);
+    });
     // check if there are items to delete
     if (items.length > 0) {
       const confirmInner = await cli.confirm(
@@ -250,7 +268,11 @@ export default class ProfileDelete extends Command {
         }" container! Are you sure you want to proceed to delete?`
       );
       if (confirmInner) {
-        return await this.deleteItems(items, relatedContainer);
+        return await this.deleteItems(
+          items,
+          relatedContainer,
+          deleteOp.partitionKey
+        );
       }
     }
     return 0;
@@ -295,7 +317,8 @@ export default class ProfileDelete extends Command {
     }
     // user confirms to proceed to delete
     try {
-      const deleteItemsCount = await this.deleteItems(itemsList, container);
+      const deleteItemsCount = 0;
+      //await this.deleteItems(itemsList, container, i => i.fiscalCode);
 
       // apply processInnerDeleteOpt to each deleteOp.relatedOps items
       const deleteInnerItems = () =>
@@ -352,9 +375,9 @@ export default class ProfileDelete extends Command {
     return await sequentialSum(items, async item => {
       const blobId = `${item.id}.json`;
       const blobExistResponse = await doesBlobExist(blobId);
-      return blobExistResponse.exists && (await deleteBlob(blobId)).isSuccessful
-        ? 1
-        : 0;
+      const deleteResult = (await deleteBlob(blobId)).isSuccessful;
+      await cli.anykey();
+      return blobExistResponse.exists && deleteResult ? 1 : 0;
     });
   }
 }
