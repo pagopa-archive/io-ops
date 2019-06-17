@@ -33,7 +33,7 @@ export default class MessagesAttributes extends Command {
   };
 
   public run = async () => {
-    const { args, flags: parsedFlags } = this.parse(MessagesAttributes);
+    const { flags: parsedFlags } = this.parse(MessagesAttributes);
 
     if (parsedFlags.isPending === undefined) {
       this.error("At least one attribute must be changed");

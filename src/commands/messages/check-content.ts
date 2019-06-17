@@ -1,19 +1,11 @@
-import * as cosmos from "@azure/cosmos";
 import { Command, flags } from "@oclif/command";
 import * as storage from "azure-storage";
 import cli from "cli-ux";
 import * as parse from "csv-parse";
 import * as fs from "fs";
-import * as t from "io-ts";
-import { FiscalCode } from "italia-ts-commons/lib/strings";
 import * as transform from "stream-transform";
 
-import {
-  config,
-  getCosmosEndpoint,
-  getCosmosReadonlyKey,
-  getStorageConnection
-} from "../../utils/azure";
+import { config, getStorageConnection } from "../../utils/azure";
 import { parseMessagePath } from "../../utils/parser";
 
 export default class MessagesCheckContent extends Command {
@@ -36,7 +28,7 @@ export default class MessagesCheckContent extends Command {
   };
 
   public run = async () => {
-    const { args, flags: parsedFlags } = this.parse(MessagesCheckContent);
+    const { flags: parsedFlags } = this.parse(MessagesCheckContent);
 
     const inputStream = parsedFlags.input
       ? fs.createReadStream(parsedFlags.input)
@@ -49,11 +41,7 @@ export default class MessagesCheckContent extends Command {
 
     try {
       cli.action.start("Retrieving credentials");
-      const [endpoint, key, storageConnection] = await Promise.all([
-        getCosmosEndpoint(config.resourceGroup, config.cosmosName),
-        getCosmosReadonlyKey(config.resourceGroup, config.cosmosName),
-        getStorageConnection(config.storageName)
-      ]);
+      const storageConnection = await getStorageConnection(config.storageName);
       cli.action.stop();
 
       const blobService = storage.createBlobService(storageConnection);
@@ -66,10 +54,6 @@ export default class MessagesCheckContent extends Command {
             (err, blobResult) => (err ? reject(err) : resolve(blobResult))
           )
         );
-      // const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
-      // const database = await client.database(config.cosmosDatabaseName);
-      // const container = database.container(config.cosmosMessagesContainer);
-
       const transformer = transform(
         {
           parallel: parsedFlags.parallel
@@ -93,7 +77,7 @@ export default class MessagesCheckContent extends Command {
         .pipe(transformer)
         .pipe(process.stdout);
 
-      await new Promise((res, rej) => parser.on("end", res));
+      await new Promise((res, _) => parser.on("end", res));
     } catch (e) {
       this.error(e);
     }
