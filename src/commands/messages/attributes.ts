@@ -131,7 +131,7 @@ export default class MessagesAttributes extends Command {
         .pipe(parser)
         .pipe(transformer)
         .pipe(process.stdout);
-
+      // tslint:disable-next-line: no-inferred-empty-object-type
       await new Promise((res, _) => parser.on("end", res));
     } catch (e) {
       this.error(e);

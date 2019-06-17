@@ -1,5 +1,4 @@
 import * as t from "io-ts";
-import { FiscalCode } from "italia-ts-commons/lib/strings";
 
 export const parseMessagePath = (
   value: unknown
