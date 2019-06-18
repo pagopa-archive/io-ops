@@ -10,7 +10,7 @@ import {
   getCosmosWriteConnection,
   getStorageConnection
 } from "../../utils/azure";
-import { sequentialSum } from "../../utils/promise";
+import { sequentialSum, sequential } from "../../utils/promise";
 
 type Containers =
   | "profiles"
@@ -21,8 +21,12 @@ type Containers =
   | "sender-services";
 
 type Container = {
+  query: string;
   containerName: Containers;
-  partitionKey: (item: any) => string;
+  partitionKeySelector: (item: any) => string;
+  queryParamName: string;
+  queryParamValue: string;
+  queryOptions?: cosmos.FeedOptions;
 };
 /**
  * define a delete operation
@@ -33,9 +37,6 @@ type Container = {
  */
 type DeleteOp = {
   relatedOps: ReadonlyArray<Container>;
-  query: string;
-  queryParameters: cosmos.SqlParameter[];
-  queryOptions?: cosmos.FeedOptions;
   deleteBlobs: boolean;
 } & Container;
 
@@ -119,44 +120,54 @@ export default class ProfileDelete extends Command {
     const deleteOps: ReadonlyArray<DeleteOp> = [
       {
         containerName: "profiles",
-        partitionKey: i => i.fiscalCode,
+        partitionKeySelector: i => i.fiscalCode,
         query: selectFromFiscalCode,
-        queryParameters: paramsFromFiscalCode,
+        queryParamName: "@fiscalCode",
+        queryParamValue: fiscalCode,
         relatedOps: [],
         deleteBlobs: false
       },
       {
         containerName: "messages",
-        partitionKey: i => i.fiscalCode,
+        partitionKeySelector: i => i.fiscalCode,
         query: selectFromFiscalCode,
-        queryParameters: paramsFromFiscalCode,
+        queryParamName: "@fiscalCode",
+        queryParamValue: fiscalCode,
         relatedOps: [
           {
             containerName: "message-status",
-            partitionKey: i => i.messageId
+            partitionKeySelector: i => i.messageId,
+            query: "SELECT * from c where c.messageId = @messageId",
+            queryParamName: "@messageId",
+            queryParamValue: ""
           }
         ],
         deleteBlobs: true
       },
       {
         containerName: "notifications",
-        partitionKey: i => i.messageId,
+        partitionKeySelector: i => i.messageId,
         query: selectFromFiscalCode,
-        queryParameters: paramsFromFiscalCode,
+        queryParamName: "@fiscalCode",
+        queryParamValue: fiscalCode,
         queryOptions: { enableCrossPartitionQuery: true },
         relatedOps: [
           {
             containerName: "notification-status",
-            partitionKey: i => i.notificationId
+            partitionKeySelector: i => i.notificationId,
+            query: "SELECT * from c where c.notificationId = @notificationId",
+            queryParamName: "@notificationId",
+            queryParamValue: ""
           }
         ],
         deleteBlobs: false
       },
       {
         containerName: "sender-services",
-        partitionKey: i => i.recipientFiscalCode,
+        partitionKeySelector: i => i.recipientFiscalCode,
         query: selectFromRecipientFiscalCode,
-        queryParameters: paramsFromRecipientFiscalCode,
+        queryParamName: "@recipientFiscalCode",
+        queryParamValue: fiscalCode,
         relatedOps: [],
         deleteBlobs: false
       }
@@ -220,11 +231,9 @@ export default class ProfileDelete extends Command {
   ): Promise<number> {
     cli.action.start(`Deleting ${items.length} items from ${container.id}`);
     const deletedItems = await sequentialSum(items, async currentOp => {
-      console.log("container:" + currentOp.container.id);
-      console.log("values:" + Object.keys(currentOp));
       const result = container
         .item(currentOp.id, partitionKey(currentOp))
-        .delete({ partitionKey: "/messageId" })
+        .delete()
         .then(_ => 1)
         .catch(e => {
           cli.log(e);
@@ -255,23 +264,34 @@ export default class ProfileDelete extends Command {
   ): Promise<number> {
     // get the container of the related delete operation
     const relatedContainer = database.container(deleteOp.containerName);
-    // retrieve items from the container giving the message id
-    const items = relatedItems.map(m => {
-      console.log(Object.keys(m));
-      return relatedContainer.item(m.id);
+    const queryResults = await sequential(relatedItems, async i => {
+      const response = relatedContainer.items.query({
+        parameters: [{ name: deleteOp.queryParamName, value: i.id }],
+        query: deleteOp.query
+      });
+      const { result: itemsList } = await response.toArray();
+      return itemsList !== undefined && itemsList.length > 0
+        ? itemsList[0]
+        : undefined;
     });
+    const innerItems = queryResults.reduce((acc, curr) => {
+      if (curr !== undefined) {
+        return [...acc, curr];
+      }
+      return acc;
+    }, []);
     // check if there are items to delete
-    if (items.length > 0) {
+    if (innerItems.length > 0) {
       const confirmInner = await cli.confirm(
-        `${items.length} items found in "${
+        `${innerItems.length} items found in "${
           deleteOp.containerName
         }" container! Are you sure you want to proceed to delete?`
       );
       if (confirmInner) {
         return await this.deleteItems(
-          items,
+          innerItems,
           relatedContainer,
-          deleteOp.partitionKey
+          deleteOp.partitionKeySelector
         );
       }
     }
@@ -296,7 +316,9 @@ export default class ProfileDelete extends Command {
     // query the container
     const response = container.items.query(
       {
-        parameters: deleteOp.queryParameters,
+        parameters: [
+          { name: deleteOp.queryParamName, value: deleteOp.queryParamValue }
+        ],
         query: deleteOp.query
       },
       deleteOp.queryOptions
@@ -317,8 +339,11 @@ export default class ProfileDelete extends Command {
     }
     // user confirms to proceed to delete
     try {
-      const deleteItemsCount = 0;
-      //await this.deleteItems(itemsList, container, i => i.fiscalCode);
+      const deleteItemsCount = await this.deleteItems(
+        itemsList,
+        container,
+        deleteOp.partitionKeySelector
+      );
 
       // apply processInnerDeleteOpt to each deleteOp.relatedOps items
       const deleteInnerItems = () =>
