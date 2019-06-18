@@ -56,7 +56,7 @@ export const hasCosmosConnection = async (
     const documentEndpoint = await execa(
       `az cosmosdb show -g ${resourceGroup} -n ${name} --query documentEndpoint -o tsv`
     );
-    const primaryReadonlyMasterKey = execa.sync(
+    const primaryReadonlyMasterKey = await execa(
       `az cosmosdb list-keys -g ${resourceGroup} -n ${name} --query primaryReadonlyMasterKey -o tsv`
     );
 

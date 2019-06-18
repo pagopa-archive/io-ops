@@ -12,6 +12,7 @@ describe("list all profiles", () => {
       "agid-rg-test",
       "agid-cosmosdb-test"
     );
+    // az cli not installed or bad cosmos credential, test no needed
     if (!isCosmosConnectionAvailable) {
       // tslint:disable-next-line: no-invalid-this
       this.skip();
