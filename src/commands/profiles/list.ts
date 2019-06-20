@@ -1,18 +1,18 @@
 import * as cosmos from "@azure/cosmos";
-import { Command, flags } from "@oclif/command";
+import { Command } from "@oclif/command";
 import cli from "cli-ux";
 
 import { getCosmosConnection } from "../../utils/azure";
 
 export default class ProfilesList extends Command {
-  static description = "Lists all profiles";
+  public static description = "Lists all profiles";
 
-  static flags = {
+  public static flags = {
     ...cli.table.flags()
   };
 
-  async run() {
-    const { args, flags } = this.parse(ProfilesList);
+  public async run(): Promise<void> {
+    const { flags } = this.parse(ProfilesList);
 
     try {
       cli.action.start("Retrieving cosmosdb credentials");
@@ -24,9 +24,9 @@ export default class ProfilesList extends Command {
 
       cli.action.start("Querying profiles...");
       const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
-      const database = await client.database("agid-documentdb-test");
+      const database = client.database("agid-documentdb-test");
       const container = database.container("profiles");
-      const response = await container.items.query(
+      const response = container.items.query(
         "SELECT c.fiscalCode, c._ts FROM c WHERE c.version = 0",
         {
           enableCrossPartitionQuery: true
@@ -48,6 +48,7 @@ export default class ProfilesList extends Command {
           },
           createdAt: {
             header: "createdAt",
+            // tslint:disable-next-line: no-any
             get: (row: any) =>
               row._ts && new Date(row._ts * 1000).toISOString(),
             extended: true

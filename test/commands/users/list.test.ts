@@ -1,17 +1,27 @@
-import {expect, test} from '@oclif/test'
+import { expect, test } from "@oclif/test";
+import { hasCosmosConnection } from "../../../src/utils/azure";
 
-describe('users:list', () => {
+describe("list all profiles", () => {
+  /**
+   * if host has the az client installed and valid cosmos credentials we test command first output line matches
+   * the header row (fiscalCode column name). Otherwise the test will be skipped
+   */
+
+  before(async function(): Promise<void> {
+    const isCosmosConnectionAvailable = await hasCosmosConnection(
+      "agid-rg-test",
+      "agid-cosmosdb-test"
+    );
+    // az cli not installed or bad cosmos credential, test no needed
+    if (!isCosmosConnectionAvailable) {
+      // tslint:disable-next-line: no-invalid-this
+      this.skip();
+    }
+  });
   test
     .stdout()
-    .command(['users:list'])
-    .it('runs hello', ctx => {
-      expect(ctx.stdout).to.contain('hello world')
-    })
-
-  test
-    .stdout()
-    .command(['users:list', '--name', 'jeff'])
-    .it('runs hello --name jeff', ctx => {
-      expect(ctx.stdout).to.contain('hello jeff')
-    })
-})
+    .command(["profiles:list"])
+    .it("runs profiles command to list all users", ctx => {
+      expect(ctx.stdout).match(/^fiscalCode/);
+    });
+});

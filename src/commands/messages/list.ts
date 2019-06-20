@@ -1,6 +1,5 @@
 import * as cosmos from "@azure/cosmos";
-import { Command, flags } from "@oclif/command";
-import * as storage from "azure-storage";
+import { Command } from "@oclif/command";
 import cli from "cli-ux";
 import { FiscalCode } from "italia-ts-commons/lib/strings";
 
@@ -46,11 +45,11 @@ export default class MessagesList extends Command {
       cli.action.stop();
 
       const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
-      const database = await client.database(config.cosmosDatabaseName);
+      const database = client.database(config.cosmosDatabaseName);
       const container = database.container(config.cosmosMessagesContainer);
 
       cli.action.start("Querying messages...");
-      const response = await container.items.query({
+      const response = container.items.query({
         parameters: [{ name: "@fiscalCode", value: fiscalCode }],
         query:
           "SELECT c.id, c.createdAt, c.isPending FROM c WHERE c.fiscalCode = @fiscalCode"
