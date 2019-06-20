@@ -29,7 +29,8 @@ type Container = {
 };
 /**
  * define a delete operation
- * a delete operation should have or not related delete operations
+ * A primary delete operation may generate secondary delete operations required to keep
+ * the consistency of the data model.
  * a related operation is when we have to retrieve items starting from a given set
  * .e.g: the delete operation "messages" has the related delete operation "message-status"
  * because items from "message-status" can be retrieved starting from "message" items
@@ -46,31 +47,31 @@ export default class ProfileDelete extends Command {
   public static flags = {
     all: flags.boolean({
       char: "a",
-      description: "delete items from all containers",
+      description: "delete items in all containers",
       required: false,
       default: false
     }),
     profile: flags.boolean({
       char: "p",
-      description: "delete items from profile container",
+      description: "delete items in profile container",
       required: false,
       default: false
     }),
     message: flags.boolean({
       char: "m",
-      description: "delete items from message container",
+      description: "delete items in message container",
       required: false,
       default: false
     }),
     notification: flags.boolean({
       char: "n",
-      description: "delete items from notification container",
+      description: "delete items in notification container",
       required: false,
       default: false
     }),
     service: flags.boolean({
       char: "s",
-      description: "delete items from service container",
+      description: "delete items in service container",
       required: false,
       default: false
     })
@@ -92,13 +93,13 @@ export default class ProfileDelete extends Command {
       return;
     }
     const fiscalCode = fiscalCodeOrErrors.value;
-
+    const fiscalCodeParamName = "@fiscalCode";
+    const messageIdParamName = "@messageId";
+    const notificationIdParamName = "@messageId";
+    const recipientFiscalCodeParamName = "@recipientFiscalCode";
     // define used queries
-    const selectFromFiscalCode =
-      "SELECT * FROM c WHERE c.fiscalCode = @fiscalCode";
-
-    const selectFromRecipientFiscalCode =
-      "SELECT * FROM c WHERE c.recipientFiscalCode = @recipientFiscalCode";
+    const selectFromFiscalCode = `SELECT * FROM c WHERE c.fiscalCode = ${fiscalCodeParamName}`;
+    const selectFromRecipientFiscalCode = `SELECT * FROM c WHERE c.recipientFiscalCode = ${recipientFiscalCodeParamName}`;
 
     // retrieve azure credentials
     cli.action.start("Retrieving cosmosdb credentials");
@@ -108,7 +109,6 @@ export default class ProfileDelete extends Command {
     ]);
     cli.action.stop();
 
-    const fiscalCodeParamName = "@fiscalCode";
     // define all delete operations
     const deleteOps: ReadonlyArray<DeleteOp> = [
       {
@@ -130,8 +130,8 @@ export default class ProfileDelete extends Command {
           {
             containerName: "message-status",
             partitionKeySelector: i => i.messageId,
-            query: "SELECT * from c where c.messageId = @messageId",
-            queryParamName: "@messageId"
+            query: `SELECT * from c where c.messageId = ${messageIdParamName}`,
+            queryParamName: messageIdParamName
           }
         ],
         deleteBlobs: true
@@ -147,8 +147,8 @@ export default class ProfileDelete extends Command {
           {
             containerName: "notification-status",
             partitionKeySelector: i => i.notificationId,
-            query: "SELECT * from c where c.notificationId = @notificationId",
-            queryParamName: "@notificationId"
+            query: `SELECT * from c where c.notificationId = ${notificationIdParamName}`,
+            queryParamName: notificationIdParamName
           }
         ],
         deleteBlobs: false
@@ -157,7 +157,7 @@ export default class ProfileDelete extends Command {
         containerName: "sender-services",
         partitionKeySelector: i => i.recipientFiscalCode,
         query: selectFromRecipientFiscalCode,
-        queryParamName: "@recipientFiscalCode",
+        queryParamName: recipientFiscalCodeParamName,
         queryParamValue: fiscalCode,
         relatedOps: [],
         deleteBlobs: false
