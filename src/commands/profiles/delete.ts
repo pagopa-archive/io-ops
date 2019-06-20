@@ -313,7 +313,9 @@ export default class ProfileDelete extends Command {
     );
     const { result: itemsList } = await response.toArray();
     if (itemsList === undefined || itemsList.length === 0) {
-      cli.action.stop(`No items found in ${deleteOp.containerName}`);
+      cli.action.stop(
+        `No items found in "${deleteOp.containerName}" container`
+      );
       return none;
     }
     cli.action.stop();
@@ -385,11 +387,18 @@ export default class ProfileDelete extends Command {
       );
     // iterate over items and for each item (giving item id) check if
     // the corresponding blob exists. If yes, delete it
-    return await sequentialSum(items, async item => {
+    const deletedBlobItems = await sequentialSum(items, async item => {
       const blobId = `${item.id}.json`;
       const blobExistResponse = await doesBlobExist(blobId);
-      const deleteResult = (await deleteBlob(blobId)).isSuccessful;
-      return blobExistResponse.exists && deleteResult ? 1 : 0;
+      return blobExistResponse.exists && (await deleteBlob(blobId)).isSuccessful
+        ? 1
+        : 0;
     });
+    cli.log(
+      deletedBlobItems > 0
+        ? `${deletedBlobItems} blob items successfully deleted`
+        : `no blob items have been deleted`
+    );
+    return deletedBlobItems;
   }
 }
