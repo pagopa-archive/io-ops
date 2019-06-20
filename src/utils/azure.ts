@@ -1,4 +1,5 @@
 import * as execa from "execa";
+import cli from "cli-ux";
 
 export const config = {
   cosmosDatabaseName: "agid-documentdb-test",
@@ -65,6 +66,7 @@ export const hasCosmosConnection = async (
       primaryReadonlyMasterKey.exitCodeName === successExitCode
     );
   } catch (e) {
+    cli.error(e);
     return false;
   }
 };
