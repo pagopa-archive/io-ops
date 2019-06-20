@@ -24,9 +24,9 @@ export default class ProfilesList extends Command {
 
       cli.action.start("Querying profiles...");
       const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
-      const database = client.database("agid-documentdb-test");
+      const database = await client.database("agid-documentdb-test");
       const container = database.container("profiles");
-      const response = container.items.query(
+      const response = await container.items.query(
         "SELECT c.fiscalCode, c._ts FROM c WHERE c.version = 0",
         {
           enableCrossPartitionQuery: true

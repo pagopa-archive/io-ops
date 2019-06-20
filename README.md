@@ -1,5 +1,4 @@
-io-ops
-======
+# io-ops
 
 IO operations tool
 
@@ -11,11 +10,15 @@ IO operations tool
 [![License](https://img.shields.io/npm/l/io-ops.svg)](https://github.com/teamdigitale/io-ops/blob/master/package.json)
 
 <!-- toc -->
-* [Usage](#usage)
-* [Commands](#commands)
-<!-- tocstop -->
+
+- [Usage](#usage)
+- [Commands](#commands)
+  <!-- tocstop -->
+
 # Usage
+
 <!-- usage -->
+
 ```sh-session
 $ npm install -g io-ops
 $ io-ops COMMAND
@@ -27,15 +30,20 @@ USAGE
   $ io-ops COMMAND
 ...
 ```
+
 <!-- usagestop -->
+
 # Commands
+
 <!-- commands -->
-* [`io-ops hello [FILE]`](#io-ops-hello-file)
-* [`io-ops help [COMMAND]`](#io-ops-help-command)
-* [`io-ops messages:attributes`](#io-ops-messagesattributes)
-* [`io-ops messages:check-content`](#io-ops-messagescheck-content)
-* [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
-* [`io-ops profiles:list`](#io-ops-profileslist)
+
+- [`io-ops hello [FILE]`](#io-ops-hello-file)
+- [`io-ops help [COMMAND]`](#io-ops-help-command)
+- [`io-ops messages:attributes`](#io-ops-messagesattributes)
+- [`io-ops messages:check-content`](#io-ops-messagescheck-content)
+- [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
+- [`io-ops profiles:list`](#io-ops-profileslist)
+- [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete)
 
 ## `io-ops hello [FILE]`
 
@@ -144,4 +152,23 @@ OPTIONS
 ```
 
 _See code: [src/commands/profiles/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/profiles/list.ts)_
+
+## `io-ops profiles:delete`
+
+Delete a profile
+
+```
+USAGE
+  $ io-ops profiles:delete FISCALCODE
+
+OPTIONS
+  -a, --all           delete items from all containers
+  -m, --message       delete items from message container
+  -n, --notification  delete items from notification container
+  -p, --profile       delete items from profile container
+  -s, --service       delete items from service container
+```
+
+_See code: [src/commands/profiles/delete.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/profiles/delete.ts)_
+
 <!-- commandsstop -->
