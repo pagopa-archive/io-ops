@@ -66,7 +66,7 @@ export const hasCosmosConnection = async (
       primaryReadonlyMasterKey.exitCodeName === successExitCode
     );
   } catch (e) {
-    cli.error(e);
+    cli.log(e);
     return false;
   }
 };
