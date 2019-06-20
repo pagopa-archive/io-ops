@@ -26,6 +26,7 @@ type ContainersName =
 interface IContainer {
   query: string;
   containerName: ContainersName;
+  // tslint:disable-next-line: no-any
   partitionKeySelector: (item: any) => string;
   queryParamName: string;
   queryOptions?: cosmos.FeedOptions;
