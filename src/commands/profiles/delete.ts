@@ -15,18 +15,21 @@ import { sequential, sequentialSum } from "../../utils/promise";
 type ContainersName =
   | "profiles"
   | "messages"
+  // tslint:disable-next-line: no-duplicate-string
   | "message-status"
   | "notifications"
+  // tslint:disable-next-line: no-duplicate-string
   | "notification-status"
+  // tslint:disable-next-line: no-duplicate-string
   | "sender-services";
 
-type Container = {
+interface IContainer {
   query: string;
   containerName: ContainersName;
   partitionKeySelector: (item: any) => string;
   queryParamName: string;
   queryOptions?: cosmos.FeedOptions;
-};
+}
 /**
  * define a delete operation
  * A primary delete operation may generate secondary delete operations required to keep
@@ -36,10 +39,10 @@ type Container = {
  * because items from "message-status" can be retrieved starting from "message" items
  */
 type DeleteOp = {
-  relatedOps: ReadonlyArray<Container>;
+  relatedOps: ReadonlyArray<IContainer>;
   queryParamValue: string;
   deleteBlobs: boolean;
-} & Container;
+} & IContainer;
 
 export default class ProfileDelete extends Command {
   public static description = "Delete a profile";
@@ -256,7 +259,7 @@ export default class ProfileDelete extends Command {
   private async processInnerDeleteOpt(
     database: cosmos.Database,
     relatedItems: ReadonlyArray<cosmos.Item>,
-    deleteOp: Container
+    deleteOp: IContainer
   ): Promise<number> {
     // get the container of the related delete operation
     const relatedContainer = database.container(deleteOp.containerName);
