@@ -9,7 +9,7 @@ import { getCosmosConnection } from "../../utils/azure";
 
 export default class ProfilesExist extends Command {
   public static description =
-    "Check if, for the given fiscal codes, there are active profiles or not. Return the given csv with a new last column contains profile exist or not.";
+    "Check if, for the given fiscal codes, there are relative profiles or not. Ouput the given csv with a new last column contains true if a profile exists";
 
   public static flags = {
     input: flags.string({
