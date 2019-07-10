@@ -173,7 +173,7 @@ _See code: [src/commands/profiles/delete.ts](https://github.com/teamdigitale/io-
 
 ## `io-ops profiles:exist`
 
-Check if, for the given fiscal codes, there are active profiles or not. Return the given csv with a new last column contains profile exist or not.
+Check if, for the given fiscal codes, there are relative profiles or not. It outputs the given csv with a new last column containing true if a profile exists.
 
 ```
 USAGE
