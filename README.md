@@ -171,4 +171,19 @@ OPTIONS
 
 _See code: [src/commands/profiles/delete.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/profiles/delete.ts)_
 
+## `io-ops profiles:exist`
+
+Check if, for the given fiscal codes, there are active profiles or not. Return the given csv with a new last column contains profile exist or not.
+
+```
+USAGE
+  $ io-ops profiles:exist
+
+OPTIONS
+  -i, --input=input        (required) Input file (CSV, with the CF as first column)
+  -p, --parallel=parallel  [default: 1] Number of parallel workers to run
+```
+
+_See code: [src/commands/profiles/exist.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/profiles/exist.ts)_
+
 <!-- commandsstop -->
