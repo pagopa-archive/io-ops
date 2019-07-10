@@ -81,9 +81,9 @@ export default class ProfilesExist extends Command {
       );
 
       /**
-       * append to record an entry with the result of check: active if
-       * the fiscalCode is present into the database. As side operation it
-       * return the fiscalCode in upperCase format
+       * it appends to record an entry with the result of check: true if
+       * the fiscalCode is into the database. As side operation it
+       * returns the fiscalCode in upperCase format
        */
       const checker = transform(
         {
