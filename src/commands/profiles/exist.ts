@@ -63,15 +63,22 @@ export default class ProfilesExist extends Command {
       // create a set of fiscalCodes
       const allProfilesCf = new Set<string>(result.map(r => r.fiscalCode));
 
+      const castBoolean = (value: boolean, _: csvStringify.CastingContext) =>
+        value ? "true" : "false";
       // return the output (csv string) if no error occurred
-      const transformer = csvStringify((error, output) => {
-        if (error) {
-          return `some error occured while parsing this line ${error.message}`;
-        } else if (output === undefined) {
-          return "row cannot be parsed";
+      const transformer = csvStringify(
+        { cast: { boolean: castBoolean } },
+        (error, output) => {
+          if (error) {
+            return `some error occured while parsing this line ${
+              error.message
+            }`;
+          } else if (output === undefined) {
+            return "row cannot be parsed";
+          }
+          return output;
         }
-        return output;
-      });
+      );
 
       /**
        * append to record an entry with the result of check: active if
@@ -91,9 +98,7 @@ export default class ProfilesExist extends Command {
             ];
             return [
               ...formattedRecord,
-              allProfilesCf.has(fiscalCode.trim().toUpperCase())
-                ? "active"
-                : "not active"
+              allProfilesCf.has(fiscalCode.trim().toUpperCase()) ? true : false
             ];
           })()
             .then(_ => cb(null, _))
