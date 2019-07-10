@@ -44,7 +44,7 @@ USAGE
 - [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
 - [`io-ops profiles:list`](#io-ops-profileslist)
 - [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete)
-- [`io-ops profiles:exist FISCALCODE`](#io-ops-profilesexist)
+- [`io-ops profiles:exist`](#io-ops-profilesexist)
 
 ## `io-ops hello [FILE]`
 
