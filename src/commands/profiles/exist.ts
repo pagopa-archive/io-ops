@@ -98,7 +98,7 @@ export default class ProfilesExist extends Command {
             ];
             return [
               ...formattedRecord,
-              allProfilesCf.has(fiscalCode.trim().toUpperCase()) ? true : false
+              allProfilesCf.has(fiscalCode.trim().toUpperCase())
             ];
           })()
             .then(_ => cb(null, _))
