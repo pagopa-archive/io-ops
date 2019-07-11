@@ -9,13 +9,13 @@ import { getCosmosConnection } from "../../utils/azure";
 
 export default class ProfilesExist extends Command {
   public static description =
-    "Check if, for the given fiscal codes, there are relative profiles or not. It outputs the given csv with a new last column containing true if a profile exists";
+    "Returns the input CSV with a new column that is true if a profile for that fiscal code exists.";
 
   public static flags = {
     input: flags.string({
       char: "i",
-      description: "Input file (CSV, with the CF as first column)",
-      required: true
+      description:
+        "Input file (CSV, with the CF as first column) - defaults to stdin"
     }),
     parallel: flags.integer({
       char: "p",
@@ -27,7 +27,9 @@ export default class ProfilesExist extends Command {
   public async run(): Promise<void> {
     const { flags: parsedFlags } = this.parse(ProfilesExist);
 
-    const inputStream = fs.createReadStream(parsedFlags.input);
+    const inputStream = parsedFlags.input
+      ? fs.createReadStream(parsedFlags.input)
+      : process.stdin;
 
     const parser = parse({
       trim: true,
@@ -42,26 +44,29 @@ export default class ProfilesExist extends Command {
       );
       cli.action.stop();
 
-      cli.action.start("Querying profiles...");
       const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
       const database = client.database("agid-documentdb-test");
       const container = database.container("profiles");
 
-      // retrieve all fiscalCodes from database
-      const response = container.items.query(
-        "SELECT c.fiscalCode FROM c WHERE c.version = 0",
-        {
-          enableCrossPartitionQuery: true
-        }
-      );
-      const result = (await response.toArray()).result;
-      cli.action.stop();
-      if (result === undefined) {
-        this.error("No result");
-        return;
-      }
-      // create a set of fiscalCodes
-      const allProfilesCf = new Set<string>(result.map(r => r.fiscalCode));
+      const hasProfile = async (fiscalCode: string): Promise<boolean> => {
+        const documentId = `${fiscalCode}-${"0".repeat(16)}`;
+        const response = container.items.query(
+          {
+            parameters: [
+              {
+                name: "@documentId",
+                value: documentId
+              }
+            ],
+            query: "SELECT VALUE COUNT(1) FROM c WHERE c.id = @documentId"
+          },
+          {
+            enableCrossPartitionQuery: true
+          }
+        );
+        const { result: item } = await response.nextItem();
+        return item !== undefined && item === 1;
+      };
 
       const castBoolean = (value: boolean, _: csvStringify.CastingContext) =>
         value ? "true" : "false";
@@ -96,14 +101,16 @@ export default class ProfilesExist extends Command {
               fiscalCode.toUpperCase(),
               ...record.slice(1)
             ];
-            return [
-              ...formattedRecord,
-              allProfilesCf.has(fiscalCode.trim().toUpperCase())
-            ];
+            const exists = await hasProfile(fiscalCode.trim().toUpperCase());
+            return [...formattedRecord, exists];
           })()
             .then(_ => cb(null, _))
             .catch(() => cb(null, undefined))
       );
+      // if the stream is the stdin, ask to input a fiscal code
+      if (parsedFlags.input === undefined) {
+        cli.log("Provide a fiscal code:");
+      }
 
       inputStream
         .pipe(parser)

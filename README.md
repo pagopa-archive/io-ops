@@ -174,14 +174,14 @@ _See code: [src/commands/profiles/delete.ts](https://github.com/teamdigitale/io-
 
 ## `io-ops profiles:exist`
 
-Check if, for the given fiscal codes, there are relative profiles or not. It outputs the given csv with a new last column containing true if a profile exists.
+Returns the input CSV with a new column that is true if a profile for that fiscal code exists.
 
 ```
 USAGE
   $ io-ops profiles:exist
 
 OPTIONS
-  -i, --input=input        (required) Input file (CSV, with the CF as first column)
+  -i, --input=input        Input file (CSV, with the CF as first column) - defaults to stdin
   -p, --parallel=parallel  [default: 1] Number of parallel workers to run
 ```
 
