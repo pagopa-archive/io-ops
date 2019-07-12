@@ -44,6 +44,7 @@ USAGE
 - [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
 - [`io-ops profiles:list`](#io-ops-profileslist)
 - [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete)
+- [`io-ops profiles:exist`](#io-ops-profilesexist)
 
 ## `io-ops hello [FILE]`
 
@@ -170,5 +171,20 @@ OPTIONS
 ```
 
 _See code: [src/commands/profiles/delete.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/profiles/delete.ts)_
+
+## `io-ops profiles:exist`
+
+Returns the input CSV with a new column that is true if a profile for that fiscal code exists.
+
+```
+USAGE
+  $ io-ops profiles:exist
+
+OPTIONS
+  -i, --input=input        Input file (CSV, with the CF as first column) - defaults to stdin
+  -p, --parallel=parallel  [default: 1] Number of parallel workers to run
+```
+
+_See code: [src/commands/profiles/exist.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/profiles/exist.ts)_
 
 <!-- commandsstop -->
