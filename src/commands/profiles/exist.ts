@@ -49,23 +49,12 @@ export default class ProfilesExist extends Command {
       const container = database.container("profiles");
 
       const hasProfile = async (fiscalCode: string): Promise<boolean> => {
-        const documentId = `${fiscalCode}-${"0".repeat(16)}`;
-        const response = container.items.query(
-          {
-            parameters: [
-              {
-                name: "@documentId",
-                value: documentId
-              }
-            ],
-            query: "SELECT VALUE COUNT(1) FROM c WHERE c.id = @documentId"
-          },
-          {
-            enableCrossPartitionQuery: true
-          }
-        );
-        const { result: item } = await response.nextItem();
-        return item !== undefined && item === 1;
+        const response = container.items.query({
+          parameters: [{ name: "@fiscalCode", value: fiscalCode }],
+          query: `SELECT VALUE COUNT(1) FROM c WHERE c.fiscalCode = @fiscalCode AND c.version = 0`
+        });
+        const { result: item } = await response.current();
+        return item === 1;
       };
 
       const castBoolean = (value: boolean, _: csvStringify.CastingContext) =>
