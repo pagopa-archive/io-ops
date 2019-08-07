@@ -802,9 +802,9 @@ cross-spawn@^6.0.0, cross-spawn@^6.0.5:
     which "^1.2.9"
 
 csv-parse@^4.4.1:
-  version "4.4.1"
-  resolved "https://registry.yarnpkg.com/csv-parse/-/csv-parse-4.4.1.tgz#b40df60a3724fdf24ad2856586bf8f1dc7682e54"
-  integrity sha512-uFe5phPfmwBXSPWz5GYHeaEc2Oezn2kY5iLIvG1sJjc32Y4GU7T/b/uX5ffZh4CBDWwJQjwAuxrDEdl3Z5Qv+g==
+  version "4.4.4"
+  resolved "https://registry.yarnpkg.com/csv-parse/-/csv-parse-4.4.4.tgz#57039751ae415d1404ce2174f422c7ae9a54d7c1"
+  integrity sha512-AjJHtVpO7/z5QywbCrDsuMMzeFC9ReZQGojveqfohzOLUXHgujqjPIlxOgY3KAboqwL8azuuUajxcDblYEGo4g==
 
 csv-stringify@^5.3.0:
   version "5.3.0"
