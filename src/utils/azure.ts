@@ -4,6 +4,7 @@ import * as execa from "execa";
 export const config = {
   cosmosDatabaseName: "agid-documentdb-test",
   cosmosMessagesContainer: "messages",
+  cosmosServicesContainer: "services",
   cosmosName: "agid-cosmosdb-test",
   resourceGroup: "agid-rg-test",
   storageMessagesContainer: "message-content",

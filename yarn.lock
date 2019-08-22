@@ -1502,13 +1502,6 @@ io-ts@1.8.5:
   dependencies:
     fp-ts "^1.0.0"
 
-io-ts@^1.8.6:
-  version "1.8.6"
-  resolved "https://registry.yarnpkg.com/io-ts/-/io-ts-1.8.6.tgz#43930e025b88bbb317cb193bd9af784322a6fed6"
-  integrity sha512-0V0gbEfW5FnlEL++hO+j1cbxSvhH3f/i5Puz5AjmN6Q071vJONWTuOHttMSe60gi4DBHBTd2eHbSnHv37ptTnQ==
-  dependencies:
-    fp-ts "^1.0.0"
-
 is-accessor-descriptor@^0.1.6:
   version "0.1.6"
   resolved "https://registry.yarnpkg.com/is-accessor-descriptor/-/is-accessor-descriptor-0.1.6.tgz#a9e12cb3ae8d876727eeef3843f8a0897b5c98d6"
@@ -1741,10 +1734,10 @@ istanbul-reports@^2.1.1:
   dependencies:
     handlebars "^4.1.2"
 
-italia-ts-commons@^5.1.3:
-  version "5.1.3"
-  resolved "https://registry.yarnpkg.com/italia-ts-commons/-/italia-ts-commons-5.1.3.tgz#1808aa61add9235c2b85db20297a7ec9e0e85d27"
-  integrity sha512-mo/PUxt2YqY4U+0XdZPcHloWIqk600CT/1V3Db3NXCCD5aC5uD/y4tfQdRqMZTwVLRxcwlPaOp7cZwHVaDtAjw==
+italia-ts-commons@5.1.1:
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/italia-ts-commons/-/italia-ts-commons-5.1.1.tgz#a4b66158286b8472ae36b685323d71841059524a"
+  integrity sha512-sTWo7U5e0VRRTjxZH7CrmTEhpsVzzCDp/FS8neiDZy/lBRohHtRAosrgqqYzhNZpUMraY5Hko8K51Ggxfb02zQ==
   dependencies:
     fp-ts "1.12.0"
     io-ts "1.8.5"
