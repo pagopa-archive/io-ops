@@ -6,7 +6,7 @@ const validService = {
   serviceName: "service_name",
   organizationName: "organization_name",
   departmentName: "department_name",
-  organization_fiscal_code: "00000000000",
+  organizationFiscalCode: "00000000000",
   version: 1
 };
 
