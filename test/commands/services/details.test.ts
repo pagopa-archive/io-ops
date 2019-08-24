@@ -7,7 +7,8 @@ const validService = {
   organizationName: "organization_name",
   departmentName: "department_name",
   organizationFiscalCode: "00000000000",
-  version: 1
+  version: 1,
+  isVisible: true
 };
 
 const invalidService = {
@@ -16,7 +17,8 @@ const invalidService = {
   organizationName: "",
   departmentName: "department_name",
   organizationFiscalCode: "123",
-  version: "1"
+  version: "1",
+  isVisible: false
 };
 
 describe("Service", () => {

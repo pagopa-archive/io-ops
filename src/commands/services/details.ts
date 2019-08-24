@@ -2,31 +2,74 @@ import * as cosmos from "@azure/cosmos";
 import { Command, flags } from "@oclif/command";
 import chalk from "chalk";
 import cli from "cli-ux";
+import { none, Option, some } from "fp-ts/lib/Option";
+import * as imageSize from "image-size";
 import * as t from "io-ts";
 import { readableReport } from "italia-ts-commons/lib/reporters";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import * as request from "request";
+import { ServiceMetadata } from "../../definitions/ServiceMetadata";
 import {
-  NonEmptyString,
-  OrganizationFiscalCode
-} from "italia-ts-commons/lib/strings";
+  ServicePublic,
+  ServicePublicFull
+} from "../../definitions/ServicePublic";
 import {
   config,
   getCosmosEndpoint,
   getCosmosReadonlyKey
 } from "../../utils/azure";
 
-const serviceAttributes = {
-  serviceId: NonEmptyString,
-  serviceName: NonEmptyString,
-  organizationName: NonEmptyString,
-  departmentName: NonEmptyString,
-  organizationFiscalCode: OrganizationFiscalCode,
-  version: t.Integer
+// tslint:disable-next-line: interface-name
+interface ImageInfo {
+  type: string;
+  width: number;
+  height: number;
+  uri: string;
+  sizeInByte: number;
+}
+
+const contentRepoUrl =
+  "https://raw.githubusercontent.com/teamdigitale/io-services-metadata/master/";
+
+const loadServiceMetadata = (
+  serviceId: string
+): Promise<t.Validation<ServiceMetadata>> => {
+  const options = {
+    uri: `${contentRepoUrl}services/${serviceId.toLowerCase().trim()}.json`,
+    json: true
+  };
+  return new Promise((res, _) => {
+    request(options, (__, ___, body) => {
+      const value = ServiceMetadata.decode(body);
+      res(value);
+    });
+  });
 };
 
-export const ServicePublic = t.strict(serviceAttributes);
-export const ServicePublicFull = t.interface(serviceAttributes);
-
-type ServicePublic = t.TypeOf<typeof ServicePublic>;
+const loadOrganizationLogo = (
+  organizationFiscalCode: string
+): Promise<Option<ImageInfo>> => {
+  const ofc = organizationFiscalCode.replace(/^0+/, "").trim();
+  const options = {
+    uri: `${contentRepoUrl}logos/organizations/${ofc}.png`,
+    encoding: null
+  };
+  return new Promise((res, _) => {
+    request(options, (__, req, body) => {
+      if (req.statusCode === 200) {
+        res(
+          some({
+            ...imageSize(body),
+            uri: options.uri,
+            sizeInByte: body.length
+          })
+        );
+      } else {
+        res(none);
+      }
+    });
+  });
+};
 
 export default class ServicesDetail extends Command {
   public static description =
@@ -43,14 +86,15 @@ export default class ServicesDetail extends Command {
     const { flags: parsedFlags } = this.parse(ServicesDetail);
     const maybeServiceId = NonEmptyString.decode(parsedFlags.serviceId);
 
+    // check if the given ID is valid
     if (maybeServiceId.isLeft()) {
-      cli.error("service ID cannot be empty");
+      cli.error(chalk.red("service ID cannot be empty"));
       this.exit();
       return;
     }
     const serviceId = maybeServiceId.value;
     try {
-      cli.action.start("Retrieving cosmosdb credentials");
+      cli.action.start(chalk.cyanBright("Retrieving cosmosdb credentials"));
       const [endpoint, key] = await Promise.all([
         getCosmosEndpoint(config.resourceGroup, config.cosmosName),
         getCosmosReadonlyKey(config.resourceGroup, config.cosmosName)
@@ -90,7 +134,7 @@ export default class ServicesDetail extends Command {
       // ask to the user if we will print strict or extended service info
       const extendedInfo =
         (await cli.prompt(
-          "Do you want to print extended service information as well? (y/n)"
+          "Do you want to print extended service information? (y/n)"
         )) === "y";
       // depending from user's choice we pass the appropriate coded to decode
       // the payload coming from cosmos db
@@ -110,7 +154,7 @@ export default class ServicesDetail extends Command {
       cli.log(
         chalk.green(
           `found ${services.length} items` +
-            ` with service ID ${chalk.bgWhite(chalk.black(serviceId))}`
+            ` with service ID ${chalk.bgWhite(chalk.black(serviceId))}\n`
         )
       );
       const serviceVersion = services.reduce(
@@ -123,10 +167,57 @@ export default class ServicesDetail extends Command {
         { min: 0, max: 0 }
       );
       cli.log(
-        `${chalk.blueBright("service version")} MAX: ${chalk.bold(
+        `${chalk.blueBright("service version")}\nMAX: ${chalk.bold(
           serviceVersion.max.toString()
-        )} MIN: ${chalk.bold(serviceVersion.min.toString())}`
+        )} MIN: ${chalk.bold(serviceVersion.min.toString())}\n`
       );
+
+      // print service items informations
+      cli.log(chalk.blueBright(`${services.length} services items`));
+      services.forEach(s => cli.log(JSON.stringify(s, null, 2)));
+      cli.log("\n");
+
+      // retrieve services metadata
+      cli.action.start(chalk.cyanBright("getting service metadata...."));
+      const servicesMetadata = await loadServiceMetadata(serviceId);
+      cli.action.stop();
+      servicesMetadata.fold(
+        error => {
+          cli.log(
+            `${chalk.red(
+              "services metadata not found or cannot be decoded:"
+            )} ${chalk.bold(readableReport(error))}`
+          );
+        },
+        metadata => {
+          const content = `services metadata\n
+          ${chalk.white(JSON.stringify(metadata, null, 2))}`;
+          cli.log(`${chalk.blueBright(content)}`);
+        }
+      );
+      const visibleService = services.find(s => s.isVisible);
+      if (visibleService !== undefined) {
+        // retrieve services organization logo
+        cli.action.start(
+          chalk.cyanBright("getting service organization logo....")
+        );
+        const maybeOrganizationLogo = await loadOrganizationLogo(
+          visibleService.organizationFiscalCode
+        );
+        cli.action.stop();
+        const description = maybeOrganizationLogo.fold(
+          chalk.red("❌ organization logo not found!"),
+          imageInfo =>
+            chalk.white(
+              `✅ organization logo found\n ${JSON.stringify(
+                imageInfo,
+                null,
+                2
+              )}`
+            )
+        );
+        cli.log(description);
+      }
     } catch (e) {
       this.error(e);
     }
