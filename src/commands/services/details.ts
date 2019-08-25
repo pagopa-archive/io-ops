@@ -31,6 +31,9 @@ interface ImageInfo {
 const contentRepoUrl =
   "https://raw.githubusercontent.com/teamdigitale/io-services-metadata/master/";
 
+/**
+ * retrive service metadata from the given service ID
+ */
 const loadServiceMetadata = (
   serviceId: string
 ): Promise<t.Validation<ServiceMetadata>> => {
@@ -46,24 +49,29 @@ const loadServiceMetadata = (
   });
 };
 
-const loadOrganizationLogo = (
-  organizationFiscalCode: string
-): Promise<Option<ImageInfo>> => {
-  const ofc = organizationFiscalCode.replace(/^0+/, "").trim();
+/**
+ * retrive logo from the given logouri. If it exists return image info, none otherwise
+ */
+export const loadImageInfo = (imageUri: string): Promise<Option<ImageInfo>> => {
   const options = {
-    uri: `${contentRepoUrl}logos/organizations/${ofc}.png`,
+    uri: imageUri,
     encoding: null
   };
   return new Promise((res, _) => {
     request(options, (__, req, body) => {
       if (req.statusCode === 200) {
-        res(
-          some({
-            ...imageSize(body),
-            uri: options.uri,
-            sizeInByte: body.length
-          })
-        );
+        try {
+          const imageInfo = imageSize(body);
+          res(
+            some({
+              ...imageInfo,
+              uri: options.uri,
+              sizeInByte: body.length
+            })
+          );
+        } catch {
+          res(none);
+        }
       } else {
         res(none);
       }
@@ -195,28 +203,54 @@ export default class ServicesDetail extends Command {
           cli.log(`${chalk.blueBright(content)}`);
         }
       );
-      const visibleService = services.find(s => s.isVisible);
-      if (visibleService !== undefined) {
-        // retrieve services organization logo
+      // to access to organizationFiscalCode and serviceId we pick
+      // the service with max version in list
+      const lastService = services.find(s => s.version === serviceVersion.max);
+      if (lastService !== undefined) {
         cli.action.start(
-          chalk.cyanBright("getting service organization logo....")
+          chalk.cyanBright("getting service and organization logo....")
         );
-        const maybeOrganizationLogo = await loadOrganizationLogo(
-          visibleService.organizationFiscalCode
+        // retrieve services organization logo
+        const ofc = lastService.organizationFiscalCode
+          .replace(/^0+/, "")
+          .trim();
+        const maybeOrganizationLogo = await loadImageInfo(
+          `${contentRepoUrl}logos/organizations/${ofc}.png`
         );
-        cli.action.stop();
-        const description = maybeOrganizationLogo.fold(
+
+        const logOrganizationLogo = maybeOrganizationLogo.fold(
           chalk.red("❌ organization logo not found!"),
           imageInfo =>
             chalk.white(
-              `✅ organization logo found\n ${JSON.stringify(
+              `✅ organization logo found, here the details\n ${JSON.stringify(
                 imageInfo,
                 null,
                 2
               )}`
             )
         );
-        cli.log(description);
+
+        const maybeServiceLogo = await loadImageInfo(
+          `${contentRepoUrl}logos/services/${lastService.serviceId
+            .toLowerCase()
+            .trim()}.png`
+        );
+
+        const logServiceLogo = maybeServiceLogo.fold(
+          chalk.red("❌ service logo not found!"),
+          imageInfo =>
+            chalk.white(
+              `✅ service logo found, here the details\n ${JSON.stringify(
+                imageInfo,
+                null,
+                2
+              )}`
+            )
+        );
+
+        cli.action.stop();
+        cli.log(logOrganizationLogo);
+        cli.log(logServiceLogo);
       }
     } catch (e) {
       this.error(e);
