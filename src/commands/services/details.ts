@@ -212,7 +212,13 @@ export default class ServicesDetail extends Command {
       } else {
         if (visibleServices.length > 1) {
           cli.log(
-            chalk.redBright(`There are ${visibleServices.length} visible!`)
+            chalk.redBright(
+              `There are ${
+                visibleServices.length
+              } services visible: version [${visibleServices
+                .map(s => s.version)
+                .join()}]`
+            )
           );
         } else {
           cli.log(
