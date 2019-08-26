@@ -203,7 +203,27 @@ export default class ServicesDetail extends Command {
           cli.log(`${chalk.blueBright(content)}`);
         }
       );
-      // to access to organizationFiscalCode and serviceId we pick
+
+      // check about visibility: it would be good to have
+      // only a service visible
+      const visibleServices = services.filter(s => s.isVisible);
+      if (visibleServices.length === 0) {
+        cli.log(chalk.redBright("None of these services is visible!"));
+      } else {
+        if (visibleServices.length > 1) {
+          cli.log(
+            chalk.redBright(`There are ${visibleServices.length} visible!`)
+          );
+        } else {
+          cli.log(
+            `The service with version ${
+              visibleServices[0].version
+            } is the visible one!`
+          );
+        }
+      }
+
+      // to access organizationFiscalCode and serviceId fields we pick
       // the service with max version in list
       const lastService = services.find(s => s.version === serviceVersion.max);
       if (lastService !== undefined) {
