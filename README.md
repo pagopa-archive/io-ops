@@ -23,7 +23,7 @@ $ npm install -g io-ops
 $ io-ops COMMAND
 running command...
 $ io-ops (-v|--version|version)
-io-ops/0.1.0 darwin-x64 node-v10.13.0
+io-ops/0.2.0 darwin-x64 node-v10.13.0
 $ io-ops --help [COMMAND]
 USAGE
   $ io-ops COMMAND
@@ -61,7 +61,7 @@ EXAMPLE
   hello world from ./src/hello.ts!
 ```
 
-_See code: [src/commands/hello.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/hello.ts)_
+_See code: [src/commands/hello.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/hello.ts)_
 
 ## `io-ops help [COMMAND]`
 
@@ -94,7 +94,7 @@ OPTIONS
   --isPending=(true|false|undefined)  Set 'isPending' flag
 ```
 
-_See code: [src/commands/messages/attributes.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/messages/attributes.ts)_
+_See code: [src/commands/messages/attributes.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/messages/attributes.ts)_
 
 ## `io-ops messages:check-content`
 
@@ -109,7 +109,7 @@ OPTIONS
   -p, --parallel=parallel  [default: 1] Number of parallel workers to run
 ```
 
-_See code: [src/commands/messages/check-content.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/messages/check-content.ts)_
+_See code: [src/commands/messages/check-content.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/messages/check-content.ts)_
 
 ## `io-ops messages:list FISCALCODE`
 
@@ -129,7 +129,7 @@ OPTIONS
   --sort=sort        property to sort by (prepend '-' for descending)
 ```
 
-_See code: [src/commands/messages/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/messages/list.ts)_
+_See code: [src/commands/messages/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/messages/list.ts)_
 
 ## `io-ops profiles:delete FISCALCODE`
 
@@ -147,7 +147,7 @@ OPTIONS
   -s, --service       delete items in service container
 ```
 
-_See code: [src/commands/profiles/delete.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/profiles/delete.ts)_
+_See code: [src/commands/profiles/delete.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/profiles/delete.ts)_
 
 ## `io-ops profiles:exist`
 
@@ -162,7 +162,7 @@ OPTIONS
   -p, --parallel=parallel  [default: 1] Number of parallel workers to run
 ```
 
-_See code: [src/commands/profiles/exist.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/profiles/exist.ts)_
+_See code: [src/commands/profiles/exist.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/profiles/exist.ts)_
 
 ## `io-ops profiles:list`
 
@@ -182,5 +182,5 @@ OPTIONS
   --sort=sort        property to sort by (prepend '-' for descending)
 ```
 
-_See code: [src/commands/profiles/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/profiles/list.ts)_
+_See code: [src/commands/profiles/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/profiles/list.ts)_
 <!-- commandsstop -->
