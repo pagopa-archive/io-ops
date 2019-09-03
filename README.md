@@ -10,50 +10,46 @@ IO operations tool
 [![License](https://img.shields.io/npm/l/io-ops.svg)](https://github.com/teamdigitale/io-ops/blob/master/package.json)
 
 <!-- toc -->
-
-- [Usage](#usage)
-- [Commands](#commands)
-  <!-- tocstop -->
+* [io-ops](#io-ops)
+* [Usage](#usage)
+* [Commands](#commands)
+<!-- tocstop -->
 
 # Usage
 
 <!-- usage -->
-
 ```sh-session
 $ npm install -g io-ops
 $ io-ops COMMAND
 running command...
 $ io-ops (-v|--version|version)
-io-ops/0.0.4 darwin-x64 node-v10.13.0
+io-ops/0.1.0 darwin-x64 node-v10.13.0
 $ io-ops --help [COMMAND]
 USAGE
   $ io-ops COMMAND
 ...
 ```
-
 <!-- usagestop -->
 
 # Commands
 
 <!-- commands -->
+* [`io-ops hello`](#io-ops-hello)
+* [`io-ops help [COMMAND]`](#io-ops-help-command)
+* [`io-ops messages:attributes`](#io-ops-messagesattributes)
+* [`io-ops messages:check-content`](#io-ops-messagescheck-content)
+* [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
+* [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete-fiscalcode)
+* [`io-ops profiles:exist`](#io-ops-profilesexist)
+* [`io-ops profiles:list`](#io-ops-profileslist)
 
-- [`io-ops hello [FILE]`](#io-ops-hello-file)
-- [`io-ops help [COMMAND]`](#io-ops-help-command)
-- [`io-ops messages:attributes`](#io-ops-messagesattributes)
-- [`io-ops messages:check-content`](#io-ops-messagescheck-content)
-- [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
-- [`io-ops profiles:list`](#io-ops-profileslist)
-- [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete)
-- [`io-ops profiles:exist`](#io-ops-profilesexist)
-- [`io-ops services:details`](#io-ops-servicesdetails)
-
-## `io-ops hello [FILE]`
+## `io-ops hello`
 
 describe the command here
 
 ```
 USAGE
-  $ io-ops hello [FILE]
+  $ io-ops hello
 
 OPTIONS
   -f, --force
@@ -65,7 +61,7 @@ EXAMPLE
   hello world from ./src/hello.ts!
 ```
 
-_See code: [src/commands/hello.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/hello.ts)_
+_See code: [src/commands/hello.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/hello.ts)_
 
 ## `io-ops help [COMMAND]`
 
@@ -98,7 +94,7 @@ OPTIONS
   --isPending=(true|false|undefined)  Set 'isPending' flag
 ```
 
-_See code: [src/commands/messages/attributes.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/messages/attributes.ts)_
+_See code: [src/commands/messages/attributes.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/messages/attributes.ts)_
 
 ## `io-ops messages:check-content`
 
@@ -113,7 +109,7 @@ OPTIONS
   -p, --parallel=parallel  [default: 1] Number of parallel workers to run
 ```
 
-_See code: [src/commands/messages/check-content.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/messages/check-content.ts)_
+_See code: [src/commands/messages/check-content.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/messages/check-content.ts)_
 
 ## `io-ops messages:list FISCALCODE`
 
@@ -133,7 +129,40 @@ OPTIONS
   --sort=sort        property to sort by (prepend '-' for descending)
 ```
 
-_See code: [src/commands/messages/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/messages/list.ts)_
+_See code: [src/commands/messages/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/messages/list.ts)_
+
+## `io-ops profiles:delete FISCALCODE`
+
+Delete a profile
+
+```
+USAGE
+  $ io-ops profiles:delete FISCALCODE
+
+OPTIONS
+  -a, --all           delete items in all containers
+  -m, --message       delete items in message container
+  -n, --notification  delete items in notification container
+  -p, --profile       delete items in profile container
+  -s, --service       delete items in service container
+```
+
+_See code: [src/commands/profiles/delete.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/profiles/delete.ts)_
+
+## `io-ops profiles:exist`
+
+Returns the input CSV with a new column that is true if a profile for that fiscal code exists.
+
+```
+USAGE
+  $ io-ops profiles:exist
+
+OPTIONS
+  -i, --input=input        Input file (CSV, with the CF as first column) - defaults to stdin
+  -p, --parallel=parallel  [default: 1] Number of parallel workers to run
+```
+
+_See code: [src/commands/profiles/exist.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/profiles/exist.ts)_
 
 ## `io-ops profiles:list`
 
@@ -153,53 +182,5 @@ OPTIONS
   --sort=sort        property to sort by (prepend '-' for descending)
 ```
 
-_See code: [src/commands/profiles/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/profiles/list.ts)_
-
-## `io-ops profiles:delete`
-
-Delete a profile
-
-```
-USAGE
-  $ io-ops profiles:delete FISCALCODE
-
-OPTIONS
-  -a, --all           delete items from all containers
-  -m, --message       delete items from message container
-  -n, --notification  delete items from notification container
-  -p, --profile       delete items from profile container
-  -s, --service       delete items from service container
-```
-
-_See code: [src/commands/profiles/delete.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/profiles/delete.ts)_
-
-## `io-ops profiles:exist`
-
-Returns the input CSV with a new column that is true if a profile for that fiscal code exists.
-
-```
-USAGE
-  $ io-ops profiles:exist
-
-OPTIONS
-  -i, --input=input        Input file (CSV, with the CF as first column) - defaults to stdin
-  -p, --parallel=parallel  [default: 1] Number of parallel workers to run
-```
-
-_See code: [src/commands/profiles/exist.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/profiles/exist.ts)_
-
-## `io-ops services:details`
-
-Retrieve service info and metadata from a given service ID
-
-```
-USAGE
-  $ io-ops services:details
-
-OPTIONS
-  -i, --serviceId=serviceId  The service ID
-```
-
-_See code: [src/commands/services/details.ts](https://github.com/teamdigitale/io-ops/blob/v0.0.4/src/commands/services/details.ts)_
-
+_See code: [src/commands/profiles/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.1.0/src/commands/profiles/list.ts)_
 <!-- commandsstop -->
