@@ -42,6 +42,7 @@ USAGE
 * [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete-fiscalcode)
 * [`io-ops profiles:exist`](#io-ops-profilesexist)
 * [`io-ops profiles:list`](#io-ops-profileslist)
+* [`io-ops services:details`](#io-ops-servicesdetails)
 
 ## `io-ops hello`
 
@@ -183,4 +184,18 @@ OPTIONS
 ```
 
 _See code: [src/commands/profiles/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/profiles/list.ts)_
+
+## `io-ops services:details`
+
+Retrieve service info and metadata from a given service ID
+
+```
+USAGE
+  $ io-ops services:details
+
+OPTIONS
+  -i, --serviceId=serviceId  The service ID
+```
+
+_See code: [src/commands/services/details.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/details.ts)_
 <!-- commandsstop -->
