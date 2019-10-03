@@ -34,7 +34,7 @@ const contentRepoUrl =
 /**
  * retrive service metadata from the given service ID
  */
-const loadServiceMetadata = (
+export const loadServiceMetadata = (
   serviceId: string
 ): Promise<t.Validation<ServiceMetadata>> => {
   const options = {
