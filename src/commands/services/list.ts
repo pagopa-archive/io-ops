@@ -2,7 +2,11 @@ import * as cosmos from "@azure/cosmos";
 import { Command } from "@oclif/command";
 import chalk from "chalk";
 import cli from "cli-ux";
+import * as csvStringify from "csv-stringify";
+import * as t from "io-ts";
 import { readableReport } from "italia-ts-commons/lib/reporters";
+import * as request from "request";
+import { ServiceMetadata } from "../../definitions/ServiceMetadata";
 import { ServicePublic } from "../../definitions/ServicePublic";
 import {
   config,
@@ -10,17 +14,19 @@ import {
   getCosmosReadonlyKey
 } from "../../utils/azure";
 import { sequential } from "../../utils/promise";
+import { serviceContentRepoUrl } from "../../utils/service";
+import { loadImageInfo } from "./details";
 
 interface IGroupOptions {
   [key: string]: (a: ServicePublic, b: ServicePublic) => number;
 }
 
-interface Check {
-  hasServiceLogo: boolean;
-  hasOrganizationLogo: boolean;
-  hasmetaData: boolean;
+interface ICheck {
+  serviceLogoUrl?: string;
+  organizationLogoUrl?: string;
+  metadataUrl?: string;
 }
-type ServiceCheck = ServicePublic & Check;
+type ServiceCheck = ServicePublic & ICheck;
 
 const groupByPredicates: IGroupOptions = {
   OrganizationName: (a: ServicePublic, b: ServicePublic) =>
@@ -45,7 +51,25 @@ const groupByPredicates: IGroupOptions = {
   }
 };
 
-export default class ServicesCheck extends Command {
+/**
+ * retrive service metadata from the given service ID
+ */
+const loadServiceMetadata = (
+  uri: string
+): Promise<t.Validation<ServiceMetadata>> => {
+  const options = {
+    uri,
+    json: true
+  };
+  return new Promise((res, _) => {
+    request(options, (__, ___, body) => {
+      const value = ServiceMetadata.decode(body);
+      res(value);
+    });
+  });
+};
+
+export default class ServicesList extends Command {
   public async run(): Promise<void> {
     try {
       cli.action.start(chalk.cyanBright("Retrieving cosmosdb credentials"));
@@ -72,6 +96,7 @@ export default class ServicesCheck extends Command {
         this.exit();
         return;
       }
+
       const services = itemsList.reduce(
         (acc: ReadonlyArray<ServicePublic>, current) => {
           const maybeService = ServicePublic.decode(current);
@@ -104,30 +129,40 @@ export default class ServicesCheck extends Command {
         },
         []
       );
+      cli.action.start(chalk.cyanBright("Retrieving services metadata..."));
+      const result = await sequential<ServicePublic, ICheck>(
+        services,
+        async s => {
+          const serviceMetadatUrl = `${serviceContentRepoUrl}services/${s.serviceId
+            .toLowerCase()
+            .trim()}.json`;
+          const hasMetadata = await loadServiceMetadata(serviceMetadatUrl);
+          const ofc = s.organizationFiscalCode.replace(/^0+/, "").trim();
+          const organizationLogoUrl = `${serviceContentRepoUrl}logos/organizations/${ofc}.png`;
+          const maybeOrganizationLogo = await loadImageInfo(
+            organizationLogoUrl
+          );
+          const serviceLogoUrl = `${serviceContentRepoUrl}logos/services/${s.serviceId
+            .toLowerCase()
+            .trim()}.png`;
+          const maybeServiceLogo = await loadImageInfo(serviceLogoUrl);
+          return {
+            metadataUrl: hasMetadata.isRight() ? serviceMetadatUrl : undefined,
+            organizationLogoUrl: maybeOrganizationLogo.isSome()
+              ? organizationLogoUrl
+              : undefined,
+            serviceLogoUrl: maybeServiceLogo.isSome()
+              ? serviceLogoUrl
+              : undefined
+          };
+        }
+      );
+      cli.action.stop();
 
-      const result = await sequential(services, async s => {
-        //const hasMetadata =
+      const servicesCheck = services.map((s: ServicePublic, index: number) => {
+        return { ...s, ...result[index] } as ServiceCheck;
       });
 
-      const columns = {
-        orgName: {
-          header: "Organization Name",
-          // tslint:disable-next-line: no-any
-          get: (row: any) =>
-            `${row.organizationName} [${row.organizationFiscalCode}]`
-        },
-        name: {
-          header: "Service Name",
-          // tslint:disable-next-line: no-any
-          get: (row: any) =>
-            `${row.serviceName} [${row.version} - ${row.serviceId}]`
-        },
-        isVisible: {
-          header: "is Visible",
-          // tslint:disable-next-line: no-any
-          get: (row: any) => (row.isVisible ? "✅" : "❌")
-        }
-      };
       const predicatesName = Object.keys(groupByPredicates);
       const groupOptions = predicatesName
         .map((go: string, index: number) => `${index + 1} - ${go}`)
@@ -147,10 +182,61 @@ export default class ServicesCheck extends Command {
         groupOptionIndex -= 1;
       }
       const sortPredicate = groupByPredicates[predicatesName[groupOptionIndex]];
-      const servicesSortedByOrganizationName = [...services].sort(
-        sortPredicate
+      const servicesSorted = [...servicesCheck].sort(sortPredicate);
+      // tslint:disable-next-line: readonly-array
+      const csvColumns: csvStringify.ColumnOption[] = [
+        {
+          key: "organizationName",
+          header: "organization name"
+        },
+        {
+          key: "organizationFiscalCode",
+          header: "organization fiscalcode"
+        },
+        {
+          key: "serviceName",
+          header: "service name"
+        },
+        {
+          key: "isVisible",
+          header: "visible"
+        },
+        {
+          key: "serviceId",
+          header: "service id"
+        },
+        {
+          key: "version",
+          header: "service version"
+        },
+        {
+          key: "metadataUrl",
+          header: "service metadata"
+        },
+        {
+          key: "serviceLogoUrl",
+          header: "service logo"
+        },
+        {
+          key: "organizationLogoUrl",
+          header: "organization logo"
+        }
+      ];
+      const castBoolean = (value: boolean, _: csvStringify.CastingContext) =>
+        value ? "true" : "false";
+
+      csvStringify(
+        servicesSorted,
+        { cast: { boolean: castBoolean }, header: true, columns: csvColumns },
+
+        (err, row) => {
+          if (err) {
+            cli.error(err);
+            return;
+          }
+          cli.log(row);
+        }
       );
-      cli.table(servicesSortedByOrganizationName, columns);
     } catch (e) {
       cli.log(e.body);
       this.error(e);
