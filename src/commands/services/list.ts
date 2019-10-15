@@ -26,7 +26,6 @@ interface ICheck {
   organizationLogoUrl?: string;
   metadataUrl?: string;
 }
-type ServiceCheck = ServicePublic & ICheck;
 
 // predicates to sort the services
 const groupByPredicates: IGroupOptions = {
