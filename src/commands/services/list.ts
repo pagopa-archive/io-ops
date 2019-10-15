@@ -173,7 +173,7 @@ export default class ServicesList extends Command {
       cli.action.stop();
 
       const servicesCheck = services.map((s: ServicePublic, index: number) => {
-        return { ...s, ...result[index] } as ServiceCheck;
+        return { ...s, ...result[index] };
       });
 
       const predicatesName = Object.keys(groupByPredicates);
