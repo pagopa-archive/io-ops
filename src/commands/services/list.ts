@@ -28,6 +28,7 @@ interface ICheck {
 }
 type ServiceCheck = ServicePublic & ICheck;
 
+// predicates to sort the services
 const groupByPredicates: IGroupOptions = {
   OrganizationName: (a: ServicePublic, b: ServicePublic) =>
     a.organizationName.localeCompare(b.organizationName),
@@ -53,23 +54,31 @@ const groupByPredicates: IGroupOptions = {
 
 /**
  * retrive service metadata from the given service ID
+ * if the response is !== 200 will be returned undefined
  */
 const loadServiceMetadata = (
   uri: string
-): Promise<t.Validation<ServiceMetadata>> => {
+): Promise<t.Validation<ServiceMetadata>> | undefined => {
   const options = {
     uri,
     json: true
   };
   return new Promise((res, _) => {
-    request(options, (__, ___, body) => {
-      const value = ServiceMetadata.decode(body);
-      res(value);
+    request(options, (__, response, body) => {
+      if (response.statusCode === 200) {
+        const value = ServiceMetadata.decode(body);
+        res(value);
+        return;
+      }
+      res(undefined);
     });
   });
 };
 
 export default class ServicesList extends Command {
+  public static description = "List all services in csv format";
+
+  // tslint:disable-next-line: cognitive-complexity
   public async run(): Promise<void> {
     try {
       cli.action.start(chalk.cyanBright("Retrieving cosmosdb credentials"));
@@ -107,7 +116,6 @@ export default class ServicesList extends Command {
             );
             // if we have already collected the same service (same id) with a less version
             // we remove it from the collection in place of the new one
-
             if (
               versionIndex >= 0 &&
               acc[versionIndex].version < maybeService.value.version
@@ -147,7 +155,12 @@ export default class ServicesList extends Command {
             .trim()}.png`;
           const maybeServiceLogo = await loadImageInfo(serviceLogoUrl);
           return {
-            metadataUrl: hasMetadata.isRight() ? serviceMetadatUrl : undefined,
+            metadataUrl:
+              hasMetadata === undefined
+                ? "n/a"
+                : hasMetadata.isRight()
+                ? serviceMetadatUrl
+                : `metadata malformed ${serviceMetadatUrl}`,
             organizationLogoUrl: maybeOrganizationLogo.isSome()
               ? organizationLogoUrl
               : undefined,
@@ -167,12 +180,14 @@ export default class ServicesList extends Command {
       const groupOptions = predicatesName
         .map((go: string, index: number) => `${index + 1} - ${go}`)
         .join("\n");
+      // ask to the user which sorting prefer
       // tslint:disable-next-line: no-let
       let groupOptionIndex = 0;
       groupOptionIndex = await cli.prompt(
         `Group results by\n${groupOptions}\n`,
         { default: "0" }
       );
+      // if the input is not a valid value, fallback to the default (0)
       if (
         isNaN(groupOptionIndex) ||
         (groupOptionIndex < 0 && groupOptionIndex >= predicatesName.length)
@@ -238,7 +253,6 @@ export default class ServicesList extends Command {
         }
       );
     } catch (e) {
-      cli.log(e.body);
       this.error(e);
     }
 
