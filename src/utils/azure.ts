@@ -1,4 +1,3 @@
-import cli from "cli-ux";
 import * as execa from "execa";
 
 export const config = {
