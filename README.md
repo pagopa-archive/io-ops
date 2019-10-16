@@ -10,14 +10,16 @@ IO operations tool
 [![License](https://img.shields.io/npm/l/io-ops.svg)](https://github.com/teamdigitale/io-ops/blob/master/package.json)
 
 <!-- toc -->
-* [io-ops](#io-ops)
-* [Usage](#usage)
-* [Commands](#commands)
-<!-- tocstop -->
+
+- [io-ops](#io-ops)
+- [Usage](#usage)
+- [Commands](#commands)
+  <!-- tocstop -->
 
 # Usage
 
 <!-- usage -->
+
 ```sh-session
 $ npm install -g io-ops
 $ io-ops COMMAND
@@ -29,20 +31,23 @@ USAGE
   $ io-ops COMMAND
 ...
 ```
+
 <!-- usagestop -->
 
 # Commands
 
 <!-- commands -->
-* [`io-ops hello`](#io-ops-hello)
-* [`io-ops help [COMMAND]`](#io-ops-help-command)
-* [`io-ops messages:attributes`](#io-ops-messagesattributes)
-* [`io-ops messages:check-content`](#io-ops-messagescheck-content)
-* [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
-* [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete-fiscalcode)
-* [`io-ops profiles:exist`](#io-ops-profilesexist)
-* [`io-ops profiles:list`](#io-ops-profileslist)
-* [`io-ops services:details`](#io-ops-servicesdetails)
+
+- [`io-ops hello`](#io-ops-hello)
+- [`io-ops help [COMMAND]`](#io-ops-help-command)
+- [`io-ops messages:attributes`](#io-ops-messagesattributes)
+- [`io-ops messages:check-content`](#io-ops-messagescheck-content)
+- [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
+- [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete-fiscalcode)
+- [`io-ops profiles:exist`](#io-ops-profilesexist)
+- [`io-ops profiles:list`](#io-ops-profileslist)
+- [`io-ops services:details`](#io-ops-servicesdetails)
+- [`io-ops services:list`](#io-ops-serviceslist)
 
 ## `io-ops hello`
 
@@ -198,4 +203,16 @@ OPTIONS
 ```
 
 _See code: [src/commands/services/details.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/details.ts)_
+
+## `io-ops services:list`
+
+List all services in csv format
+
+```
+USAGE
+  $ io-ops services:list
+```
+
+_See code: [src/commands/services/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/list.ts)_
+
 <!-- commandsstop -->

@@ -4,18 +4,26 @@ import {
   OrganizationFiscalCode
 } from "italia-ts-commons/lib/strings";
 
-const serviceAttributes = {
+const serviceAttributesRequired = t.interface({
   serviceId: NonEmptyString,
   serviceName: NonEmptyString,
   organizationName: NonEmptyString,
   departmentName: NonEmptyString,
   organizationFiscalCode: OrganizationFiscalCode,
-  version: t.Integer,
-  isVisible: t.boolean
-};
+  version: t.Integer
+});
 
-export const ServicePublic = t.strict(serviceAttributes);
-export const ServicePublicFull = t.interface(serviceAttributes);
+const serviceAttributesOptional = t.partial({
+  isVisible: t.boolean
+});
+
+export const ServicePublic = t.exact(
+  t.intersection([serviceAttributesRequired, serviceAttributesOptional])
+);
+export const ServicePublicFull = t.intersection([
+  serviceAttributesRequired,
+  serviceAttributesOptional
+]);
 
 export type ServicePublic = t.TypeOf<typeof ServicePublic>;
 export type ServicePublicFull = t.TypeOf<typeof ServicePublicFull>;
