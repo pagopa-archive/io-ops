@@ -4,9 +4,9 @@ import cli from "cli-ux";
 import { FiscalCode } from "italia-ts-commons/lib/strings";
 
 import {
-  config,
   getCosmosEndpoint,
-  getCosmosReadonlyKey
+  getCosmosReadonlyKey,
+  pickAzureConfig
 } from "../../utils/azure";
 
 export default class MessagesList extends Command {
@@ -38,6 +38,7 @@ export default class MessagesList extends Command {
 
     try {
       cli.action.start("Retrieving credentials");
+      const config = await pickAzureConfig();
       const [endpoint, key] = await Promise.all([
         getCosmosEndpoint(config.resourceGroup, config.cosmosName),
         getCosmosReadonlyKey(config.resourceGroup, config.cosmosName)

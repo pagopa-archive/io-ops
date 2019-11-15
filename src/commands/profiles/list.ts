@@ -2,7 +2,7 @@ import * as cosmos from "@azure/cosmos";
 import { Command } from "@oclif/command";
 import cli from "cli-ux";
 
-import { getCosmosConnection } from "../../utils/azure";
+import { getCosmosConnection, pickAzureConfig } from "../../utils/azure";
 
 export default class ProfilesList extends Command {
   public static description = "Lists all profiles";
@@ -15,10 +15,11 @@ export default class ProfilesList extends Command {
     const { flags } = this.parse(ProfilesList);
 
     try {
+      const config = await pickAzureConfig();
       cli.action.start("Retrieving cosmosdb credentials");
       const { endpoint, key } = await getCosmosConnection(
-        "agid-rg-test",
-        "agid-cosmosdb-test"
+        config.resourceGroup,
+        config.cosmosName
       );
       cli.action.stop();
 

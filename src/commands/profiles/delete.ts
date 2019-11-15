@@ -6,26 +6,16 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { FiscalCode } from "italia-ts-commons/lib/strings";
 
 import {
-  config,
   getCosmosWriteConnection,
-  getStorageConnection
+  getStorageConnection,
+  IAzureConfig,
+  pickAzureConfig
 } from "../../utils/azure";
 import { sequential, sequentialSum } from "../../utils/promise";
 
-type ContainersName =
-  | "profiles"
-  | "messages"
-  // tslint:disable-next-line: no-duplicate-string
-  | "message-status"
-  | "notifications"
-  // tslint:disable-next-line: no-duplicate-string
-  | "notification-status"
-  // tslint:disable-next-line: no-duplicate-string
-  | "sender-services";
-
 interface IContainer {
   query: string;
-  containerName: ContainersName;
+  containerName: string;
   // tslint:disable-next-line: no-any
   partitionKeySelector: (item: any) => string;
   queryParamName: string;
@@ -104,19 +94,22 @@ export default class ProfileDelete extends Command {
     // define used queries
     const selectFromFiscalCode = `SELECT * FROM c WHERE c.fiscalCode = ${fiscalCodeParamName}`;
     const selectFromRecipientFiscalCode = `SELECT * FROM c WHERE c.recipientFiscalCode = ${recipientFiscalCodeParamName}`;
-
+    const azureConfig = await pickAzureConfig();
     // retrieve azure credentials
     cli.action.start("Retrieving cosmosdb credentials");
     const [connection, storageConnection] = await Promise.all([
-      getCosmosWriteConnection("agid-rg-test", "agid-cosmosdb-test"),
-      getStorageConnection(config.storageName)
+      getCosmosWriteConnection(
+        azureConfig.resourceGroup,
+        azureConfig.cosmosName
+      ),
+      getStorageConnection(azureConfig.storageName)
     ]);
     cli.action.stop();
 
     // define all delete operations
     const deleteOps: ReadonlyArray<DeleteOp> = [
       {
-        containerName: "profiles",
+        containerName: azureConfig.cosmosProfilesContainer,
         partitionKeySelector: i => i.fiscalCode,
         query: selectFromFiscalCode,
         queryParamName: fiscalCodeParamName,
@@ -125,14 +118,14 @@ export default class ProfileDelete extends Command {
         deleteBlobs: false
       },
       {
-        containerName: "messages",
+        containerName: azureConfig.cosmosMessagesContainer,
         partitionKeySelector: i => i.fiscalCode,
         query: selectFromFiscalCode,
         queryParamName: fiscalCodeParamName,
         queryParamValue: fiscalCode,
         relatedOps: [
           {
-            containerName: "message-status",
+            containerName: azureConfig.cosmosMessageStatusContainer,
             partitionKeySelector: i => i.messageId,
             query: `SELECT * from c where c.messageId = ${messageIdParamName}`,
             queryParamName: messageIdParamName
@@ -141,7 +134,7 @@ export default class ProfileDelete extends Command {
         deleteBlobs: true
       },
       {
-        containerName: "notifications",
+        containerName: azureConfig.cosmosNotificationContainer,
         partitionKeySelector: i => i.messageId,
         query: selectFromFiscalCode,
         queryParamName: fiscalCodeParamName,
@@ -149,7 +142,7 @@ export default class ProfileDelete extends Command {
         queryOptions: { enableCrossPartitionQuery: true },
         relatedOps: [
           {
-            containerName: "notification-status",
+            containerName: azureConfig.cosmosNotificationStatusContainer,
             partitionKeySelector: i => i.notificationId,
             query: `SELECT * from c where c.notificationId = ${notificationIdParamName}`,
             queryParamName: notificationIdParamName
@@ -158,7 +151,7 @@ export default class ProfileDelete extends Command {
         deleteBlobs: false
       },
       {
-        containerName: "sender-services",
+        containerName: azureConfig.cosmosSenderServicesContainer,
         partitionKeySelector: i => i.recipientFiscalCode,
         query: selectFromRecipientFiscalCode,
         queryParamName: recipientFiscalCodeParamName,
@@ -198,11 +191,12 @@ export default class ProfileDelete extends Command {
       auth: { key: connection.key }
     });
 
-    const database = client.database("agid-documentdb-test");
+    const database = client.database(azureConfig.cosmosDatabaseName);
 
     // apply processDeleteOpt to each delete operation
     const deletedItemsCount = await sequentialSum(deleteOpsToProcess, item => {
       const deleteCount = this.processDeleteOpt(
+        azureConfig,
         database,
         storageConnection,
         item
@@ -296,6 +290,7 @@ export default class ProfileDelete extends Command {
    * @param deleteOp the delete operation to process
    */
   private async processDeleteOpt(
+    azureConfig: IAzureConfig,
     database: cosmos.Database,
     storageConnection: string,
     deleteOp: DeleteOp
@@ -354,7 +349,11 @@ export default class ProfileDelete extends Command {
           `Are you sure to delete items in message-content storage?`
         ));
       const deleteMessageContentCount = confirmDeleteMessageContent
-        ? await this.processDeleteBlobOpt(storageConnection, itemsList)
+        ? await this.processDeleteBlobOpt(
+            storageConnection,
+            azureConfig.storageMessagesContainer,
+            itemsList
+          )
         : 0;
       return some(
         deleteInnerItemsCount + deleteItemsCount + deleteMessageContentCount
@@ -367,6 +366,7 @@ export default class ProfileDelete extends Command {
 
   private async processDeleteBlobOpt(
     storageConnection: string,
+    storageMessagesContainer: string,
     items: ReadonlyArray<cosmos.Item>
   ): Promise<number> {
     // get the blob service
@@ -375,7 +375,7 @@ export default class ProfileDelete extends Command {
     const doesBlobExist = (id: string) =>
       new Promise<storage.BlobService.BlobResult>((resolve, reject) =>
         blobService.doesBlobExist(
-          config.storageMessagesContainer,
+          storageMessagesContainer,
           id,
           (err, blobResult) => (err ? reject(err) : resolve(blobResult))
         )
@@ -383,10 +383,8 @@ export default class ProfileDelete extends Command {
     // a function to mark a blob item for deletion (The blob is later deleted during cosmos garbage collection)
     const deleteBlob = (id: string) =>
       new Promise<storage.ServiceResponse>((resolve, reject) =>
-        blobService.deleteBlob(
-          config.storageMessagesContainer,
-          id,
-          (err, response) => (err ? reject(err) : resolve(response))
+        blobService.deleteBlob(storageMessagesContainer, id, (err, response) =>
+          err ? reject(err) : resolve(response)
         )
       );
     // iterate over items and for each item (giving item id) check if

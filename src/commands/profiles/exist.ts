@@ -5,7 +5,7 @@ import * as parse from "csv-parse";
 import * as csvStringify from "csv-stringify";
 import * as fs from "fs";
 import * as transform from "stream-transform";
-import { getCosmosConnection } from "../../utils/azure";
+import { getCosmosConnection, pickAzureConfig } from "../../utils/azure";
 
 export default class ProfilesExist extends Command {
   public static description =
@@ -37,16 +37,17 @@ export default class ProfilesExist extends Command {
     });
 
     try {
+      const config = await pickAzureConfig();
       cli.action.start("Retrieving cosmosdb credentials");
       const { endpoint, key } = await getCosmosConnection(
-        "agid-rg-test",
-        "agid-cosmosdb-test"
+        config.resourceGroup,
+        config.cosmosName
       );
       cli.action.stop();
 
       const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
-      const database = client.database("agid-documentdb-test");
-      const container = database.container("profiles");
+      const database = client.database(config.cosmosDatabaseName);
+      const container = database.container(config.cosmosProfilesContainer);
 
       const hasProfile = async (fiscalCode: string): Promise<boolean> => {
         const response = container.items.query({

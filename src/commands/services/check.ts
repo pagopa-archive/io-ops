@@ -5,11 +5,10 @@ import cli from "cli-ux";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 import { ServicePublic } from "../../definitions/ServicePublic";
 import {
-  config,
   getCosmosEndpoint,
-  getCosmosReadonlyKey
+  getCosmosReadonlyKey,
+  pickAzureConfig
 } from "../../utils/azure";
-import { sequential } from "../../utils/promise";
 
 interface IGroupOptions {
   [key: string]: (a: ServicePublic, b: ServicePublic) => number;
@@ -48,6 +47,7 @@ const groupByPredicates: IGroupOptions = {
 export default class ServicesCheck extends Command {
   public async run(): Promise<void> {
     try {
+      const config = await pickAzureConfig();
       cli.action.start(chalk.cyanBright("Retrieving cosmosdb credentials"));
       const [endpoint, key] = await Promise.all([
         getCosmosEndpoint(config.resourceGroup, config.cosmosName),
@@ -104,10 +104,6 @@ export default class ServicesCheck extends Command {
         },
         []
       );
-
-      const result = await sequential(services, async s => {
-        //const hasMetadata =
-      });
 
       const columns = {
         orgName: {

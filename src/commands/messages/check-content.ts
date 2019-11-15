@@ -5,7 +5,7 @@ import * as parse from "csv-parse";
 import * as fs from "fs";
 import * as transform from "stream-transform";
 
-import { config, getStorageConnection } from "../../utils/azure";
+import { getStorageConnection, pickAzureConfig } from "../../utils/azure";
 import { parseMessagePath } from "../../utils/parser";
 
 export default class MessagesCheckContent extends Command {
@@ -41,6 +41,7 @@ export default class MessagesCheckContent extends Command {
 
     try {
       cli.action.start("Retrieving credentials");
+      const config = await pickAzureConfig();
       const storageConnection = await getStorageConnection(config.storageName);
       cli.action.stop();
 
