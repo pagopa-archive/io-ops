@@ -13,16 +13,16 @@ const serviceAttributesRequired = t.interface({
   version: t.Integer
 });
 
-const optionalAttributesOptional = t.partial({
+const serviceAttributesOptional = t.partial({
   isVisible: t.boolean
 });
 
 export const ServicePublic = t.exact(
-  t.intersection([serviceAttributesRequired, optionalAttributesOptional])
+  t.intersection([serviceAttributesRequired, serviceAttributesOptional])
 );
 export const ServicePublicFull = t.intersection([
   serviceAttributesRequired,
-  optionalAttributesOptional
+  serviceAttributesOptional
 ]);
 
 export type ServicePublic = t.TypeOf<typeof ServicePublic>;

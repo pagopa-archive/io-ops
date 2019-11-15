@@ -18,6 +18,7 @@ import {
   getCosmosEndpoint,
   getCosmosReadonlyKey
 } from "../../utils/azure";
+import { serviceContentRepoUrl } from "../../utils/service";
 
 // tslint:disable-next-line: interface-name
 interface ImageInfo {
@@ -28,9 +29,6 @@ interface ImageInfo {
   sizeInByte: number;
 }
 
-const contentRepoUrl =
-  "https://raw.githubusercontent.com/teamdigitale/io-services-metadata/master/";
-
 /**
  * retrive service metadata from the given service ID
  */
@@ -38,7 +36,9 @@ export const loadServiceMetadata = (
   serviceId: string
 ): Promise<t.Validation<ServiceMetadata>> => {
   const options = {
-    uri: `${contentRepoUrl}services/${serviceId.toLowerCase().trim()}.json`,
+    uri: `${serviceContentRepoUrl}services/${serviceId
+      .toLowerCase()
+      .trim()}.json`,
     json: true
   };
   return new Promise((res, _) => {
@@ -59,7 +59,7 @@ export const loadImageInfo = (imageUri: string): Promise<Option<ImageInfo>> => {
   };
   return new Promise((res, _) => {
     request(options, (__, req, body) => {
-      if (req.statusCode === 200) {
+      if (req && req.statusCode === 200) {
         try {
           const imageInfo = imageSize(body);
           res(
@@ -241,7 +241,7 @@ export default class ServicesDetail extends Command {
           .replace(/^0+/, "")
           .trim();
         const maybeOrganizationLogo = await loadImageInfo(
-          `${contentRepoUrl}logos/organizations/${ofc}.png`
+          `${serviceContentRepoUrl}logos/organizations/${ofc}.png`
         );
 
         const logOrganizationLogo = maybeOrganizationLogo.fold(
@@ -257,7 +257,7 @@ export default class ServicesDetail extends Command {
         );
 
         const maybeServiceLogo = await loadImageInfo(
-          `${contentRepoUrl}logos/services/${lastService.serviceId
+          `${serviceContentRepoUrl}logos/services/${lastService.serviceId
             .toLowerCase()
             .trim()}.png`
         );
