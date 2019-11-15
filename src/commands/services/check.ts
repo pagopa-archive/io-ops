@@ -14,13 +14,6 @@ interface IGroupOptions {
   [key: string]: (a: ServicePublic, b: ServicePublic) => number;
 }
 
-interface Check {
-  hasServiceLogo: boolean;
-  hasOrganizationLogo: boolean;
-  hasmetaData: boolean;
-}
-type ServiceCheck = ServicePublic & Check;
-
 const groupByPredicates: IGroupOptions = {
   OrganizationName: (a: ServicePublic, b: ServicePublic) =>
     a.organizationName.localeCompare(b.organizationName),
