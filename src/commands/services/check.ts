@@ -38,6 +38,7 @@ const groupByPredicates: IGroupOptions = {
 };
 
 export default class ServicesCheck extends Command {
+  // tslint:disable-next-line: cognitive-complexity
   public async run(): Promise<void> {
     try {
       const config = await pickAzureConfig();
