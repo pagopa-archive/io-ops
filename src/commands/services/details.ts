@@ -14,9 +14,9 @@ import {
   ServicePublicFull
 } from "../../definitions/ServicePublic";
 import {
-  config,
   getCosmosEndpoint,
-  getCosmosReadonlyKey
+  getCosmosReadonlyKey,
+  pickAzureConfig
 } from "../../utils/azure";
 import { serviceContentRepoUrl } from "../../utils/service";
 
@@ -32,7 +32,7 @@ interface ImageInfo {
 /**
  * retrive service metadata from the given service ID
  */
-const loadServiceMetadata = (
+export const loadServiceMetadata = (
   serviceId: string
 ): Promise<t.Validation<ServiceMetadata>> => {
   const options = {
@@ -100,6 +100,7 @@ export default class ServicesDetail extends Command {
       this.exit();
       return;
     }
+    const config = await pickAzureConfig();
     const serviceId = maybeServiceId.value;
     try {
       cli.action.start(chalk.cyanBright("Retrieving cosmosdb credentials"));

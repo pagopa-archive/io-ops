@@ -9,9 +9,9 @@ import * as request from "request";
 import { ServiceMetadata } from "../../definitions/ServiceMetadata";
 import { ServicePublic } from "../../definitions/ServicePublic";
 import {
-  config,
   getCosmosEndpoint,
-  getCosmosReadonlyKey
+  getCosmosReadonlyKey,
+  pickAzureConfig
 } from "../../utils/azure";
 import { sequential } from "../../utils/promise";
 import { serviceContentRepoUrl } from "../../utils/service";
@@ -80,6 +80,7 @@ export default class ServicesList extends Command {
   // tslint:disable-next-line: cognitive-complexity
   public async run(): Promise<void> {
     try {
+      const config = await pickAzureConfig();
       cli.action.start(chalk.cyanBright("Retrieving cosmosdb credentials"));
       const [endpoint, key] = await Promise.all([
         getCosmosEndpoint(config.resourceGroup, config.cosmosName),

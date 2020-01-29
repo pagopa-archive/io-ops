@@ -1,13 +1,92 @@
+import chalk from "chalk";
+import cli from "cli-ux";
 import * as execa from "execa";
 
-export const config = {
+export interface IAzureConfig {
+  configName: string;
+  cosmosDatabaseName: string;
+  cosmosProfilesContainer: string;
+  cosmosMessagesContainer: string;
+  cosmosMessageStatusContainer: string;
+  cosmosNotificationContainer: string;
+  cosmosNotificationStatusContainer: string;
+  cosmosServicesContainer: string;
+  cosmosSenderServicesContainer: string;
+  cosmosName: string;
+  resourceGroup: string;
+  storageMessagesContainer: string;
+  storageName: string;
+}
+
+export const agid: IAzureConfig = {
+  configName: "agid-aks-k8s-01-test",
   cosmosDatabaseName: "agid-documentdb-test",
   cosmosMessagesContainer: "messages",
+  cosmosMessageStatusContainer: "message-status",
+  cosmosNotificationContainer: "notifications",
+  cosmosNotificationStatusContainer: "notification-status",
+  cosmosProfilesContainer: "profiles",
   cosmosServicesContainer: "services",
+  cosmosSenderServicesContainer: "sender-services",
   cosmosName: "agid-cosmosdb-test",
   resourceGroup: "agid-rg-test",
   storageMessagesContainer: "message-content",
   storageName: "agidstoragetest"
+};
+
+export const dev: IAzureConfig = {
+  configName: "io-dev-aks-k8s-01",
+  cosmosDatabaseName: "io-dev-sqldb-db-01",
+  cosmosMessagesContainer: "messages",
+  cosmosMessageStatusContainer: "message-status",
+  cosmosNotificationContainer: "notifications",
+  cosmosNotificationStatusContainer: "notification-status",
+  cosmosProfilesContainer: "profiles",
+  cosmosServicesContainer: "services",
+  cosmosSenderServicesContainer: "sender-services",
+  cosmosName: "io-dev-cosmosdb-01",
+  resourceGroup: "io-dev-rg",
+  storageMessagesContainer: "message-content",
+  storageName: "iodevsaappdata"
+};
+interface IConfigs {
+  [key: string]: IAzureConfig;
+}
+const configs: IConfigs = { agid, dev };
+
+const getCredentials = async (config: IAzureConfig) =>
+  await execa(
+    `az aks get-credentials -n ${config.configName} -g ${
+      config.resourceGroup
+    }  --overwrite-existing`
+  );
+
+export const pickAzureConfig = async (): Promise<IAzureConfig> => {
+  const options = Object.keys(configs)
+    .map((c, i) => `${i + 1} - ${c}`)
+    .join("\n");
+  const choice = await cli.prompt(`select azure config:\n${options}\n`, {
+    default: "0"
+  });
+  const defaultValue = configs[Object.keys(configs)[0]];
+  if (isNaN(choice)) {
+    return defaultValue;
+  }
+  const index = parseInt(choice, 10) - 1;
+  if (index < 0 || index > options.length) {
+    return defaultValue;
+  }
+  const config = configs[Object.keys(configs)[index]];
+  cli.action.start(
+    chalk.cyanBright(
+      `Retrieving azure credentials for '${
+        Object.keys(configs)[index]
+      }' config...`
+    )
+  );
+  await getCredentials(config);
+  cli.action.stop();
+  return config;
 };
 
 export const getCosmosEndpoint = async (resourceGroup: string, name: string) =>

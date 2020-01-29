@@ -6,9 +6,9 @@ import * as fs from "fs";
 import * as transform from "stream-transform";
 
 import {
-  config,
   getCosmosEndpoint,
-  getCosmosWriteKey
+  getCosmosWriteKey,
+  pickAzureConfig
 } from "../../utils/azure";
 import { parseMessagePath } from "../../utils/parser";
 
@@ -86,6 +86,7 @@ export default class MessagesAttributes extends Command {
     });
 
     try {
+      const config = await pickAzureConfig();
       cli.action.start("Retrieving credentials");
       const [endpoint, key] = await Promise.all([
         getCosmosEndpoint(config.resourceGroup, config.cosmosName),
