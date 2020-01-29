@@ -1,3 +1,7 @@
+/**
+ * this command allows to collect all services information
+ * and print them in a csv format
+ */
 import * as cosmos from "@azure/cosmos";
 import { Command } from "@oclif/command";
 import chalk from "chalk";
@@ -14,6 +18,14 @@ interface IGroupOptions {
   [key: string]: (a: ServicePublic, b: ServicePublic) => number;
 }
 
+/**
+ * Define all predicates used for output sorting
+ * The key is the sorting name and the value is a function that compares
+ * 2 services and returns a number:
+ * 0 => services are equal
+ * -1 => service (a) comes before service (b)
+ * 1 => service (a) comes after service (b)
+ */
 const groupByPredicates: IGroupOptions = {
   OrganizationName: (a: ServicePublic, b: ServicePublic) =>
     a.organizationName.localeCompare(b.organizationName),
@@ -128,12 +140,14 @@ export default class ServicesCheck extends Command {
         `Group results by\n${groupOptions}\n`,
         { default: "0" }
       );
+      // if groupindex is out of possible range, fallback is index 0
       if (
         isNaN(groupOptionIndex) ||
-        (groupOptionIndex < 0 && groupOptionIndex >= predicatesName.length)
+        (groupOptionIndex <= 0 && groupOptionIndex >= predicatesName.length)
       ) {
         groupOptionIndex = 0;
       } else {
+        // convert user choice to index-based
         groupOptionIndex -= 1;
       }
       const sortPredicate = groupByPredicates[predicatesName[groupOptionIndex]];
