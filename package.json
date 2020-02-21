@@ -13,6 +13,7 @@
     "@oclif/config": "^1",
     "@oclif/plugin-help": "^2",
     "@types/adm-zip": "^0.4.32",
+    "@types/node-fetch": "^2.5.4",
     "azure-storage": "^2.10.3",
     "chalk": "2.4.2",
     "cli-ux": "^5.2.1",
@@ -21,11 +22,14 @@
     "execa": "sindresorhus/execa#0d39fdffeb053215a56a631db8d2cf32ea119a95",
     "fp-ts": "1.12.0",
     "image-size": "0.7.4",
+    "io-functions-commons": "^1.9.0",
     "io-ts": "1.8.5",
     "italia-ts-commons": "5.1.9",
+    "node-fetch": "^2.6.0",
     "request": "2.88.0",
     "stream-transform": "^2.0.0",
-    "tslib": "1.9.3"
+    "tslib": "1.9.3",
+    "vfile-message": "^2.0.2"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1",
