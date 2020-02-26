@@ -10,44 +10,228 @@ IO operations tool
 [![License](https://img.shields.io/npm/l/io-ops.svg)](https://github.com/teamdigitale/io-ops/blob/master/package.json)
 
 <!-- toc -->
-
-- [io-ops](#io-ops)
-- [Usage](#usage)
-- [Commands](#commands)
-  <!-- tocstop -->
+* [io-ops](#io-ops)
+* [Usage](#usage)
+* [Commands](#commands)
+<!-- tocstop -->
 
 # Usage
 
 <!-- usage -->
-
 ```sh-session
 $ npm install -g io-ops
 $ io-ops COMMAND
 running command...
 $ io-ops (-v|--version|version)
-io-ops/0.2.0 darwin-x64 node-v10.13.0
+io-ops/0.2.0 darwin-x64 node-v12.14.0
 $ io-ops --help [COMMAND]
 USAGE
   $ io-ops COMMAND
 ...
 ```
-
 <!-- usagestop -->
 
 # Commands
 
 <!-- commands -->
+* [`io-ops api-service:create`](#io-ops-api-servicecreate)
+* [`io-ops api-service:get SERVICEID`](#io-ops-api-serviceget-serviceid)
+* [`io-ops api-service:get-all`](#io-ops-api-serviceget-all)
+* [`io-ops api-service:keys SERVICEID`](#io-ops-api-servicekeys-serviceid)
+* [`io-ops api-service:logo SERVICEID`](#io-ops-api-servicelogo-serviceid)
+* [`io-ops api-service:update`](#io-ops-api-serviceupdate)
+* [`io-ops hello`](#io-ops-hello)
+* [`io-ops help [COMMAND]`](#io-ops-help-command)
+* [`io-ops messages:attributes`](#io-ops-messagesattributes)
+* [`io-ops messages:check-content`](#io-ops-messagescheck-content)
+* [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
+* [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete-fiscalcode)
+* [`io-ops profiles:exist`](#io-ops-profilesexist)
+* [`io-ops profiles:list`](#io-ops-profileslist)
+* [`io-ops services:check`](#io-ops-servicescheck)
+* [`io-ops services:details`](#io-ops-servicesdetails)
+* [`io-ops services:list`](#io-ops-serviceslist)
 
-- [`io-ops hello`](#io-ops-hello)
-- [`io-ops help [COMMAND]`](#io-ops-help-command)
-- [`io-ops messages:attributes`](#io-ops-messagesattributes)
-- [`io-ops messages:check-content`](#io-ops-messagescheck-content)
-- [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
-- [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete-fiscalcode)
-- [`io-ops profiles:exist`](#io-ops-profilesexist)
-- [`io-ops profiles:list`](#io-ops-profileslist)
-- [`io-ops services:details`](#io-ops-servicesdetails)
-- [`io-ops services:list`](#io-ops-serviceslist)
+## `io-ops api-service:create`
+
+Create a service
+
+```
+USAGE
+  $ io-ops api-service:create
+
+OPTIONS
+  --authorized_cidrs=authorized_cidrs                          Allowed source IPs or CIDRs for this service. String
+                                                               separated by , of single IP or a range of IPs and can be
+                                                               empty
+
+  --authorized_recipients=authorized_recipients                If non empty, the service will be able to send messages
+                                                               only to these fiscal codes. Fiscal code format
+
+  --department_name=department_name                            (required) Name of the department of the organization
+
+  --is_visible                                                 Is the service visible?
+
+  --organization_fiscal_code=organization_fiscal_code          (required) Name of the organization
+
+  --organization_name=organization_name                        (required) Name of the organization
+
+  --require_secure_channels                                    Require secure channel?
+
+  --service_id=service_id                                      (required) Id of the service
+
+  --service_metadata.address=service_metadata.address          Address of the institution
+
+  --service_metadata.app_android=service_metadata.app_android  App android url
+
+  --service_metadata.app_ios=service_metadata.app_ios          App ios url
+
+  --service_metadata.description=service_metadata.description  Description of the sevice
+
+  --service_metadata.email=service_metadata.email              Email of the institution
+
+  --service_metadata.pec=service_metadata.pec                  Pec of the institution
+
+  --service_metadata.phone=service_metadata.phone              Phone number
+
+  --service_metadata.privacy_url=service_metadata.privacy_url  Privacy url
+
+  --service_metadata.scope=NATIONAL|LOCAL                      Scope of the service can be NATIONAL or LOCAL
+
+  --service_metadata.tos_url=service_metadata.tos_url          Term of Service url
+
+  --service_metadata.web_url=service_metadata.web_url          Url of the service
+
+  --service_name=service_name                                  (required) Name of the service
+
+  --version=version                                            Version of the service
+
+EXAMPLE
+  $ io-ops api-service:create  --department_name=department_test --organization_fiscal_code=12345670000  
+  --organization_name=organization_name --service_id=test-api-service --service_name=test_api-service
+```
+
+_See code: [src/commands/api-service/create.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/create.ts)_
+
+## `io-ops api-service:get SERVICEID`
+
+Get the service by serviceId
+
+```
+USAGE
+  $ io-ops api-service:get SERVICEID
+
+ARGUMENTS
+  SERVICEID  id of the service
+```
+
+_See code: [src/commands/api-service/get.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/get.ts)_
+
+## `io-ops api-service:get-all`
+
+Get all services
+
+```
+USAGE
+  $ io-ops api-service:get-all
+```
+
+_See code: [src/commands/api-service/get-all.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/get-all.ts)_
+
+## `io-ops api-service:keys SERVICEID`
+
+Get subscription keys associated to service
+
+```
+USAGE
+  $ io-ops api-service:keys SERVICEID
+
+ARGUMENTS
+  SERVICEID  id of the service
+```
+
+_See code: [src/commands/api-service/keys.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/keys.ts)_
+
+## `io-ops api-service:logo SERVICEID`
+
+Update service data with base64 of the logo
+
+```
+USAGE
+  $ io-ops api-service:logo SERVICEID
+
+ARGUMENTS
+  SERVICEID  id of the service
+
+OPTIONS
+  --logo=logo  (required) Path of logo image to be converter into base64
+
+EXAMPLE
+  $ io-ops SERVICEID --logo ~/PATH/logo.png
+```
+
+_See code: [src/commands/api-service/logo.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/logo.ts)_
+
+## `io-ops api-service:update`
+
+Update a service
+
+```
+USAGE
+  $ io-ops api-service:update
+
+OPTIONS
+  --authorized_cidrs=authorized_cidrs                          Allowed source IPs or CIDRs for this service. String
+                                                               separated by , of single IP or a range of IPs and can be
+                                                               empty
+
+  --authorized_recipients=authorized_recipients                If non empty, the service will be able to send messages
+                                                               only to these fiscal codes. Fiscal code format
+
+  --department_name=department_name                            (required) Name of the department of the organization
+
+  --is_visible                                                 Is the service visible?
+
+  --organization_fiscal_code=organization_fiscal_code          (required) Name of the organization
+
+  --organization_name=organization_name                        (required) Name of the organization
+
+  --require_secure_channels                                    Require secure channel?
+
+  --service_id=service_id                                      (required) Id of the service
+
+  --service_metadata.address=service_metadata.address          Address of the institution
+
+  --service_metadata.app_android=service_metadata.app_android  App android url
+
+  --service_metadata.app_ios=service_metadata.app_ios          App ios url
+
+  --service_metadata.description=service_metadata.description  Description of the sevice
+
+  --service_metadata.email=service_metadata.email              Email of the institution
+
+  --service_metadata.pec=service_metadata.pec                  Pec of the institution
+
+  --service_metadata.phone=service_metadata.phone              Phone number
+
+  --service_metadata.privacy_url=service_metadata.privacy_url  Privacy url
+
+  --service_metadata.scope=NATIONAL|LOCAL                      Scope of the service can be NATIONAL or LOCAL
+
+  --service_metadata.tos_url=service_metadata.tos_url          Term of Service url
+
+  --service_metadata.web_url=service_metadata.web_url          Url of the service
+
+  --service_name=service_name                                  (required) Name of the service
+
+  --version=version                                            Version of the service
+
+EXAMPLE
+  $ io-ops api-service:update  --department_name=department_test --organization_fiscal_code=12345670016  
+  --organization_name=organization_name --service_id=test-api-service --service_name=test_api-service
+```
+
+_See code: [src/commands/api-service/update.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/update.ts)_
 
 ## `io-ops hello`
 
@@ -84,7 +268,7 @@ OPTIONS
   --all  see all commands in CLI
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.1.6/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.2.3/src/commands/help.ts)_
 
 ## `io-ops messages:attributes`
 
@@ -126,13 +310,14 @@ USAGE
   $ io-ops messages:list FISCALCODE
 
 OPTIONS
-  -x, --extended     show extra columns
-  --columns=columns  only show provided columns (comma-separated)
-  --csv              output is csv format
-  --filter=filter    filter property by partial string matching, ex: name=foo
-  --no-header        hide table header from output
-  --no-truncate      do not truncate output to fit screen
-  --sort=sort        property to sort by (prepend '-' for descending)
+  -x, --extended          show extra columns
+  --columns=columns       only show provided columns (comma-separated)
+  --csv                   output is csv format [alias: --output=csv]
+  --filter=filter         filter property by partial string matching, ex: name=foo
+  --no-header             hide table header from output
+  --no-truncate           do not truncate output to fit screen
+  --output=csv|json|yaml  output in a more machine friendly format
+  --sort=sort             property to sort by (prepend '-' for descending)
 ```
 
 _See code: [src/commands/messages/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/messages/list.ts)_
@@ -182,17 +367,26 @@ USAGE
 \$ io-ops profiles:list
 
 OPTIONS
--x, --extended show extra columns
---columns=columns only show provided columns (comma-separated)
---csv output is csv format
---filter=filter filter property by partial string matching, ex: name=foo
---no-header hide table header from output
---no-truncate do not truncate output to fit screen
---sort=sort property to sort by (prepend '-' for descending)
-
+  -x, --extended          show extra columns
+  --columns=columns       only show provided columns (comma-separated)
+  --csv                   output is csv format
+  --filter=filter         filter property by partial string matching, ex: name=foo
+  --no-header             hide table header from output
+  --no-truncate           do not truncate output to fit screen
+  --output=csv|json|yaml  output in a more machine friendly format
+  --sort=sort             property to sort by (prepend '-' for descending)
 ```
 
 _See code: [src/commands/profiles/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/profiles/list.ts)_
+
+## `io-ops services:check`
+
+```
+USAGE
+  $ io-ops services:check
+```
+
+_See code: [src/commands/services/check.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/check.ts)_
 
 ## `io-ops services:details`
 
@@ -222,7 +416,6 @@ USAGE
 ```
 
 _See code: [src/commands/services/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/list.ts)_
-
 <!-- commandsstop -->
 
 ```
