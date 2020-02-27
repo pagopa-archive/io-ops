@@ -61,54 +61,13 @@ USAGE
   $ io-ops api-service:create
 
 OPTIONS
-  --authorized_cidrs=authorized_cidrs                          Allowed source IPs or CIDRs for this service. String
-                                                               separated by , of single IP or a range of IPs and can be
-                                                               empty
-
-  --authorized_recipients=authorized_recipients                If non empty, the service will be able to send messages
-                                                               only to these fiscal codes. Fiscal code format
-
-  --department_name=department_name                            (required) Name of the department of the organization
-
-  --is_visible                                                 Is the service visible?
-
-  --organization_fiscal_code=organization_fiscal_code          (required) Name of the organization
-
-  --organization_name=organization_name                        (required) Name of the organization
-
-  --require_secure_channels                                    Require secure channel?
-
-  --service_id=service_id                                      (required) Id of the service
-
-  --service_metadata.address=service_metadata.address          Address of the institution
-
-  --service_metadata.app_android=service_metadata.app_android  App android url
-
-  --service_metadata.app_ios=service_metadata.app_ios          App ios url
-
-  --service_metadata.description=service_metadata.description  Description of the sevice
-
-  --service_metadata.email=service_metadata.email              Email of the institution
-
-  --service_metadata.pec=service_metadata.pec                  Pec of the institution
-
-  --service_metadata.phone=service_metadata.phone              Phone number
-
-  --service_metadata.privacy_url=service_metadata.privacy_url  Privacy url
-
-  --service_metadata.scope=NATIONAL|LOCAL                      Scope of the service can be NATIONAL or LOCAL
-
-  --service_metadata.tos_url=service_metadata.tos_url          Term of Service url
-
-  --service_metadata.web_url=service_metadata.web_url          Url of the service
-
-  --service_name=service_name                                  (required) Name of the service
-
-  --version=version                                            Version of the service
+  --json=json  JSON string rapresentation of a service
 
 EXAMPLE
-  $ io-ops api-service:create  --department_name=department_test --organization_fiscal_code=12345670000  
-  --organization_name=organization_name --service_id=test-api-service --service_name=test_api-service
+  $ io-ops api-service:create  --json={ "authorized_cidrs": [], "authorized_recipients": [], "department_name": 
+  "department_test", "organization_fiscal_code": "12345670013", "organization_name": "organization_name", "service_id": 
+  "test-api-123", "service_name": "test_name", "is_visible": false, "max_allowed_payment_amount": 0, 
+  "require_secure_channels": false }
 ```
 
 _See code: [src/commands/api-service/create.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/create.ts)_
@@ -164,7 +123,7 @@ ARGUMENTS
   SERVICEID  id of the service
 
 OPTIONS
-  --logo=logo  (required) Path of logo image to be converter into base64
+  --logo=logo  (required) Path of logo image to be uploaded
 
 EXAMPLE
   $ io-ops SERVICEID --logo ~/PATH/logo.png
@@ -181,54 +140,13 @@ USAGE
   $ io-ops api-service:update
 
 OPTIONS
-  --authorized_cidrs=authorized_cidrs                          Allowed source IPs or CIDRs for this service. String
-                                                               separated by , of single IP or a range of IPs and can be
-                                                               empty
-
-  --authorized_recipients=authorized_recipients                If non empty, the service will be able to send messages
-                                                               only to these fiscal codes. Fiscal code format
-
-  --department_name=department_name                            (required) Name of the department of the organization
-
-  --is_visible                                                 Is the service visible?
-
-  --organization_fiscal_code=organization_fiscal_code          (required) Name of the organization
-
-  --organization_name=organization_name                        (required) Name of the organization
-
-  --require_secure_channels                                    Require secure channel?
-
-  --service_id=service_id                                      (required) Id of the service
-
-  --service_metadata.address=service_metadata.address          Address of the institution
-
-  --service_metadata.app_android=service_metadata.app_android  App android url
-
-  --service_metadata.app_ios=service_metadata.app_ios          App ios url
-
-  --service_metadata.description=service_metadata.description  Description of the sevice
-
-  --service_metadata.email=service_metadata.email              Email of the institution
-
-  --service_metadata.pec=service_metadata.pec                  Pec of the institution
-
-  --service_metadata.phone=service_metadata.phone              Phone number
-
-  --service_metadata.privacy_url=service_metadata.privacy_url  Privacy url
-
-  --service_metadata.scope=NATIONAL|LOCAL                      Scope of the service can be NATIONAL or LOCAL
-
-  --service_metadata.tos_url=service_metadata.tos_url          Term of Service url
-
-  --service_metadata.web_url=service_metadata.web_url          Url of the service
-
-  --service_name=service_name                                  (required) Name of the service
-
-  --version=version                                            Version of the service
+  --json=json  JSON string rapresentation of a service
 
 EXAMPLE
-  $ io-ops api-service:update  --department_name=department_test --organization_fiscal_code=12345670016  
-  --organization_name=organization_name --service_id=test-api-service --service_name=test_api-service
+  $ io-ops api-service:update  --json={ "authorized_cidrs": [], "authorized_recipients": [], "department_name": 
+  "department_test", "organization_fiscal_code": "12345670013", "organization_name": "organization_name", "service_id": 
+  "test-api-123", "service_name": "test_name", "is_visible": false, "max_allowed_payment_amount": 0, 
+  "require_secure_channels": false }
 ```
 
 _See code: [src/commands/api-service/update.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/update.ts)_
