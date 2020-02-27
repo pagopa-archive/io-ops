@@ -16,95 +16,13 @@ export class ServiceUpdate extends Command {
 
   // tslint:disable-next-line: readonly-array
   public static examples = [
-    "$ io-ops api-service:update  --department_name=department_test --organization_fiscal_code=12345670016  --organization_name=organization_name --service_id=test-api-service --service_name=test_api-service"
+    '$ io-ops api-service:update  --json={ "authorized_cidrs": [], "authorized_recipients": [], "department_name": "department_test", "organization_fiscal_code": "12345670013", "organization_name": "organization_name", "service_id": "test-api-123", "service_name": "test_name", "is_visible": false, "max_allowed_payment_amount": 0, "require_secure_channels": false }'
   ];
 
   public static flags = {
-    authorized_cidrs: flags.string({
+    json: flags.string({
       default: "",
-      description:
-        "Allowed source IPs or CIDRs for this service. String separated by , of single IP or a range of IPs and can be empty"
-    }),
-    authorized_recipients: flags.string({
-      default: "",
-      description:
-        "If non empty, the service will be able to send messages only to these fiscal codes. Fiscal code format"
-    }),
-    department_name: flags.string({
-      description: "Name of the department of the organization",
-      required: true
-    }),
-    organization_fiscal_code: flags.string({
-      description: "Name of the organization",
-      required: true
-    }),
-    organization_name: flags.string({
-      description: "Name of the organization",
-      required: true
-    }),
-    service_id: flags.string({
-      description: "Id of the service",
-      required: true
-    }),
-    service_name: flags.string({
-      description: "Name of the service",
-      required: true
-    }),
-    require_secure_channels: flags.boolean({
-      description: "Require secure channel?",
-      default: false
-    }),
-    version: flags.integer({
-      description: "Version of the service"
-    }),
-    is_visible: flags.boolean({
-      description: "Is the service visible?",
-      default: false
-    }),
-    "service_metadata.description": flags.string({
-      description: "Description of the sevice",
-      required: false
-    }),
-    "service_metadata.web_url": flags.string({
-      description: "Url of the service",
-      required: false
-    }),
-    "service_metadata.app_ios": flags.string({
-      description: "App ios url",
-      required: false
-    }),
-    "service_metadata.app_android": flags.string({
-      description: "App android url",
-      required: false
-    }),
-    "service_metadata.tos_url": flags.string({
-      description: "Term of Service url",
-      required: false
-    }),
-    "service_metadata.privacy_url": flags.string({
-      description: "Privacy url",
-      required: false
-    }),
-    "service_metadata.address": flags.string({
-      description: "Address of the institution",
-      required: false
-    }),
-    "service_metadata.phone": flags.string({
-      description: "Phone number",
-      required: false
-    }),
-    "service_metadata.email": flags.string({
-      description: "Email of the institution",
-      required: false
-    }),
-    "service_metadata.pec": flags.string({
-      description: "Pec of the institution",
-      required: false
-    }),
-    "service_metadata.scope": flags.string({
-      description: "Scope of the service can be NATIONAL or LOCAL",
-      required: false,
-      options: ["NATIONAL", "LOCAL"]
+      description: "JSON string rapresentation of a service"
     })
   };
 
@@ -120,8 +38,8 @@ export class ServiceUpdate extends Command {
       }
     );
 
-    const errorOrService: Either<Errors, Service> = flagsToService(
-      commandLineFlags
+    const errorOrService: Either<Errors, Service> = Service.decode(
+      commandLineFlags.json
     );
 
     // I don't like much this nesting of fold
