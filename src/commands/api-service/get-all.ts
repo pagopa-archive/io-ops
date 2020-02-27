@@ -1,4 +1,4 @@
-import Command, { flags } from "@oclif/command";
+import Command from "@oclif/command";
 import * as Parser from "@oclif/parser";
 import chalk from "chalk";
 import cli from "cli-ux";

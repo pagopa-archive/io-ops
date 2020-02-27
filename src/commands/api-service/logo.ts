@@ -26,15 +26,15 @@ export class ServiceLogo extends Command {
 
   public static flags = {
     logo: flags.string({
-      description: "Path of logo image to be converter into base64",
+      description: "Path of logo image to be uploaded",
       required: true
     })
   };
 
   public async run(): Promise<void> {
     const { args } = this.parse(ServiceLogo);
-    // tslint:disable-next-line: no-shadowed-variable
-    const { flags } = this.parse(ServiceLogo);
+
+    const { flags: commandLineFlags } = this.parse(ServiceLogo);
     // tslint:disable-next-line: no-console
     cli.action.start(
       chalk.blue.bold(`Updating logo to service with id: ${args.serviceId}`),
@@ -44,7 +44,7 @@ export class ServiceLogo extends Command {
       }
     );
 
-    this.logoToBase64(flags.logo)
+    this.logoToBase64(commandLineFlags.logo)
       .mapLeft(err => cli.action.stop(chalk.red(`${err}`)))
       .map(base64 =>
         this.put(args.serviceId, base64)
@@ -55,7 +55,7 @@ export class ServiceLogo extends Command {
             resp => {
               resp[0] === "green"
                 ? cli.action.stop(chalk.green(`Response: ${resp[1]}`))
-                : cli.action.stop(chalk.red(`Error ale: ${resp[1]}`));
+                : cli.action.stop(chalk.red(`Error: ${resp[1]}`));
             }
           )
           .run()
@@ -90,6 +90,8 @@ export class ServiceLogo extends Command {
     );
   };
 
+  // given a path on your PC it will transform the file in a
+  // base64 string
   private logoToBase64 = (path: string): IOEither<Error, string> =>
     IOtryCatch(
       () => fs.readFileSync(path, { encoding: "base64" }),

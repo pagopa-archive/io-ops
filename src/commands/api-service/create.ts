@@ -109,8 +109,7 @@ export class ServiceCreate extends Command {
   };
 
   public async run(): Promise<void> {
-    // tslint:disable-next-line: no-shadowed-variable
-    const { flags } = this.parse(ServiceCreate);
+    const { flags: commandLineFlags } = this.parse(ServiceCreate);
 
     cli.action.start(
       chalk.blue.bold(`Creating a service`),
@@ -120,7 +119,9 @@ export class ServiceCreate extends Command {
       }
     );
 
-    const errorOrService: Either<Errors, AdminService> = flagsToService(flags);
+    const errorOrService: Either<Errors, AdminService> = flagsToService(
+      commandLineFlags
+    );
 
     // may be can be a better way without nesting
     // suggestions?

@@ -110,7 +110,7 @@ export class ServiceUpdate extends Command {
 
   public async run(): Promise<void> {
     // tslint:disable-next-line: no-shadowed-variable
-    const { flags } = this.parse(ServiceUpdate);
+    const { flags: commandLineFlags } = this.parse(ServiceUpdate);
 
     cli.action.start(
       chalk.blue.bold(`Updating a service`),
@@ -120,7 +120,9 @@ export class ServiceUpdate extends Command {
       }
     );
 
-    const errorOrService: Either<Errors, Service> = flagsToService(flags);
+    const errorOrService: Either<Errors, Service> = flagsToService(
+      commandLineFlags
+    );
 
     // I don't like much this nesting of fold
     // suggestions?
