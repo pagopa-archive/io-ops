@@ -61,7 +61,7 @@ USAGE
   $ io-ops api-service:create
 
 OPTIONS
-  --json=json  JSON string rapresentation of a service
+  --json=json  (required) JSON string rapresentation of a service
 
 EXAMPLE
   $ io-ops api-service:create  --json={ "authorized_cidrs": [], "authorized_recipients": [], "department_name": 
@@ -140,7 +140,7 @@ USAGE
   $ io-ops api-service:update
 
 OPTIONS
-  --json=json  JSON string rapresentation of a service
+  --json=json  (required) JSON string rapresentation of a service
 
 EXAMPLE
   $ io-ops api-service:update  --json={ "authorized_cidrs": [], "authorized_recipients": [], "department_name": 

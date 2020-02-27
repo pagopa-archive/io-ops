@@ -16,13 +16,13 @@ export class ServiceUpdate extends Command {
 
   // tslint:disable-next-line: readonly-array
   public static examples = [
-    '$ io-ops api-service:update  --json={ "authorized_cidrs": [], "authorized_recipients": [], "department_name": "department_test", "organization_fiscal_code": "12345670013", "organization_name": "organization_name", "service_id": "test-api-123", "service_name": "test_name", "is_visible": false, "max_allowed_payment_amount": 0, "require_secure_channels": false }'
+    `$ io-ops api-service:update  --json='{ "authorized_cidrs": [], "authorized_recipients": [], "department_name": "department_test", "organization_fiscal_code": "12345670013", "organization_name": "organization_name", "service_id": "test-api-123", "service_name": "test_name", "is_visible": false, "max_allowed_payment_amount": 0, "require_secure_channels": false }'`
   ];
 
   public static flags = {
     json: flags.string({
-      default: "",
-      description: "JSON string rapresentation of a service"
+      description: "JSON string rapresentation of a service",
+      required: true
     })
   };
 
