@@ -9,7 +9,6 @@ import { Errors } from "io-ts";
 import { errorsToReadableMessages } from "italia-ts-commons/lib/reporters";
 import fetch from "node-fetch";
 import { Service as AdminService } from "../../generated/Service";
-import { flagsToService } from "../../utils/service-utils";
 
 export class ServiceCreate extends Command {
   public static description = "Create a service";

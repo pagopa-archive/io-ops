@@ -45,6 +45,7 @@ USAGE
 * [`io-ops messages:attributes`](#io-ops-messagesattributes)
 * [`io-ops messages:check-content`](#io-ops-messagescheck-content)
 * [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
+* [`io-ops migrate`](#io-ops-migrate)
 * [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete-fiscalcode)
 * [`io-ops profiles:exist`](#io-ops-profilesexist)
 * [`io-ops profiles:list`](#io-ops-profileslist)
@@ -64,10 +65,10 @@ OPTIONS
   --json=json  (required) JSON string rapresentation of a service
 
 EXAMPLE
-  $ io-ops api-service:create  --json={ "authorized_cidrs": [], "authorized_recipients": [], "department_name": 
+  $ io-ops api-service:create  --json='{ "authorized_cidrs": [], "authorized_recipients": [], "department_name": 
   "department_test", "organization_fiscal_code": "12345670013", "organization_name": "organization_name", "service_id": 
   "test-api-123", "service_name": "test_name", "is_visible": false, "max_allowed_payment_amount": 0, 
-  "require_secure_channels": false }
+  "require_secure_channels": false }'
 ```
 
 _See code: [src/commands/api-service/create.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/create.ts)_
@@ -143,10 +144,10 @@ OPTIONS
   --json=json  (required) JSON string rapresentation of a service
 
 EXAMPLE
-  $ io-ops api-service:update  --json={ "authorized_cidrs": [], "authorized_recipients": [], "department_name": 
+  $ io-ops api-service:update  --json='{ "authorized_cidrs": [], "authorized_recipients": [], "department_name": 
   "department_test", "organization_fiscal_code": "12345670013", "organization_name": "organization_name", "service_id": 
   "test-api-123", "service_name": "test_name", "is_visible": false, "max_allowed_payment_amount": 0, 
-  "require_secure_channels": false }
+  "require_secure_channels": false }'
 ```
 
 _See code: [src/commands/api-service/update.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/update.ts)_
@@ -239,6 +240,17 @@ OPTIONS
 ```
 
 _See code: [src/commands/messages/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/messages/list.ts)_
+
+## `io-ops migrate`
+
+Migrate data from github
+
+```
+USAGE
+  $ io-ops migrate
+```
+
+_See code: [src/commands/migrate.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/migrate.ts)_
 
 ## `io-ops profiles:delete FISCALCODE`
 
