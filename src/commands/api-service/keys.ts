@@ -2,6 +2,7 @@ import Command from "@oclif/command";
 import * as Parser from "@oclif/parser";
 import chalk from "chalk";
 import cli from "cli-ux";
+import { toError } from "fp-ts/lib/Either";
 import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
@@ -55,7 +56,7 @@ export class ServiceGet extends Command {
             }
           }
         ).then(res => res.text()),
-      reason => new Error(String(reason))
+      toError
     );
   };
 }

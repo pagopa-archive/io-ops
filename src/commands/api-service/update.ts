@@ -1,7 +1,7 @@
 import Command, { flags } from "@oclif/command";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { Either } from "fp-ts/lib/Either";
+import { Either, toError } from "fp-ts/lib/Either";
 import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
@@ -9,7 +9,6 @@ import { Errors } from "io-ts";
 import { errorsToReadableMessages } from "italia-ts-commons/lib/reporters";
 import fetch from "node-fetch";
 import { Service } from "../../generated/Service";
-import { flagsToService } from "../../utils/service-utils";
 
 export class ServiceUpdate extends Command {
   public static description = "Update a service";
@@ -78,7 +77,7 @@ export class ServiceUpdate extends Command {
             method: "put"
           }
         ).then(res => res.text()),
-      reason => new Error(String(reason))
+      toError
     );
   };
 }

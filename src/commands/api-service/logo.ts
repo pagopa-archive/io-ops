@@ -2,6 +2,7 @@ import Command, { flags } from "@oclif/command";
 import * as Parser from "@oclif/parser";
 import chalk from "chalk";
 import cli from "cli-ux";
+import { toError } from "fp-ts/lib/Either";
 import { IOEither, tryCatch as IOtryCatch } from "fp-ts/lib/IOEither";
 import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 import * as fs from "fs";
@@ -86,7 +87,7 @@ export class ServiceLogo extends Command {
                 : ["red", result]
             )
         ),
-      reason => new Error(String(reason))
+      toError
     );
   };
 

@@ -71,6 +71,6 @@ export class ServiceCreate extends Command {
           },
           method: "post"
         }).then(res => res.text()),
-      reason => new Error(String(reason))
+      toError
     );
 }
