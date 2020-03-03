@@ -4,7 +4,7 @@ import chalk from "chalk";
 import cli from "cli-ux";
 import { toError } from "fp-ts/lib/Either";
 import { IOEither, tryCatch as IOtryCatch } from "fp-ts/lib/IOEither";
-import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
+import { tryCatch } from "fp-ts/lib/TaskEither";
 import * as fs from "fs";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
