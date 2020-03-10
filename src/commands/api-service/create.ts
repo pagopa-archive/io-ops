@@ -21,7 +21,8 @@ export class ServiceCreate extends Command {
   public static flags = {
     json: flags.string({
       description: "JSON string rapresentation of a service",
-      required: true
+      required: true,
+      parse: input => JSON.parse(input)
     })
   };
 
