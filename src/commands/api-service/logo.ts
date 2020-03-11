@@ -14,7 +14,9 @@ export class ServiceLogo extends Command {
   public static description = "Update service data with base64 of the logo";
 
   // tslint:disable-next-line: readonly-array
-  public static examples = ["$ io-ops SERVICEID --logo ~/PATH/logo.png"];
+  public static examples = [
+    "$ io-ops api-service:logo SERVICEID --logo ~/PATH/logo.png"
+  ];
 
   // tslint:disable-next-line: readonly-array
   public static args: Parser.args.IArg[] = [

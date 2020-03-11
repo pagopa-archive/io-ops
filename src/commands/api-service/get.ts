@@ -12,6 +12,9 @@ export class ServiceGet extends Command {
   public static description = "Get the service by serviceId";
 
   // tslint:disable-next-line: readonly-array
+  public static examples = [`$ io-ops api-service:get  SERVICEID`];
+
+  // tslint:disable-next-line: readonly-array
   public static args: Parser.args.IArg[] = [
     {
       description: "id of the service",

@@ -1,4 +1,4 @@
-import Command from "@oclif/command";
+import Command, { flags } from "@oclif/command";
 import * as Parser from "@oclif/parser";
 import chalk from "chalk";
 import cli from "cli-ux";
@@ -8,22 +8,34 @@ import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import fetch from "node-fetch";
 
-export class ServiceGet extends Command {
-  public static description = "Get all services";
+export class UsersGet extends Command {
+  public static description =
+    "Get users max 100 per call use cursor for iterating";
 
   // tslint:disable-next-line: readonly-array
-  public static examples = ["$ io-ops api-service:get-all"];
+  public static examples = [
+    "$ io-ops users:get-all",
+    "$ io-ops users:get-all --cursor=100"
+  ];
+
+  public static flags = {
+    cursor: flags.integer({
+      description: "Items to skip",
+      required: false
+    })
+  };
 
   public async run(): Promise<void> {
+    const { flags: commandLineFlags } = this.parse(UsersGet);
     // tslint:disable-next-line: no-console
     cli.action.start(
-      chalk.blue.bold(`Getting all services`),
+      chalk.blue.bold(`Getting users`),
       chalk.blueBright.bold("Running"),
       {
         stdout: true
       }
     );
-    return this.get()
+    return this.get(commandLineFlags.cursor)
       .fold(
         error => {
           cli.action.stop(chalk.red(`Error : ${error}`));
@@ -35,10 +47,11 @@ export class ServiceGet extends Command {
       .run();
   }
 
-  private get = (): TaskEither<Error, string> => {
+  private get = (cursor?: number): TaskEither<Error, string> => {
+    const queryParam = cursor ? `?cursor=${cursor}` : "";
     return tryCatch(
       () =>
-        fetch(`${getRequiredStringEnv("BASE_URL_ADMIN")}/services`, {
+        fetch(`${getRequiredStringEnv("BASE_URL_ADMIN")}/users${queryParam}`, {
           headers: {
             "Ocp-Apim-Subscription-Key": getRequiredStringEnv("OCP_APIM")
           }

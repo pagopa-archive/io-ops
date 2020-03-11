@@ -8,33 +8,33 @@ import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import fetch from "node-fetch";
 
-export class Keys extends Command {
-  public static description = "Get subscription keys associated to service";
+export class UserGet extends Command {
+  public static description =
+    "Gets the user information, that is the complete list of subscription and the complete list of groups for the User identified by the provided email";
 
   // tslint:disable-next-line: readonly-array
-  public static examples = [`$ io-ops api-service:keys SERVICEID`];
+  public static examples = ["$ io-ops users:get example@example.it"];
 
   // tslint:disable-next-line: readonly-array
   public static args: Parser.args.IArg[] = [
     {
-      description: "id of the service",
-      name: "serviceId",
+      description: "email",
+      name: "email",
       required: true
     }
   ];
 
   public async run(): Promise<void> {
-    // can get args as an object
-    const { args } = this.parse(Keys);
+    const { args } = this.parse(UserGet);
     // tslint:disable-next-line: no-console
     cli.action.start(
-      chalk.blue.bold(`Getting keys for service ${args.serviceId}`),
+      chalk.blue.bold(`Getting user by ${args.email}`),
       chalk.blueBright.bold("Running"),
       {
         stdout: true
       }
     );
-    return this.get(args.serviceId)
+    return this.get(args.email)
       .fold(
         error => {
           cli.action.stop(chalk.red(`Error : ${error}`));
@@ -46,19 +46,14 @@ export class Keys extends Command {
       .run();
   }
 
-  private get = (serviceId: string): TaskEither<Error, string> => {
+  private get = (email: string): TaskEither<Error, string> => {
     return tryCatch(
       () =>
-        fetch(
-          `${getRequiredStringEnv(
-            "BASE_URL_ADMIN"
-          )}/services/${serviceId}/keys`,
-          {
-            headers: {
-              "Ocp-Apim-Subscription-Key": getRequiredStringEnv("OCP_APIM")
-            }
+        fetch(`${getRequiredStringEnv("BASE_URL_ADMIN")}/users/${email}`, {
+          headers: {
+            "Ocp-Apim-Subscription-Key": getRequiredStringEnv("OCP_APIM")
           }
-        ).then(res => res.text()),
+        }).then(res => res.text()),
       toError
     );
   };
