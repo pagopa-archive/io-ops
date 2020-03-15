@@ -11,6 +11,22 @@ import { sequential } from "../../utils/promise";
 const fiscalCodeParamName = "@fiscalCode";
 const messageIdParamName = "@messageId";
 
+// define an operation to execute on azure to retrieve profile data
+interface IOperation {
+  name: string;
+  container: string;
+  query: string;
+  whereValue: string;
+  enableCrossPartitionQuery: boolean;
+}
+
+// define the result of an Operation
+interface IOperationResult {
+  name: string;
+  // tslint:disable-next-line: no-any
+  items: ReadonlyArray<any>;
+}
+
 export default class ProfileExport extends Command {
   public static description = "Dump a profile data into a zip file";
 
@@ -60,14 +76,6 @@ export default class ProfileExport extends Command {
 
     cli.action.start("Retrieving user profiles...");
 
-    interface IOperation {
-      name: string;
-      container: string;
-      query: string;
-      whereValue: string;
-      enableCrossPartitionQuery: boolean;
-    }
-
     const profiles = "profiles";
     const messages = "messages";
     const notifications = "notifications";
@@ -104,11 +112,6 @@ export default class ProfileExport extends Command {
       }
     ];
 
-    interface IOperationResult {
-      name: string;
-      // tslint:disable-next-line: no-any
-      items: ReadonlyArray<any>;
-    }
     const items: ReadonlyArray<IOperationResult> = await sequential(
       operations,
       async (op: IOperation) => {
@@ -124,12 +127,15 @@ export default class ProfileExport extends Command {
         return { name: op.name, items: retrievedItems };
       }
     );
+
+    // dumpData contains all date to be dumped in a zip file
     // tslint:disable-next-line: readonly-array
     const dumpData = [...items];
     const messagesItems = items.find(
       i => i.name === messages && i.items.length > 0
     );
 
+    // if there are message, retrieve all related messages status
     if (messagesItems) {
       cli.action.start("Retrieving user messages status...");
       const result = await sequential(
