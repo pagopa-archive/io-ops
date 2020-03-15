@@ -83,7 +83,7 @@ export default class ProfileDelete extends Command {
     const { args, flags: parsedFlags } = this.parse(ProfileDelete);
     const fiscalCodeOrErrors = FiscalCode.decode(args.fiscalCode);
     if (fiscalCodeOrErrors.isLeft()) {
-      this.error("the provided valid fiscal code is not valid");
+      this.error("the provided fiscal code is not valid");
       return;
     }
     const fiscalCode = fiscalCodeOrErrors.value;
