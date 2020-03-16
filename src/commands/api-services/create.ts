@@ -2,10 +2,9 @@ import Command, { flags } from "@oclif/command";
 import chalk from "chalk";
 import cli from "cli-ux";
 import { Either, toError } from "fp-ts/lib/Either";
-import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
+import { fromEither, TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
-import { Errors } from "io-ts";
 import { errorsToReadableMessages } from "italia-ts-commons/lib/reporters";
 import fetch from "node-fetch";
 import { Service as AdminService } from "../../generated/Service";
@@ -37,27 +36,21 @@ export class ServiceCreate extends Command {
       }
     );
 
-    const errorOrService: Either<Errors, AdminService> = AdminService.decode(
+    const errorOrService: Either<Error, AdminService> = AdminService.decode(
       JSON.parse(commandLineFlags.json)
-    );
+    ).mapLeft(errors => Error(errorsToReadableMessages(errors).join(" /")));
 
-    errorOrService.fold(
-      error =>
-        cli.action.stop(
-          chalk.red(`Error : ${errorsToReadableMessages(error)}`)
-        ),
-      service =>
-        this.post(service)
-          .fold(
-            error => {
-              cli.action.stop(chalk.red(`Error : ${error}`));
-            },
-            result => {
-              cli.action.stop(chalk.green(`Response: ${result}`));
-            }
-          )
-          .run()
-    );
+    fromEither(errorOrService)
+      .chain(this.post)
+      .fold(
+        error => {
+          cli.action.stop(chalk.red(`Error : ${error}`));
+        },
+        result => {
+          cli.action.stop(chalk.green(`Response: ${result}`));
+        }
+      )
+      .run();
   }
 
   private post = (service: AdminService): TaskEither<Error, string> =>
