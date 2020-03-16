@@ -40,7 +40,7 @@ export class ServiceCreate extends Command {
       JSON.parse(commandLineFlags.json)
     ).mapLeft(errors => Error(errorsToReadableMessages(errors).join(" /")));
 
-    fromEither(errorOrService)
+    await fromEither(errorOrService)
       .chain(this.post)
       .fold(
         error => {

@@ -66,7 +66,7 @@ export class Migrate extends Command {
           error => {
             cli.action.stop(chalk.red(`Error : ${error}`));
           },
-          result => {
+          () => {
             cli.action.stop(chalk.green(`Services Updated`));
           }
         )
@@ -78,7 +78,7 @@ export class Migrate extends Command {
           error => {
             cli.action.stop(chalk.red(`Error : ${error}`));
           },
-          result => {
+          () => {
             cli.action.stop(chalk.green(`Logos Updated`));
           }
         )
@@ -149,7 +149,7 @@ export class Migrate extends Command {
           .then(buf => {
             return buf.toString("base64");
           })
-          .catch(error => {
+          .catch(() => {
             return "";
           }),
       toError
@@ -185,7 +185,7 @@ export class Migrate extends Command {
             method: "put"
           }
         ).then(resp =>
-          resp.text().then(result => {
+          resp.text().then(() => {
             if (resp.ok) {
               return cli.log(
                 chalk.green(`Updated logo for service: ${serviceId}`)
