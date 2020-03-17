@@ -42,8 +42,6 @@ export class ServiceUpdate extends Command {
       commandLineFlags.json
     );
 
-    // I don't like much this nesting of fold
-    // suggestions?
     errorOrService.fold(
       error =>
         cli.action.stop(

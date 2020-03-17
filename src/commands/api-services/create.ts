@@ -41,8 +41,6 @@ export class ServiceCreate extends Command {
       JSON.parse(commandLineFlags.json)
     );
 
-    // may be can be a better way without nesting
-    // suggestions?
     errorOrService.fold(
       error =>
         cli.action.stop(

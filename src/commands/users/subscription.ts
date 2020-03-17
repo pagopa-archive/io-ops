@@ -7,6 +7,7 @@ import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import fetch from "node-fetch";
+import { ProductNamePayload } from "../../generated/ProductNamePayload";
 
 export class UserSubscriptionCreate extends Command {
   public static description =
@@ -74,7 +75,10 @@ export class UserSubscriptionCreate extends Command {
     subscriptionId: readonly string[],
     productName?: string
   ): TaskEither<Error, string> => {
-    const product = productName ? { product_name: productName } : {};
+    const productNamePayload = productName
+      ? ProductNamePayload.decode({ product_name: productName })
+      : {};
+
     const options = {
       ...{
         headers: {
@@ -82,7 +86,7 @@ export class UserSubscriptionCreate extends Command {
         },
         method: "put"
       },
-      ...product
+      ...productNamePayload
     };
 
     return tryCatch(

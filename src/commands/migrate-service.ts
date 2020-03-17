@@ -2,8 +2,10 @@ import Command from "@oclif/command";
 import chalk from "chalk";
 import cli from "cli-ux";
 import { array } from "fp-ts/lib/Array";
+import { flatten } from "fp-ts/lib/Chain";
 import { toError } from "fp-ts/lib/Either";
 import {
+  fromEither,
   TaskEither,
   taskEither,
   taskEitherSeq,
@@ -11,10 +13,19 @@ import {
 } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
+import { errorsToReadableMessages } from "italia-ts-commons/lib/reporters";
 import { safeLoad } from "js-yaml";
 import fetch from "node-fetch";
 import { Service } from "../generated/Service";
+import { ServiceMetadata } from "../generated/ServiceMetadata";
 
+// This command is used to migrate services metadata or logos from github
+// @see https://github.com/pagopa/io-services-metadata to cosmosDB. For metadata
+// it iterates on https://github.com/pagopa/io-services-metadata/blob/master/services.yml
+// for all metadata services and will update the service identified by ID. Moreover,
+// the command can also save the logo saved in the same repo into a CDN using the
+// related API. In this case it will fallback if the service has no logo it will fallback
+// with organization logo looking for into the same github repository.
 export class Migrate extends Command {
   public static description = "Migrate metadata or logos from github";
 

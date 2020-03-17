@@ -7,6 +7,8 @@ import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import fetch from "node-fetch";
+import { SubscriptionKeyTypePayload } from "../../generated/SubscriptionKeyTypePayload";
+import { SubscriptionKeyTypeEnum } from "../../generated/SubscriptionKeyType";
 
 export class KeyRegenerate extends Command {
   public static description = "Regenerate keys associated to service";
@@ -44,6 +46,7 @@ export class KeyRegenerate extends Command {
         stdout: true
       }
     );
+
     return this.put(args.serviceId, commandLineFlags.key_type)
       .fold(
         error => {
@@ -60,6 +63,10 @@ export class KeyRegenerate extends Command {
     serviceId: string,
     keyType: string
   ): TaskEither<Error, string> => {
+    const keyTypePayload = SubscriptionKeyTypePayload.encode({
+      key_type: keyType as SubscriptionKeyTypeEnum
+    });
+
     return tryCatch(
       () =>
         fetch(
@@ -67,7 +74,7 @@ export class KeyRegenerate extends Command {
             "BASE_URL_ADMIN"
           )}/services/${serviceId}/keys`,
           {
-            body: JSON.stringify({ key_type: keyType }),
+            body: JSON.stringify(keyTypePayload),
             headers: {
               "Ocp-Apim-Subscription-Key": getRequiredStringEnv("OCP_APIM")
             },

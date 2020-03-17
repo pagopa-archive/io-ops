@@ -34,37 +34,38 @@ USAGE
 # Commands
 
 <!-- commands -->
-* [`io-ops api-service:create`](#io-ops-api-servicecreate)
-* [`io-ops api-service:get SERVICEID`](#io-ops-api-serviceget-serviceid)
-* [`io-ops api-service:get-all`](#io-ops-api-serviceget-all)
-* [`io-ops api-service:keys SERVICEID`](#io-ops-api-servicekeys-serviceid)
-* [`io-ops api-service:keys-regenerate SERVICEID`](#io-ops-api-servicekeys-regenerate-serviceid)
-* [`io-ops api-service:logo SERVICEID`](#io-ops-api-servicelogo-serviceid)
-* [`io-ops api-service:update`](#io-ops-api-serviceupdate)
+* [`io-ops api-services:create`](#io-ops-api-servicescreate)
+* [`io-ops api-services:get SERVICEID`](#io-ops-api-servicesget-serviceid)
+* [`io-ops api-services:get-all`](#io-ops-api-servicesget-all)
+* [`io-ops api-services:keys SERVICEID`](#io-ops-api-serviceskeys-serviceid)
+* [`io-ops api-services:keys-regenerate SERVICEID`](#io-ops-api-serviceskeys-regenerate-serviceid)
+* [`io-ops api-services:logo SERVICEID`](#io-ops-api-serviceslogo-serviceid)
+* [`io-ops api-services:update`](#io-ops-api-servicesupdate)
 * [`io-ops hello`](#io-ops-hello)
 * [`io-ops help [COMMAND]`](#io-ops-help-command)
 * [`io-ops messages:attributes`](#io-ops-messagesattributes)
 * [`io-ops messages:check-content`](#io-ops-messagescheck-content)
 * [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
-* [`io-ops migrate METADATA`](#io-ops-migrate-metadata)
+* [`io-ops migrate-service METADATA`](#io-ops-migrate-service-metadata)
 * [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete-fiscalcode)
 * [`io-ops profiles:exist`](#io-ops-profilesexist)
 * [`io-ops profiles:list`](#io-ops-profileslist)
 * [`io-ops services:check`](#io-ops-servicescheck)
 * [`io-ops services:details`](#io-ops-servicesdetails)
 * [`io-ops services:list`](#io-ops-serviceslist)
+* [`io-ops users:create`](#io-ops-userscreate)
 * [`io-ops users:get EMAIL`](#io-ops-usersget-email)
 * [`io-ops users:get-all`](#io-ops-usersget-all)
 * [`io-ops users:subscription EMAIL SUBSCRIPTIONID`](#io-ops-userssubscription-email-subscriptionid)
 * [`io-ops users:update-groups EMAIL`](#io-ops-usersupdate-groups-email)
 
-## `io-ops api-service:create`
+## `io-ops api-services:create`
 
 Create a service
 
 ```
 USAGE
-  $ io-ops api-service:create
+  $ io-ops api-services:create
 
 OPTIONS
   --json=json  (required) JSON string rapresentation of a service
@@ -76,15 +77,15 @@ EXAMPLE
   "require_secure_channels": false }'
 ```
 
-_See code: [src/commands/api-service/create.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/create.ts)_
+_See code: [src/commands/api-services/create.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-services/create.ts)_
 
-## `io-ops api-service:get SERVICEID`
+## `io-ops api-services:get SERVICEID`
 
 Get the service by serviceId
 
 ```
 USAGE
-  $ io-ops api-service:get SERVICEID
+  $ io-ops api-services:get SERVICEID
 
 ARGUMENTS
   SERVICEID  id of the service
@@ -93,29 +94,29 @@ EXAMPLE
   $ io-ops api-service:get  SERVICEID
 ```
 
-_See code: [src/commands/api-service/get.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/get.ts)_
+_See code: [src/commands/api-services/get.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-services/get.ts)_
 
-## `io-ops api-service:get-all`
+## `io-ops api-services:get-all`
 
 Get all services
 
 ```
 USAGE
-  $ io-ops api-service:get-all
+  $ io-ops api-services:get-all
 
 EXAMPLE
   $ io-ops api-service:get-all
 ```
 
-_See code: [src/commands/api-service/get-all.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/get-all.ts)_
+_See code: [src/commands/api-services/get-all.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-services/get-all.ts)_
 
-## `io-ops api-service:keys SERVICEID`
+## `io-ops api-services:keys SERVICEID`
 
 Get subscription keys associated to service
 
 ```
 USAGE
-  $ io-ops api-service:keys SERVICEID
+  $ io-ops api-services:keys SERVICEID
 
 ARGUMENTS
   SERVICEID  id of the service
@@ -124,15 +125,15 @@ EXAMPLE
   $ io-ops api-service:keys SERVICEID
 ```
 
-_See code: [src/commands/api-service/keys.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/keys.ts)_
+_See code: [src/commands/api-services/keys.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-services/keys.ts)_
 
-## `io-ops api-service:keys-regenerate SERVICEID`
+## `io-ops api-services:keys-regenerate SERVICEID`
 
 Regenerate keys associated to service
 
 ```
 USAGE
-  $ io-ops api-service:keys-regenerate SERVICEID
+  $ io-ops api-services:keys-regenerate SERVICEID
 
 ARGUMENTS
   SERVICEID  id of the service
@@ -144,15 +145,15 @@ EXAMPLE
   $ io-ops api-service:keys-regenerate  SERVICEID --key_type=PRIMARY_KEY
 ```
 
-_See code: [src/commands/api-service/keys-regenerate.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/keys-regenerate.ts)_
+_See code: [src/commands/api-services/keys-regenerate.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-services/keys-regenerate.ts)_
 
-## `io-ops api-service:logo SERVICEID`
+## `io-ops api-services:logo SERVICEID`
 
 Update service data with base64 of the logo
 
 ```
 USAGE
-  $ io-ops api-service:logo SERVICEID
+  $ io-ops api-services:logo SERVICEID
 
 ARGUMENTS
   SERVICEID  id of the service
@@ -164,15 +165,15 @@ EXAMPLE
   $ io-ops api-service:logo SERVICEID --logo ~/PATH/logo.png
 ```
 
-_See code: [src/commands/api-service/logo.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/logo.ts)_
+_See code: [src/commands/api-services/logo.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-services/logo.ts)_
 
-## `io-ops api-service:update`
+## `io-ops api-services:update`
 
 Update a service
 
 ```
 USAGE
-  $ io-ops api-service:update
+  $ io-ops api-services:update
 
 OPTIONS
   --json=json  (required) JSON string rapresentation of a service
@@ -184,7 +185,7 @@ EXAMPLE
   "require_secure_channels": false }'
 ```
 
-_See code: [src/commands/api-service/update.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-service/update.ts)_
+_See code: [src/commands/api-services/update.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-services/update.ts)_
 
 ## `io-ops hello`
 
@@ -275,13 +276,13 @@ OPTIONS
 
 _See code: [src/commands/messages/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/messages/list.ts)_
 
-## `io-ops migrate METADATA`
+## `io-ops migrate-service METADATA`
 
 Migrate metadata or logos from github
 
 ```
 USAGE
-  $ io-ops migrate METADATA
+  $ io-ops migrate-service METADATA
 
 ARGUMENTS
   METADATA  (metadata|logo) Migrate metadata or logo from github
@@ -291,7 +292,7 @@ EXAMPLES
   $ io-ops migrate logo
 ```
 
-_See code: [src/commands/migrate.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/migrate.ts)_
+_See code: [src/commands/migrate-service.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/migrate-service.ts)_
 
 ## `io-ops profiles:delete FISCALCODE`
 
@@ -388,6 +389,23 @@ USAGE
 
 _See code: [src/commands/services/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/list.ts)_
 
+## `io-ops users:create`
+
+Create a new user with a random password in the Active Directory Azure B2C, then create a corresponding user on the API management resource.
+
+```
+USAGE
+  $ io-ops users:create
+
+OPTIONS
+  --json=json  (required) JSON string rapresentation of a user
+
+EXAMPLE
+  $ io-ops api-service:create  --json='{ "email": "foobar@example.com","first_name": "string","last_name": "string"}'
+```
+
+_See code: [src/commands/users/create.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/users/create.ts)_
+
 ## `io-ops users:get EMAIL`
 
 Gets the user information, that is the complete list of subscription and the complete list of groups for the User identified by the provided email
@@ -417,7 +435,7 @@ OPTIONS
   --cursor=cursor  Items to skip
 
 EXAMPLES
-  $ io-ops users:get-all --cursor=1
+  $ io-ops users:get-all
   $ io-ops users:get-all --cursor=100
 ```
 

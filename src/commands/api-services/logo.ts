@@ -9,6 +9,8 @@ import * as fs from "fs";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import fetch from "node-fetch";
+import { Logo } from "../../generated/Logo";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 
 export class ServiceLogo extends Command {
   public static description = "Update service data with base64 of the logo";
@@ -67,6 +69,9 @@ export class ServiceLogo extends Command {
   }
 
   private put = (serviceId: string, base64Logo: string) => {
+    const logoPayload = Logo.encode({
+      logo: base64Logo as NonEmptyString
+    });
     return tryCatch(
       () =>
         fetch(
@@ -74,7 +79,7 @@ export class ServiceLogo extends Command {
             "BASE_URL_ADMIN"
           )}/services/${serviceId}/logo`,
           {
-            body: JSON.stringify({ logo: base64Logo }),
+            body: JSON.stringify(logoPayload),
             headers: {
               "Ocp-Apim-Subscription-Key": getRequiredStringEnv("OCP_APIM")
             },
