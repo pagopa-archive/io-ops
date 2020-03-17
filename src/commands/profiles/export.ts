@@ -261,24 +261,26 @@ export default class ProfileExport extends Command {
     blobName: string
     // tslint:disable-next-line: no-any
   ): Promise<any> {
-    return new Promise((res, rej) => {
-      // get the blob service
-      const blobService = storage.createBlobService(storageConnection);
-      blobService.getBlobToText(
-        storageMessagesContainer,
-        blobName,
-        (
-          error: Error,
-          text: string,
-          _: BlobService.BlobResult,
-          __: ServiceResponse
-        ) => {
-          if (error !== null) {
-            rej(error);
+    return new Promise(
+      (res: (value: string) => void, rej: (err: Error) => void) => {
+        // get the blob service
+        const blobService = storage.createBlobService(storageConnection);
+        blobService.getBlobToText(
+          storageMessagesContainer,
+          blobName,
+          (
+            error: Error,
+            text: string,
+            _: BlobService.BlobResult,
+            __: ServiceResponse
+          ) => {
+            if (error !== null) {
+              rej(error);
+            }
+            res(JSON.parse(text));
           }
-          res(JSON.parse(text));
-        }
-      );
-    });
+        );
+      }
+    );
   }
 }
