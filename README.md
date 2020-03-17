@@ -11,9 +11,20 @@ IO operations tool
 
 <!-- toc -->
 * [io-ops](#io-ops)
+* [Requirements](#requirements)
 * [Usage](#usage)
 * [Commands](#commands)
 <!-- tocstop -->
+
+# Requirements
+
+### Environment variables
+The environment variables required by the application are listed in the table below.
+
+| Variable name                     | Description                                                                       | type   |
+|-----------------------------------|-----------------------------------------------------------------------------------|--------|
+| BASE_URL_ADMIN                    | The URL of the admin functions API                                                | string |
+| OCP_APIM                          | The key used to authenticate to the admin functions API                           | string |
 
 # Usage
 
@@ -23,7 +34,7 @@ $ npm install -g io-ops
 $ io-ops COMMAND
 running command...
 $ io-ops (-v|--version|version)
-io-ops/0.2.0 darwin-x64 node-v12.14.0
+io-ops/0.2.0 darwin-x64 node-v10.14.1
 $ io-ops --help [COMMAND]
 USAGE
   $ io-ops COMMAND
