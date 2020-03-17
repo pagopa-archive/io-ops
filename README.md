@@ -44,6 +44,7 @@ USAGE
 - [`io-ops messages:check-content`](#io-ops-messagescheck-content)
 - [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
 - [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete-fiscalcode)
+- [`io-ops profiles:export FISCALCODE`](#io-ops-profilesexport-fiscalcode)
 - [`io-ops profiles:exist`](#io-ops-profilesexist)
 - [`io-ops profiles:list`](#io-ops-profileslist)
 - [`io-ops services:details`](#io-ops-servicesdetails)
@@ -155,17 +156,34 @@ OPTIONS
 
 _See code: [src/commands/profiles/delete.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/profiles/delete.ts)_
 
+## `io-ops profiles:export FISCALCODE`
+
+Dump a profile's data into a zip archive
+
+```
+USAGE
+\$ io-ops profiles:export FISCALCODE
+
+OPTIONS
+-o, --output=output [default: .] output folder
+
+```
+
+_See code: [src/commands/profiles/export.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/profiles/export.ts)_
+
 ## `io-ops profiles:exist`
 
 Returns the input CSV with a new column that is true if a profile for that fiscal code exists.
 
 ```
+
 USAGE
-  $ io-ops profiles:exist
+\$ io-ops profiles:exist
 
 OPTIONS
-  -i, --input=input        Input file (CSV, with the CF as first column) - defaults to stdin
-  -p, --parallel=parallel  [default: 1] Number of parallel workers to run
+-i, --input=input Input file (CSV, with the CF as first column) - defaults to stdin
+-p, --parallel=parallel [default: 1] Number of parallel workers to run
+
 ```
 
 _See code: [src/commands/profiles/exist.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/profiles/exist.ts)_
@@ -175,17 +193,19 @@ _See code: [src/commands/profiles/exist.ts](https://github.com/teamdigitale/io-o
 Lists all profiles
 
 ```
+
 USAGE
-  $ io-ops profiles:list
+\$ io-ops profiles:list
 
 OPTIONS
-  -x, --extended     show extra columns
-  --columns=columns  only show provided columns (comma-separated)
-  --csv              output is csv format
-  --filter=filter    filter property by partial string matching, ex: name=foo
-  --no-header        hide table header from output
-  --no-truncate      do not truncate output to fit screen
-  --sort=sort        property to sort by (prepend '-' for descending)
+-x, --extended show extra columns
+--columns=columns only show provided columns (comma-separated)
+--csv output is csv format
+--filter=filter filter property by partial string matching, ex: name=foo
+--no-header hide table header from output
+--no-truncate do not truncate output to fit screen
+--sort=sort property to sort by (prepend '-' for descending)
+
 ```
 
 _See code: [src/commands/profiles/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/profiles/list.ts)_
@@ -195,11 +215,13 @@ _See code: [src/commands/profiles/list.ts](https://github.com/teamdigitale/io-op
 Retrieve service info and metadata from a given service ID
 
 ```
+
 USAGE
-  $ io-ops services:details
+\$ io-ops services:details
 
 OPTIONS
-  -i, --serviceId=serviceId  The service ID
+-i, --serviceId=serviceId The service ID
+
 ```
 
 _See code: [src/commands/services/details.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/details.ts)_
@@ -209,10 +231,16 @@ _See code: [src/commands/services/details.ts](https://github.com/teamdigitale/io
 List all services in csv format
 
 ```
+
 USAGE
-  $ io-ops services:list
+\$ io-ops services:list
+
 ```
 
 _See code: [src/commands/services/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/list.ts)_
 
 <!-- commandsstop -->
+
+```
+
+```
