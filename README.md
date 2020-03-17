@@ -169,7 +169,7 @@ OPTIONS
 
 ```
 
-_See code: [src/commands/profiles/export.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/profiles/export.ts)_
+_See code: [src/commands/profiles/export.ts](https://github.com/pagopa/io-ops/blob/master/src/commands/profiles/delete.ts)_
 
 ## `io-ops profiles:exist`
 
