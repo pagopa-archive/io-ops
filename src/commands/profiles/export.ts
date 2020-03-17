@@ -68,7 +68,7 @@ export default class ProfileExport extends Command {
       this.error(`this output folder "${outputFolder}" doesn't exist`);
     }
 
-    const fiscalCode = fiscalCodeOrErrors.value;
+    const fiscalCode = fiscalCodeOrErrors.value as string;
     // ask to pick desidered azure configuration
     const azureConfig = await pickAzureConfig();
 
@@ -244,7 +244,8 @@ export default class ProfileExport extends Command {
       const result = (await response.toArray()).result;
       return fromNullable(result).getOrElse([]);
     } catch (error) {
-      cli.error(error.message);
+      cli.log(error);
+      return [];
     }
   }
 
