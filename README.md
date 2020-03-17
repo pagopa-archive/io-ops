@@ -44,6 +44,7 @@ USAGE
 - [`io-ops messages:check-content`](#io-ops-messagescheck-content)
 - [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
 - [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete-fiscalcode)
+- [`io-ops profiles:export FISCALCODE`](#io-ops-profilesexport-fiscalcode)
 - [`io-ops profiles:exist`](#io-ops-profilesexist)
 - [`io-ops profiles:list`](#io-ops-profileslist)
 - [`io-ops services:details`](#io-ops-servicesdetails)
@@ -154,6 +155,21 @@ OPTIONS
 ```
 
 _See code: [src/commands/profiles/delete.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/profiles/delete.ts)_
+
+## `io-ops profiles:export FISCALCODE`
+
+Dump a profile's data into a zip archive
+
+```
+USAGE
+\$ io-ops profiles:export FISCALCODE
+
+OPTIONS
+-o, --output=output [default: .] output folder
+
+```
+
+_See code: [src/commands/profiles/export.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/profiles/export.ts)_
 
 ## `io-ops profiles:exist`
 
