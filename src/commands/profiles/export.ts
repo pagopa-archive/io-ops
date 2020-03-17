@@ -61,7 +61,7 @@ export default class ProfileExport extends Command {
     if (fiscalCodeOrErrors.isLeft()) {
       this.error(`the provided "${args.fiscalCode}" fiscal code is not valid`);
     }
-    // if no output folder is provider, report will be saved in place
+    // if no output folder is provider, export data file will be saved in place
     const outputFolder = parsedFlags.output || __dirname;
     // check if the provided output folder exists
     if (!fs.existsSync(outputFolder)) {
@@ -71,10 +71,8 @@ export default class ProfileExport extends Command {
     const fiscalCode = fiscalCodeOrErrors.value;
     // ask to pick desidered azure configuration
     const azureConfig = await pickAzureConfig();
-    // retrieve azure credentials
-    cli.action.start("Retrieving cosmosdb credentials");
 
-    // init cosmos client
+    // retrieve azure credentials
     cli.action.start("Retrieving cosmosdb credentials");
     const { endpoint, key } = await getCosmosConnection(
       azureConfig.resourceGroup,
@@ -84,8 +82,9 @@ export default class ProfileExport extends Command {
     const storageConnection = await getStorageConnection(
       azureConfig.storageName
     );
-
     cli.action.stop();
+
+    // init cosmos client
     const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
     const database = client.database(azureConfig.cosmosDatabaseName);
 
@@ -136,7 +135,7 @@ export default class ProfileExport extends Command {
       }
     ];
 
-    // execute sequentially all operations
+    // execute all operations sequentially
     const items: ReadonlyArray<IOperationResult> = await sequential(
       operations,
       async (op: IOperation) => {
@@ -162,7 +161,7 @@ export default class ProfileExport extends Command {
       i => i.name === messages && i.items.length > 0
     );
 
-    // if there are message, retrieve all related messages status and messages blob
+    // if there are messages, retrieve all related messages status and messages blob
     if (messagesItems) {
       cli.action.start("Retrieving user messages status...");
       const resultMessagesStatus = await sequential(
@@ -197,11 +196,10 @@ export default class ProfileExport extends Command {
       if (resultMessagesBlob.length > 0) {
         dumpData.push({ name: "messages-content", items: resultMessagesBlob });
       }
-
       cli.action.stop(`${resultMessagesBlob.length} messages blob found!`);
     }
 
-    // check if there are no date collected
+    // check if no data has been collected
     if (dumpData.find(d => d.items.length > 0) === undefined) {
       cli.log("no data has been exported");
       this.exit();
