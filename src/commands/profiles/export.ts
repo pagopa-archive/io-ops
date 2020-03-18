@@ -5,6 +5,9 @@ import * as storage from "azure-storage";
 import { BlobService, ServiceResponse } from "azure-storage";
 import { cli } from "cli-ux";
 import { fromNullable } from "fp-ts/lib/Option";
+
+import * as A from "fp-ts/lib/Array";
+import * as TE from "fp-ts/lib/TaskEither";
 import * as fs from "fs";
 import { FiscalCode } from "italia-ts-commons/lib/strings";
 import { join } from "path";
@@ -136,26 +139,36 @@ export default class ProfileExport extends Command {
     ];
 
     // execute all operations sequentially
-    const items: ReadonlyArray<IOperationResult> = await sequential(
-      operations,
-      async (op: IOperation) => {
-        cli.action.start(`Retrieving ${op.name}...`);
-        const retrievedItems = await this.getItems(
-          database,
-          op.container,
-          op.query,
-          op.whereValue,
-          op.enableCrossPartitionQuery
-        );
-        cli.action.stop(`${retrievedItems.length} ${op.name} found!`);
-        return { name: op.name, items: retrievedItems };
-      }
-    );
+
+    // dumpData contains all data to be dumped in a zip file
+    // tslint:disable-next-line: readonly-array
+    const tasks = await A.array
+      .sequence(TE.taskEitherSeq)(
+        operations.map(op =>
+          this.getItems(
+            database,
+            op.container,
+            op.query,
+            op.whereValue,
+            op.name,
+            op.enableCrossPartitionQuery
+          )
+        )
+      )
+      .run();
+
+    const items = tasks
+      .map(r =>
+        r.map((res, idx) => {
+          cli.log(`retrieved ${res.length} ${operations[idx].name} items!`);
+          return { name: operations[idx].name, items: res };
+        })
+      )
+      .getOrElse([]);
 
     // dumpData contains all data to be dumped in a zip file
     // tslint:disable-next-line: readonly-array
     const dumpData = [...items];
-
     // get message section
     const messagesItems = items.find(
       i => i.name === messages && i.items.length > 0
@@ -163,40 +176,51 @@ export default class ProfileExport extends Command {
 
     // if there are messages, retrieve all related messages status and messages blob
     if (messagesItems) {
-      cli.action.start("Retrieving user messages status...");
-      const resultMessagesStatus = await sequential(
-        messagesItems.items.map((m: { id: string }) => m.id),
-        async (messageId: string) => {
-          return await this.getItems(
+      const pipeline = messagesItems.items.map(
+        (m: {
+          id: string;
+        }): TE.TaskEither<unknown, ReadonlyArray<cosmos.Item>> =>
+          this.getItems(
             database,
             azureConfig.cosmosMessageStatusContainer,
             selectFromMessageId,
-            messageId
-          );
-        }
+            m.id,
+            "message status"
+          )
       );
-      // remove empty array and select the only element (message status : message = 1 : 1)
-      const messagesStatus = resultMessagesStatus
-        .filter(ms => ms.length > 0)
-        .map(i => i[0]);
-      dumpData.push({ name: "messages-status", items: messagesStatus });
-      cli.action.stop(`${messagesStatus.length} messages status found!`);
+      cli.action.start("Retrieving user messages status...");
+      const resultMessagesStatus = await A.array
+        .sequence(TE.taskEitherSeq)(pipeline)
+        .run();
+      resultMessagesStatus.map(ms => {
+        // remove empty array and select the only element (message status : message = 1 : 1)
+        const filtered = ms.filter(m => m.length > 0).map(i => i[0]);
+        dumpData.push({ name: "messages-status", items: filtered });
+        cli.action.stop(`${filtered.length} messages status found!`);
+      });
 
       cli.action.start("Retrieving user messages blob...");
-      const resultMessagesBlob = await sequential(
-        messagesItems.items.map((m: { id: string }) => m.id),
-        async (messageId: string) => {
-          return await this.getBlobs(
-            storageConnection,
-            azureConfig.storageMessagesContainer,
-            `${messageId}.json`
-          );
-        }
-      );
-      if (resultMessagesBlob.length > 0) {
-        dumpData.push({ name: "messages-content", items: resultMessagesBlob });
+
+      const blobs = await A.array
+        .sequence(TE.taskEitherSeq)(
+          messagesItems.items.map((m: { id: string }) =>
+            this.getBlobs(
+              storageConnection,
+              azureConfig.storageMessagesContainer,
+              `${m.id}.json`
+            )
+          )
+        )
+        .run();
+      if (blobs.isRight() && blobs.value.length > 0) {
+        dumpData.push({
+          name: "messages-content",
+          items: blobs.value
+        });
+        cli.action.stop(`${blobs.value.length} messages blob found!`);
+      } else {
+        cli.action.stop(`0 messages blob found!`);
       }
-      cli.action.stop(`${resultMessagesBlob.length} messages blob found!`);
     }
 
     // check if no data has been collected
@@ -224,30 +248,38 @@ export default class ProfileExport extends Command {
    * @param whereValue the value of where condition
    * @param enableCrossPartitionQuery the query option
    */
-  private async getItems(
+  private getItems = (
     database: cosmos.Database,
     containerName: string,
     query: string,
     whereValue: string,
+    opName: string,
     enableCrossPartitionQuery: boolean = false
-  ): Promise<ReadonlyArray<cosmos.Item>> {
-    try {
-      // get the container of the related delete operation
-      const container = database.container(containerName);
-      const response = container.items.query(
-        {
-          query,
-          parameters: [{ name: fiscalCodeParamName, value: whereValue }]
-        },
-        { enableCrossPartitionQuery }
-      );
-      const result = (await response.toArray()).result;
-      return fromNullable(result).getOrElse([]);
-    } catch (error) {
-      cli.log(error);
-      return [];
-    }
-  }
+  ): TE.TaskEither<unknown, ReadonlyArray<cosmos.Item>> => {
+    const retriveItems = new Promise(
+      (
+        res: (items: ReadonlyArray<cosmos.Item>) => void,
+        rej: (error: string) => void
+      ) => {
+        const container = database.container(containerName);
+        const response = container.items.query(
+          {
+            query,
+            parameters: [{ name: fiscalCodeParamName, value: whereValue }]
+          },
+          { enableCrossPartitionQuery }
+        );
+        response
+          .toArray()
+          .then(value => {
+            const items = fromNullable(value.result).getOrElse([]);
+            res(items);
+          })
+          .catch((error: Error) => rej(error.message));
+      }
+    );
+    return TE.tryCatch(() => retriveItems, error => error);
+  };
 
   /**
    * retrieve a blob from azure storage
@@ -255,13 +287,13 @@ export default class ProfileExport extends Command {
    * @param storageMessagesContainer
    * @param blobName
    */
-  private async getBlobs(
+  private getBlobs(
     storageConnection: string,
     storageMessagesContainer: string,
     blobName: string
     // tslint:disable-next-line: no-any
-  ): Promise<any> {
-    return new Promise(
+  ): TE.TaskEither<unknown, any> {
+    const retrieveBlob = new Promise(
       (res: (value: string) => void, rej: (err: Error) => void) => {
         // get the blob service
         const blobService = storage.createBlobService(storageConnection);
@@ -282,5 +314,6 @@ export default class ProfileExport extends Command {
         );
       }
     );
+    return TE.tryCatch(() => retrieveBlob, error => error);
   }
 }
