@@ -1,14 +1,15 @@
 import Command, { flags } from "@oclif/command";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { Either, toError } from "fp-ts/lib/Either";
-import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
+import { Either } from "fp-ts/lib/Either";
+import { Task } from "fp-ts/lib/Task";
+import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
-import { Errors } from "io-ts";
-import { errorsToReadableMessages } from "italia-ts-commons/lib/reporters";
-import fetch from "node-fetch";
-import { User } from "../../generated/User";
+import { ApiClient } from "../../clients/api";
+import { UserCreated } from "../../generated/UserCreated";
+import { UserPayload } from "../../generated/UserPayload";
+import { errorsToError } from "../../utils/conversions";
 
 export class UserCreate extends Command {
   public static description =
@@ -38,41 +39,38 @@ export class UserCreate extends Command {
       }
     );
 
-    const errorOrService: Either<Errors, User> = User.decode(
+    const errorOrUser: Either<Error, UserPayload> = UserPayload.decode(
       JSON.parse(commandLineFlags.json)
-    );
+    ).mapLeft(errorsToError);
 
-    // may be can be a better way without nesting
-    // suggestions?
-    errorOrService.fold(
-      error =>
-        cli.action.stop(
-          chalk.red(`Error : ${errorsToReadableMessages(error)}`)
-        ),
-      service =>
-        this.post(service)
-          .fold(
-            error => {
-              cli.action.stop(chalk.red(`Error : ${error}`));
-            },
-            result => {
-              cli.action.stop(chalk.green(`Response: ${result}`));
-            }
-          )
-          .run()
-    );
+    return fromEither(errorOrUser)
+      .chain(this.post)
+      .fold(
+        error => cli.action.stop(chalk.red(`Error : ${error}`)),
+        user =>
+          cli.action.stop(chalk.green(`Response: ${JSON.stringify(user)}`))
+      )
+      .run();
   }
 
-  private post = (user: User): TaskEither<Error, string> =>
-    tryCatch(
-      () =>
-        fetch(`${getRequiredStringEnv("BASE_URL_ADMIN")}/users`, {
-          body: JSON.stringify(user),
-          headers: {
-            "Ocp-Apim-Subscription-Key": getRequiredStringEnv("OCP_APIM")
-          },
-          method: "post"
-        }).then(res => res.text()),
-      toError
+  private getApiClient = () =>
+    ApiClient(
+      getRequiredStringEnv("BASE_URL_ADMIN"),
+      getRequiredStringEnv("OCP_APIM")
     );
+
+  private post = (user: UserPayload): TaskEither<Error, UserCreated> =>
+    new TaskEither(
+      new Task(() => this.getApiClient().createUser({ userPayload: user }))
+    )
+      .mapLeft(errorsToError)
+      .chain(
+        fromPredicate(
+          response => response.status === 201,
+          () => Error("Could not create user")
+        )
+      )
+      .chain(response =>
+        fromEither(UserCreated.decode(response.value)).mapLeft(errorsToError)
+      );
 }

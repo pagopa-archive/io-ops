@@ -2,12 +2,14 @@ import Command, { flags } from "@oclif/command";
 import * as Parser from "@oclif/parser";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { toError } from "fp-ts/lib/Either";
-import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
+import { Task } from "fp-ts/lib/Task";
+import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
-import fetch from "node-fetch";
-import { ProductNamePayload } from "../../generated/ProductNamePayload";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { ApiClient } from "../../clients/api";
+import { Subscription } from "../../generated/Subscription";
+import { errorsToError } from "../../utils/conversions";
 
 export class UserSubscriptionCreate extends Command {
   public static description =
@@ -54,50 +56,55 @@ export class UserSubscriptionCreate extends Command {
       }
     );
 
-    return this.put(
-      args.email,
-      args.subscriptionId,
-      commandLineFlags.product_name
+    return fromEither(
+      NonEmptyString.decode(commandLineFlags.product_name).mapLeft(errors => {
+        const error = errorsToError(errors);
+        cli.action.stop(chalk.red(`Error : ${error}`));
+        return error;
+      })
     )
+      .chain(productName =>
+        this.put(args.email, args.subscriptionId, productName)
+      )
       .fold(
         error => {
           cli.action.stop(chalk.red(`Error : ${error}`));
         },
         result => {
-          cli.action.stop(chalk.green(`Response: ${result}`));
+          cli.action.stop(chalk.green(`Response: ${JSON.stringify(result)}`));
         }
       )
       .run();
   }
 
+  private getApiClient = () =>
+    ApiClient(
+      getRequiredStringEnv("BASE_URL_ADMIN"),
+      getRequiredStringEnv("OCP_APIM")
+    );
+
   private put = (
     email: string,
-    subscriptionId: readonly string[],
-    productName?: string
-  ): TaskEither<Error, string> => {
-    const productNamePayload = productName
-      ? ProductNamePayload.decode({ product_name: productName })
-      : {};
-
-    const options = {
-      ...{
-        headers: {
-          "Ocp-Apim-Subscription-Key": getRequiredStringEnv("OCP_APIM")
-        },
-        method: "put"
-      },
-      ...productNamePayload
-    };
-
-    return tryCatch(
-      () =>
-        fetch(
-          `${getRequiredStringEnv(
-            "BASE_URL_ADMIN"
-          )}/users/${email}/subscriptions/${subscriptionId}`,
-          options
-        ).then(res => res.text()),
-      toError
-    );
-  };
+    subscriptionId: string,
+    productName: NonEmptyString
+  ): TaskEither<Error, Subscription> =>
+    new TaskEither(
+      new Task(() =>
+        this.getApiClient().createSubscription({
+          email,
+          subscription_id: subscriptionId,
+          productNamePayload: { product_name: productName }
+        })
+      )
+    )
+      .mapLeft(errorsToError)
+      .chain(
+        fromPredicate(
+          response => response.status === 200,
+          () => Error(`Could not create the subscription ${subscriptionId}`)
+        )
+      )
+      .chain(response =>
+        fromEither(Subscription.decode(response.value)).mapLeft(errorsToError)
+      );
 }

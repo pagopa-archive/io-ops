@@ -2,15 +2,15 @@ import Command, { flags } from "@oclif/command";
 import * as Parser from "@oclif/parser";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { toError } from "fp-ts/lib/Either";
 import { IOEither, tryCatch2v as IOtryCatch2v } from "fp-ts/lib/IOEither";
-import { tryCatch } from "fp-ts/lib/TaskEither";
+import { Task } from "fp-ts/lib/Task";
+import { fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 import * as fs from "fs";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
-import fetch from "node-fetch";
-import { Logo } from "../../generated/Logo";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { ApiClient } from "../../clients/api";
+import { errorsToError } from "../../utils/conversions";
 
 export class ServiceLogo extends Command {
   public static description = "Update service data with base64 of the logo";
@@ -52,51 +52,38 @@ export class ServiceLogo extends Command {
     this.logoToBase64(commandLineFlags.logo)
       .mapLeft(err => cli.action.stop(chalk.red(`${err}`)))
       .map(base64 =>
-        this.put(args.serviceId, base64)
+        this.put(args.serviceId, base64 as NonEmptyString)
           .fold(
-            error => {
-              cli.action.stop(chalk.red(`Error : ${error}`));
-            },
-            resp => {
-              resp[0] === "green"
-                ? cli.action.stop(chalk.green(`Response: ${resp[1]}`))
-                : cli.action.stop(chalk.red(`Error: ${resp[1]}`));
-            }
+            error => cli.action.stop(chalk.red(`Error : ${error}`)),
+            () => cli.action.stop(chalk.green("Response: Logo created"))
           )
           .run()
       )
       .run();
   }
 
-  private put = (serviceId: string, base64Logo: string) => {
-    const logoPayload = Logo.encode({
-      logo: base64Logo as NonEmptyString
-    });
-    return tryCatch(
-      () =>
-        fetch(
-          `${getRequiredStringEnv(
-            "BASE_URL_ADMIN"
-          )}/services/${serviceId}/logo`,
-          {
-            body: JSON.stringify(logoPayload),
-            headers: {
-              "Ocp-Apim-Subscription-Key": getRequiredStringEnv("OCP_APIM")
-            },
-            method: "put"
-          }
-        ).then(resp =>
-          resp
-            .text()
-            .then(result =>
-              resp.status === 200 || resp.status === 201
-                ? ["green", "Logo created"]
-                : ["red", result]
-            )
-        ),
-      toError
+  private getApiClient = () =>
+    ApiClient(
+      getRequiredStringEnv("BASE_URL_ADMIN"),
+      getRequiredStringEnv("OCP_APIM")
     );
-  };
+
+  private put = (serviceId: string, base64Logo: NonEmptyString) =>
+    new TaskEither(
+      new Task(() =>
+        this.getApiClient().uploadServiceLogo({
+          logo: { logo: base64Logo },
+          service_id: serviceId
+        })
+      )
+    )
+      .mapLeft(errorsToError)
+      .chain(
+        fromPredicate(
+          response => response.status === 201,
+          () => Error(`Could not update logo for: ${serviceId}`)
+        )
+      );
 
   // given a path on your PC it will transform the file in a
   // base64 string

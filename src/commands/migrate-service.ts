@@ -2,10 +2,11 @@ import Command from "@oclif/command";
 import chalk from "chalk";
 import cli from "cli-ux";
 import { array } from "fp-ts/lib/Array";
-import { flatten } from "fp-ts/lib/Chain";
 import { toError } from "fp-ts/lib/Either";
+import { Task } from "fp-ts/lib/Task";
 import {
   fromEither,
+  fromPredicate,
   TaskEither,
   taskEither,
   taskEitherSeq,
@@ -13,11 +14,12 @@ import {
 } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
-import { errorsToReadableMessages } from "italia-ts-commons/lib/reporters";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { safeLoad } from "js-yaml";
 import fetch from "node-fetch";
+import { ApiClient } from "../clients/api";
 import { Service } from "../generated/Service";
-import { ServiceMetadata } from "../generated/ServiceMetadata";
+import { errorsToError } from "../utils/conversions";
 
 // This command is used to migrate services metadata or logos from github
 // @see https://github.com/pagopa/io-services-metadata to cosmosDB. For metadata
@@ -86,40 +88,52 @@ export class Migrate extends Command {
     }
   }
 
-  // Update service
-  private update = (service: Service): TaskEither<Error, string> => {
-    return tryCatch(
-      () =>
-        fetch(
-          `${getRequiredStringEnv("BASE_URL_ADMIN")}/services/${
-            service.service_id
-          }`,
-          {
-            body: JSON.stringify(service),
-            headers: {
-              [Migrate.ocpHeader]: getRequiredStringEnv("OCP_APIM")
-            },
-            method: "put"
-          }
-        ).then(res => res.text()),
-      toError
+  private getApiClient = () =>
+    ApiClient(
+      getRequiredStringEnv("BASE_URL_ADMIN"),
+      getRequiredStringEnv("OCP_APIM")
     );
+
+  // Update service
+  private update = (service: Service): TaskEither<Error, Service> => {
+    return new TaskEither(
+      new Task(() =>
+        this.getApiClient().updateService({
+          service,
+          service_id: service.service_id
+        })
+      )
+    )
+      .mapLeft(errorsToError)
+      .chain(
+        fromPredicate(
+          response => response.status === 200,
+          () => Error(`Could not update service ${service.service_id}`)
+        )
+      )
+      .chain(response =>
+        fromEither(Service.decode(response.value)).mapLeft(errorsToError)
+      );
   };
 
   // Get service data
-  private service = (serviceId: string): TaskEither<Error, string> =>
-    tryCatch(
-      () =>
-        fetch(
-          `${getRequiredStringEnv("BASE_URL_ADMIN")}/services/${serviceId}`,
-          {
-            headers: {
-              [Migrate.ocpHeader]: getRequiredStringEnv("OCP_APIM")
-            }
-          }
-        ).then(res => res.text()),
-      toError
-    );
+  private service = (serviceId: string): TaskEither<Error, Service> => {
+    return new TaskEither(
+      new Task(() => this.getApiClient().getService({ service_id: serviceId }))
+    )
+      .mapLeft(errorsToError)
+      .chain(
+        fromPredicate(
+          response => response.status === 200,
+          () => Error(`Could not read service ${serviceId}`)
+        )
+      )
+      .chain(response =>
+        // The usage of `.map(response => response.value);` raised a TS error
+        // because response.value can be undefined
+        fromEither(Service.decode(response.value)).mapLeft(errorsToError)
+      );
+  };
 
   // Conver yaml to object
   private readServiceYaml = (yamlString: string) => safeLoad(yamlString);
@@ -170,33 +184,28 @@ export class Migrate extends Command {
     ]);
 
   // Update logo and associate to service
-  private putLogo = (serviceId: string, base64Logo: string) => {
-    return tryCatch(
-      () =>
-        fetch(
-          `${getRequiredStringEnv(
-            "BASE_URL_ADMIN"
-          )}/services/${serviceId}/logo`,
-          {
-            body: JSON.stringify({ logo: base64Logo }),
-            headers: {
-              [Migrate.ocpHeader]: getRequiredStringEnv("OCP_APIM")
-            },
-            method: "put"
+  private putLogo = (serviceId: string, base64Logo: NonEmptyString) => {
+    return new TaskEither(
+      new Task(() =>
+        this.getApiClient().uploadServiceLogo({
+          logo: { logo: base64Logo },
+          service_id: serviceId
+        })
+      )
+    )
+      .mapLeft(errorsToError)
+      .chain(
+        fromPredicate(
+          response => response.status === 201,
+          () => {
+            cli.log(chalk.red(`Could not update logo for: ${serviceId}`));
+            return Error(`Could not update logo for: ${serviceId}`);
           }
-        ).then(resp =>
-          resp.text().then(() => {
-            if (resp.ok) {
-              return cli.log(
-                chalk.green(`Updated logo for service: ${serviceId}`)
-              );
-            } else {
-              return cli.log(chalk.red(`No logo found for: ${serviceId}`));
-            }
-          })
-        ),
-      toError
-    );
+        )
+      )
+      .map(() =>
+        cli.log(chalk.green(`Updated logo for service: ${serviceId}`))
+      );
   };
 
   private migrateMetadata = () =>
@@ -211,21 +220,14 @@ export class Migrate extends Command {
         const metadata = servicesMetadata[key];
         // Update service with metadata by calling the API
         return this.service(key)
-          .map(serviceString => {
-            const serviceObj = JSON.parse(serviceString);
+          .map(serviceObj => {
             return {
               ...serviceObj,
               ...{ service_metadata: metadata }
             };
           })
           .chain(serviceObj => {
-            if (serviceObj.service_id) {
-              cli.log(
-                chalk.green(`Updated metadata: ${serviceObj.service_id}`)
-              );
-            } else {
-              cli.log(chalk.red(`Not found ${key}`));
-            }
+            cli.log(chalk.green(`Updated metadata: ${serviceObj.service_id}`));
             return this.update(serviceObj);
           });
       });
@@ -242,8 +244,7 @@ export class Migrate extends Command {
       const services = Object.keys(servicesMetadata).map(key => {
         // get metadata obj
         return this.service(key)
-          .map(serviceString => {
-            const serviceObj = JSON.parse(serviceString);
+          .map(serviceObj => {
             // remove 00 from organization fiscal code
             return serviceObj.organization_fiscal_code &&
               serviceObj.organization_fiscal_code.startsWith("00")
@@ -255,7 +256,11 @@ export class Migrate extends Command {
               return {
                 serviceId: key,
                 organization: organizationCode,
-                results: result.filter(Boolean)
+                results: result.reduce<ReadonlyArray<NonEmptyString>>(
+                  (prevs, logo) =>
+                    NonEmptyString.is(logo) ? [...prevs, logo] : prevs,
+                  []
+                )
               };
             })
           )

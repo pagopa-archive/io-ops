@@ -1,14 +1,14 @@
 import Command, { flags } from "@oclif/command";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { Either, toError } from "fp-ts/lib/Either";
-import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
+import { Either } from "fp-ts/lib/Either";
+import { Task } from "fp-ts/lib/Task";
+import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
-import { Errors } from "io-ts";
-import { errorsToReadableMessages } from "italia-ts-commons/lib/reporters";
-import fetch from "node-fetch";
+import { ApiClient } from "../../clients/api";
 import { Service } from "../../generated/Service";
+import { errorsToError } from "../../utils/conversions";
 
 export class ServiceUpdate extends Command {
   public static description = "Update a service";
@@ -38,45 +38,46 @@ export class ServiceUpdate extends Command {
       }
     );
 
-    const errorOrService: Either<Errors, Service> = Service.decode(
+    const errorOrService: Either<Error, Service> = Service.decode(
       commandLineFlags.json
-    );
+    ).mapLeft(errorsToError);
 
-    errorOrService.fold(
-      error =>
-        cli.action.stop(
-          chalk.red(`Error : ${errorsToReadableMessages(error)}`)
-        ),
-      service =>
-        this.put(service)
-          .fold(
-            error => {
-              cli.action.stop(chalk.red(`Error : ${error}`));
-            },
-            result => {
-              cli.action.stop(chalk.green(`Response: ${result}`));
-            }
+    return fromEither(errorOrService)
+      .chain(this.put)
+      .fold(
+        error => cli.action.stop(chalk.red(`Error: ${error}`)),
+        service =>
+          cli.action.stop(
+            chalk.green(`Response: ${JSON.stringify(JSON.stringify(service))}`)
           )
-          .run()
-    );
+      )
+      .run();
   }
 
-  private put = (service: Service): TaskEither<Error, string> => {
-    return tryCatch(
-      () =>
-        fetch(
-          `${getRequiredStringEnv("BASE_URL_ADMIN")}/services/${
-            service.service_id
-          }`,
-          {
-            body: JSON.stringify(service),
-            headers: {
-              "Ocp-Apim-Subscription-Key": getRequiredStringEnv("OCP_APIM")
-            },
-            method: "put"
-          }
-        ).then(res => res.text()),
-      toError
+  private getApiClient = () =>
+    ApiClient(
+      getRequiredStringEnv("BASE_URL_ADMIN"),
+      getRequiredStringEnv("OCP_APIM")
     );
+
+  private put = (service: Service): TaskEither<Error, Service> => {
+    return new TaskEither(
+      new Task(() =>
+        this.getApiClient().updateService({
+          service,
+          service_id: service.service_id
+        })
+      )
+    )
+      .mapLeft(errorsToError)
+      .chain(
+        fromPredicate(
+          response => response.status === 200,
+          () => Error(`Could not update service ${service.service_id}`)
+        )
+      )
+      .chain(response =>
+        fromEither(Service.decode(response.value)).mapLeft(errorsToError)
+      );
   };
 }

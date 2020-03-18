@@ -2,13 +2,15 @@ import Command, { flags } from "@oclif/command";
 import * as Parser from "@oclif/parser";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { toError } from "fp-ts/lib/Either";
-import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
+import { Task } from "fp-ts/lib/Task";
+import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
-import fetch from "node-fetch";
-import { SubscriptionKeyTypePayload } from "../../generated/SubscriptionKeyTypePayload";
+import { ApiClient } from "../../clients/api";
+import { SubscriptionKeys } from "../../generated/SubscriptionKeys";
 import { SubscriptionKeyTypeEnum } from "../../generated/SubscriptionKeyType";
+import { SubscriptionKeyTypePayload } from "../../generated/SubscriptionKeyTypePayload";
+import { errorsToError } from "../../utils/conversions";
 
 export class KeyRegenerate extends Command {
   public static description = "Regenerate keys associated to service";
@@ -53,35 +55,42 @@ export class KeyRegenerate extends Command {
           cli.action.stop(chalk.red(`Error : ${error}`));
         },
         result => {
-          cli.action.stop(chalk.green(`Response: ${result}`));
+          cli.action.stop(chalk.green(`Response: ${JSON.stringify(result)}`));
         }
       )
       .run();
   }
 
+  private getApiClient = () =>
+    ApiClient(
+      getRequiredStringEnv("BASE_URL_ADMIN"),
+      getRequiredStringEnv("OCP_APIM")
+    );
+
   private put = (
     serviceId: string,
     keyType: string
-  ): TaskEither<Error, string> => {
-    const keyTypePayload = SubscriptionKeyTypePayload.encode({
-      key_type: keyType as SubscriptionKeyTypeEnum
-    });
-
-    return tryCatch(
-      () =>
-        fetch(
-          `${getRequiredStringEnv(
-            "BASE_URL_ADMIN"
-          )}/services/${serviceId}/keys`,
-          {
-            body: JSON.stringify(keyTypePayload),
-            headers: {
-              "Ocp-Apim-Subscription-Key": getRequiredStringEnv("OCP_APIM")
-            },
-            method: "put"
-          }
-        ).then(res => res.text()),
-      toError
-    );
-  };
+  ): TaskEither<Error, SubscriptionKeys> =>
+    new TaskEither(
+      new Task(() =>
+        this.getApiClient().regenerateSubscriptionKeys({
+          service_id: serviceId,
+          subscriptionKeyTypePayload: SubscriptionKeyTypePayload.encode({
+            key_type: keyType as SubscriptionKeyTypeEnum
+          })
+        })
+      )
+    )
+      .mapLeft(errorsToError)
+      .chain(
+        fromPredicate(
+          response => response.status === 200,
+          () => Error("Could not regenerate the subscription keys")
+        )
+      )
+      .chain(response =>
+        fromEither(SubscriptionKeys.decode(response.value)).mapLeft(
+          errorsToError
+        )
+      );
 }

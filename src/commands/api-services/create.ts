@@ -1,13 +1,15 @@
 import Command, { flags } from "@oclif/command";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { Either, toError } from "fp-ts/lib/Either";
-import { fromEither, TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
+import { Either } from "fp-ts/lib/Either";
+import { Task } from "fp-ts/lib/Task";
+import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import { errorsToReadableMessages } from "italia-ts-commons/lib/reporters";
-import fetch from "node-fetch";
+import { ApiClient } from "../../clients/api";
 import { Service as AdminService } from "../../generated/Service";
+import { errorsToError } from "../../utils/conversions";
 
 export class ServiceCreate extends Command {
   public static description = "Create a service";
@@ -40,29 +42,37 @@ export class ServiceCreate extends Command {
       JSON.parse(commandLineFlags.json)
     ).mapLeft(errors => Error(errorsToReadableMessages(errors).join(" /")));
 
-    await fromEither(errorOrService)
+    return fromEither(errorOrService)
       .chain(this.post)
       .fold(
         error => {
           cli.action.stop(chalk.red(`Error : ${error}`));
         },
         result => {
-          cli.action.stop(chalk.green(`Response: ${result}`));
+          cli.action.stop(chalk.green(`Response: ${JSON.stringify(result)}`));
         }
       )
       .run();
   }
 
-  private post = (service: AdminService): TaskEither<Error, string> =>
-    tryCatch(
-      () =>
-        fetch(`${getRequiredStringEnv("BASE_URL_ADMIN")}/services`, {
-          body: JSON.stringify(service),
-          headers: {
-            "Ocp-Apim-Subscription-Key": getRequiredStringEnv("OCP_APIM")
-          },
-          method: "post"
-        }).then(res => res.text()),
-      toError
+  private getApiClient = () =>
+    ApiClient(
+      getRequiredStringEnv("BASE_URL_ADMIN"),
+      getRequiredStringEnv("OCP_APIM")
     );
+
+  private post = (service: AdminService): TaskEither<Error, AdminService> =>
+    new TaskEither(
+      new Task(() => this.getApiClient().createService({ service }))
+    )
+      .mapLeft(errorsToError)
+      .chain(
+        fromPredicate(
+          response => response.status === 200,
+          () => Error(`Could not create the service ${service.service_id}`)
+        )
+      )
+      .chain(response =>
+        fromEither(AdminService.decode(response.value)).mapLeft(errorsToError)
+      );
 }

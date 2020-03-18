@@ -1,11 +1,13 @@
 import Command from "@oclif/command";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { toError } from "fp-ts/lib/Either";
-import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
+import { Task } from "fp-ts/lib/Task";
+import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
-import fetch from "node-fetch";
+import { ApiClient } from "../../clients/api";
+import { ServiceCollection } from "../../generated/ServiceCollection";
+import { errorsToError } from "../../utils/conversions";
 
 export class ServiceGet extends Command {
   public static description = "Get all services";
@@ -28,21 +30,30 @@ export class ServiceGet extends Command {
           cli.action.stop(chalk.red(`Error : ${error}`));
         },
         result => {
-          cli.action.stop(chalk.green(`Response: ${result}`));
+          cli.action.stop(chalk.green(`Response: ${JSON.stringify(result)}`));
         }
       )
       .run();
   }
 
-  private get = (): TaskEither<Error, string> => {
-    return tryCatch(
-      () =>
-        fetch(`${getRequiredStringEnv("BASE_URL_ADMIN")}/services`, {
-          headers: {
-            "Ocp-Apim-Subscription-Key": getRequiredStringEnv("OCP_APIM")
-          }
-        }).then(res => res.text()),
-      toError
+  private getApiClient = () =>
+    ApiClient(
+      getRequiredStringEnv("BASE_URL_ADMIN"),
+      getRequiredStringEnv("OCP_APIM")
     );
-  };
+
+  private get = (): TaskEither<Error, ServiceCollection> =>
+    new TaskEither(new Task(() => this.getApiClient().getServices({})))
+      .mapLeft(errorsToError)
+      .chain(
+        fromPredicate(
+          response => response.status === 200,
+          () => Error("Could not read the services")
+        )
+      )
+      .chain(response =>
+        fromEither(ServiceCollection.decode(response.value)).mapLeft(
+          errorsToError
+        )
+      );
 }

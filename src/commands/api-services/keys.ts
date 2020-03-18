@@ -2,11 +2,13 @@ import Command from "@oclif/command";
 import * as Parser from "@oclif/parser";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { toError } from "fp-ts/lib/Either";
-import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
+import { Task } from "fp-ts/lib/Task";
+import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
-import fetch from "node-fetch";
+import { ApiClient } from "../../clients/api";
+import { SubscriptionKeys } from "../../generated/SubscriptionKeys";
+import { errorsToError } from "../../utils/conversions";
 
 export class Keys extends Command {
   public static description = "Get subscription keys associated to service";
@@ -46,20 +48,28 @@ export class Keys extends Command {
       .run();
   }
 
-  private get = (serviceId: string): TaskEither<Error, string> => {
-    return tryCatch(
-      () =>
-        fetch(
-          `${getRequiredStringEnv(
-            "BASE_URL_ADMIN"
-          )}/services/${serviceId}/keys`,
-          {
-            headers: {
-              "Ocp-Apim-Subscription-Key": getRequiredStringEnv("OCP_APIM")
-            }
-          }
-        ).then(res => res.text()),
-      toError
+  private getApiClient = () =>
+    ApiClient(
+      getRequiredStringEnv("BASE_URL_ADMIN"),
+      getRequiredStringEnv("OCP_APIM")
     );
-  };
+
+  private get = (serviceId: string): TaskEither<Error, SubscriptionKeys> =>
+    new TaskEither(
+      new Task(() =>
+        this.getApiClient().getSubscriptionKeys({ service_id: serviceId })
+      )
+    )
+      .mapLeft(errorsToError)
+      .chain(
+        fromPredicate(
+          response => response.status === 200,
+          () => Error("Could not read the services")
+        )
+      )
+      .chain(response =>
+        fromEither(SubscriptionKeys.decode(response.value)).mapLeft(
+          errorsToError
+        )
+      );
 }
