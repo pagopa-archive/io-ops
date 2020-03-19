@@ -64,7 +64,7 @@ export class Keys extends Command {
       .chain(
         fromPredicate(
           response => response.status === 200,
-          () => Error("Could not read the services")
+          () => Error("Could not read the service")
         )
       )
       .chain(response =>
