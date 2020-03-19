@@ -42,7 +42,7 @@ export class Keys extends Command {
           cli.action.stop(chalk.red(`Error : ${error}`));
         },
         result => {
-          cli.action.stop(chalk.green(`Response: ${result}`));
+          cli.action.stop(chalk.green(`Response: ${JSON.stringify(result)}`));
         }
       )
       .run();
