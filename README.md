@@ -329,14 +329,12 @@ _See code: [src/commands/profiles/delete.ts](https://github.com/teamdigitale/io-
 Returns the input CSV with a new column that is true if a profile for that fiscal code exists.
 
 ```
-
 USAGE
-\$ io-ops profiles:exist
+  $ io-ops profiles:exist
 
 OPTIONS
--i, --input=input Input file (CSV, with the CF as first column) - defaults to stdin
--p, --parallel=parallel [default: 1] Number of parallel workers to run
-
+  -i, --input=input        Input file (CSV, with the CF as first column) - defaults to stdin
+  -p, --parallel=parallel  [default: 1] Number of parallel workers to run
 ```
 
 _See code: [src/commands/profiles/exist.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/profiles/exist.ts)_
@@ -346,14 +344,13 @@ _See code: [src/commands/profiles/exist.ts](https://github.com/teamdigitale/io-o
 Lists all profiles
 
 ```
-
 USAGE
-\$ io-ops profiles:list
+  $ io-ops profiles:list
 
 OPTIONS
   -x, --extended          show extra columns
   --columns=columns       only show provided columns (comma-separated)
-  --csv                   output is csv format
+  --csv                   output is csv format [alias: --output=csv]
   --filter=filter         filter property by partial string matching, ex: name=foo
   --no-header             hide table header from output
   --no-truncate           do not truncate output to fit screen
@@ -377,13 +374,11 @@ _See code: [src/commands/services/check.ts](https://github.com/teamdigitale/io-o
 Retrieve service info and metadata from a given service ID
 
 ```
-
 USAGE
-\$ io-ops services:details
+  $ io-ops services:details
 
 OPTIONS
--i, --serviceId=serviceId The service ID
-
+  -i, --serviceId=serviceId  The service ID
 ```
 
 _See code: [src/commands/services/details.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/details.ts)_
@@ -393,10 +388,8 @@ _See code: [src/commands/services/details.ts](https://github.com/teamdigitale/io
 List all services in csv format
 
 ```
-
 USAGE
-\$ io-ops services:list
-
+  $ io-ops services:list
 ```
 
 _See code: [src/commands/services/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/list.ts)_
