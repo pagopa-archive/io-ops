@@ -19,7 +19,8 @@ IO operations tool
 # Requirements
 
 ### Environment variables
-The environment variables required by the application are listed in the table below.
+The following sets of commands require the environment variabiles listed in the table below:
+`api-services:*`, `users:*`, `migrate-service`.
 
 | Variable name                     | Description                                                                       | type   |
 |-----------------------------------|-----------------------------------------------------------------------------------|--------|
