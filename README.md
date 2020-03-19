@@ -465,10 +465,9 @@ ARGUMENTS
   SUBSCRIPTIONID  The id of the Subscription
 
 OPTIONS
-  --product_name=product_name  The name of the product
+  --product_name=product_name  (required) The name of the product
 
-EXAMPLES
-  $ io-ops users:subscription  example@example.com SUBSCRIPTIONID
+EXAMPLE
   $ io-ops users:subscription  example@example.com SUBSCRIPTIONID --product_name=PRODUCTNAME
 ```
 

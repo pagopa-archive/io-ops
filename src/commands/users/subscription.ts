@@ -31,14 +31,13 @@ export class UserSubscriptionCreate extends Command {
 
   // tslint:disable-next-line: readonly-array
   public static examples = [
-    `$ io-ops users:subscription  example@example.com SUBSCRIPTIONID`,
     `$ io-ops users:subscription  example@example.com SUBSCRIPTIONID --product_name=PRODUCTNAME`
   ];
 
   public static flags = {
     product_name: flags.string({
       description: "The name of the product",
-      required: false
+      required: true
     })
   };
 
