@@ -39,7 +39,7 @@ export class ServiceCreate extends Command {
     );
 
     const errorOrService: Either<Error, AdminService> = AdminService.decode(
-      JSON.parse(commandLineFlags.json)
+      commandLineFlags.json
     ).mapLeft(errors => Error(errorsToReadableMessages(errors).join(" /")));
 
     return fromEither(errorOrService)
