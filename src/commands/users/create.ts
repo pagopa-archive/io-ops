@@ -66,7 +66,7 @@ export class UserCreate extends Command {
       .mapLeft(errorsToError)
       .chain(
         fromPredicate(
-          response => response.status === 201,
+          response => response.status === 200,
           () => Error("Could not create user")
         )
       )
