@@ -54,7 +54,7 @@ export class UsersGet extends Command {
       getRequiredStringEnv("OCP_APIM")
     );
 
-  private get = (cursor?: number): TaskEither<Error, UserCollection> =>
+  private get = (cursor: number = 0): TaskEither<Error, UserCollection> =>
     new TaskEither(new Task(() => this.getApiClient().getUsers({ cursor })))
       .mapLeft(errorsToError)
       .chain(
