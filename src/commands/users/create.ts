@@ -40,7 +40,7 @@ export class UserCreate extends Command {
     );
 
     const errorOrUser: Either<Error, UserPayload> = UserPayload.decode(
-      JSON.parse(commandLineFlags.json)
+      commandLineFlags.json
     ).mapLeft(errorsToError);
 
     return fromEither(errorOrUser)
