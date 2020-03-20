@@ -9,7 +9,7 @@ import * as fs from "fs";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
-import { ApiClient } from "../../clients/api";
+import { ApiClient } from "../../clients/admin";
 import { errorsToError } from "../../utils/conversions";
 
 export class ServiceLogo extends Command {

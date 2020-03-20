@@ -17,7 +17,7 @@ import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { safeLoad } from "js-yaml";
 import fetch from "node-fetch";
-import { ApiClient } from "../clients/api";
+import { ApiClient } from "../clients/admin";
 import { Service } from "../generated/Service";
 import { errorsToError } from "../utils/conversions";
 

@@ -5,7 +5,7 @@ import { Task } from "fp-ts/lib/Task";
 import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
-import { ApiClient } from "../../clients/api";
+import { ApiClient } from "../../clients/admin";
 import { UserCollection } from "../../generated/UserCollection";
 import { errorsToError } from "../../utils/conversions";
 
