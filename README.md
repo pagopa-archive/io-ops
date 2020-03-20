@@ -58,7 +58,7 @@ USAGE
 * [`io-ops messages:attributes`](#io-ops-messagesattributes)
 * [`io-ops messages:check-content`](#io-ops-messagescheck-content)
 * [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
-* [`io-ops migrate-service METADATA`](#io-ops-migrate-service-metadata)
+* [`io-ops migrate-services METADATA`](#io-ops-migrate-services-metadata)
 * [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete-fiscalcode)
 * [`io-ops profiles:exist`](#io-ops-profilesexist)
 * [`io-ops profiles:list`](#io-ops-profileslist)
@@ -288,13 +288,13 @@ OPTIONS
 
 _See code: [src/commands/messages/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/messages/list.ts)_
 
-## `io-ops migrate-service METADATA`
+## `io-ops migrate-services METADATA`
 
 Migrate metadata or logos from github
 
 ```
 USAGE
-  $ io-ops migrate-service METADATA
+  $ io-ops migrate-services METADATA
 
 ARGUMENTS
   METADATA  (metadata|logo) Migrate metadata or logo from github
@@ -304,7 +304,7 @@ EXAMPLES
   $ io-ops migrate logo
 ```
 
-_See code: [src/commands/migrate-service.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/migrate-service.ts)_
+_See code: [src/commands/migrate-services.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/migrate-services.ts)_
 
 ## `io-ops profiles:delete FISCALCODE`
 
