@@ -8,3 +8,5 @@
 node_modules
 .vscode
 tsconfig.tsbuildinfo
+/src/generated
+/.idea/

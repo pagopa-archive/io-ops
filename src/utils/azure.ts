@@ -56,9 +56,7 @@ const configs: IConfigs = { agid, dev };
 
 const getCredentials = async (config: IAzureConfig) =>
   await execa(
-    `az aks get-credentials -n ${config.configName} -g ${
-      config.resourceGroup
-    }  --overwrite-existing`
+    `az aks get-credentials -n ${config.configName} -g ${config.resourceGroup}  --overwrite-existing`
   );
 
 export const pickAzureConfig = async (): Promise<IAzureConfig> => {
@@ -90,22 +88,28 @@ export const pickAzureConfig = async (): Promise<IAzureConfig> => {
 };
 
 export const getCosmosEndpoint = async (resourceGroup: string, name: string) =>
-  (await execa(
-    `az cosmosdb show -g ${resourceGroup} -n ${name} --query documentEndpoint -o tsv`
-  )).stdout;
+  (
+    await execa(
+      `az cosmosdb show -g ${resourceGroup} -n ${name} --query documentEndpoint -o tsv`
+    )
+  ).stdout;
 
 export const getCosmosReadonlyKey = async (
   resourceGroup: string,
   name: string
 ) =>
-  (await execa(
-    `az cosmosdb list-keys -g ${resourceGroup} -n ${name} --query primaryReadonlyMasterKey -o tsv`
-  )).stdout;
+  (
+    await execa(
+      `az cosmosdb list-keys -g ${resourceGroup} -n ${name} --query primaryReadonlyMasterKey -o tsv`
+    )
+  ).stdout;
 
 export const getCosmosWriteKey = async (resourceGroup: string, name: string) =>
-  (await execa(
-    `az cosmosdb list-keys -g ${resourceGroup} -n ${name} --query primaryMasterKey -o tsv`
-  )).stdout;
+  (
+    await execa(
+      `az cosmosdb list-keys -g ${resourceGroup} -n ${name} --query primaryMasterKey -o tsv`
+    )
+  ).stdout;
 
 export const getCosmosConnection = async (
   resourceGroup: string,
@@ -130,9 +134,11 @@ export const getCosmosWriteConnection = async (
 };
 
 export const getStorageConnection = async (name: string) =>
-  (await execa(
-    `az storage account show-connection-string --name ${name} --output tsv`
-  )).stdout;
+  (
+    await execa(
+      `az storage account show-connection-string --name ${name} --output tsv`
+    )
+  ).stdout;
 
 /**
  * hasCosmosConnection checks if the host has az cli installed and resouceGroup and name
