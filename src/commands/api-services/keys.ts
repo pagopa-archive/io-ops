@@ -7,7 +7,7 @@ import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import { ApiClient } from "../../clients/admin";
-import { SubscriptionKeys } from "../../generated/SubscriptionKeys";
+import { SubscriptionKeys } from "../../generated/admin/SubscriptionKeys";
 import { errorsToError } from "../../utils/conversions";
 
 export class Keys extends Command {

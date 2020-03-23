@@ -40,7 +40,7 @@ import {
   updateServiceDefaultDecoder,
   UpdateServiceT,
   UploadServiceLogoT
-} from "../../src/generated/requestTypes";
+} from "../generated/admin/requestTypes";
 
 function SubscriptionKeyHeaderProducer<P>(
   token: string

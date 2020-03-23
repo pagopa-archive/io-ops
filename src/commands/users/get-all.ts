@@ -6,7 +6,7 @@ import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import { ApiClient } from "../../clients/admin";
-import { UserCollection } from "../../generated/UserCollection";
+import { UserCollection } from "../../generated/admin/UserCollection";
 import { errorsToError } from "../../utils/conversions";
 
 export class UsersGet extends Command {

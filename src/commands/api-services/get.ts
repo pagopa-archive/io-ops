@@ -7,7 +7,7 @@ import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import { ApiClient } from "../../clients/admin";
-import { Service } from "../../generated/Service";
+import { Service } from "../../generated/admin/Service";
 import { errorsToError } from "../../utils/conversions";
 
 export class ServiceGet extends Command {
