@@ -102,6 +102,7 @@ export class CreateDemo extends Command {
         ]).map(() => taskResults)
       )
       .chain(taskResults => {
+        // tslint:disable-next-line:no-useless-cast
         const subscriptionId = ulid() as NonEmptyString;
         return this.createSubscription(
           taskResults.user.email,

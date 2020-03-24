@@ -2,7 +2,7 @@
   "extends": "italia-tslint-rules/strong",
   "linterOptions": {
     "exclude": [
-      "src/generated/*.ts"
+      "src/generated/**/*.ts"
     ]
   },
   "rules": {
