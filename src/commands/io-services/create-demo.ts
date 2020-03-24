@@ -11,7 +11,6 @@ import * as t from "io-ts";
 import { FiscalCode, NonEmptyString } from "italia-ts-commons/lib/strings";
 import { ulid } from "ulid";
 import { ApiClient as AdminApiClient } from "../../clients/admin";
-import { ApiClient as ServicesApiClient } from "../../clients/services";
 import { DepartmentName } from "../../generated/admin/DepartmentName";
 import { EmailAddress } from "../../generated/admin/EmailAddress";
 import { GroupCollection } from "../../generated/admin/GroupCollection";
@@ -22,7 +21,6 @@ import { ServiceName } from "../../generated/admin/ServiceName";
 import { Subscription } from "../../generated/admin/Subscription";
 import { UserCreated } from "../../generated/admin/UserCreated";
 import { UserPayload } from "../../generated/admin/UserPayload";
-import { NewMessage } from "../../generated/services/NewMessage";
 import { errorsToError } from "../../utils/conversions";
 
 const ServiceData = t.interface({
@@ -121,21 +119,13 @@ export class CreateDemo extends Command {
           service_id: taskResults.subscriptionId
         })
       )
-      .chain(() =>
-        this.submitMessageforUser(sandboxFiscalCode, {
-          content: {
-            markdown: `Il codice fiscale dell'account demo è ${sandboxFiscalCode}`,
-            subject: "Creazione account demo"
-          }
-        })
-      )
       .fold(
         error => {
           cli.action.stop(chalk.red(`Error : ${error}`));
         },
-        () => {
+        service => {
           cli.action.stop(
-            chalk.green(`Message successfully sent to ${sandboxFiscalCode}`)
+            chalk.green(`Success: created service ${service.service_id}`)
           );
         }
       )
@@ -144,12 +134,6 @@ export class CreateDemo extends Command {
 
   private getAdminApiClient = () =>
     AdminApiClient(
-      getRequiredStringEnv("BASE_URL_ADMIN"),
-      getRequiredStringEnv("OCP_APIM")
-    );
-
-  private getServicesApiClient = () =>
-    ServicesApiClient(
       getRequiredStringEnv("BASE_URL_ADMIN"),
       getRequiredStringEnv("OCP_APIM")
     );
@@ -237,25 +221,4 @@ export class CreateDemo extends Command {
       .chain(response =>
         fromEither(AdminService.decode(response.value)).mapLeft(errorsToError)
       );
-
-  private submitMessageforUser = (
-    fiscalCode: FiscalCode,
-    newMessage: NewMessage
-  ): TaskEither<Error, undefined> =>
-    new TaskEither(
-      new Task(() =>
-        this.getServicesApiClient().submitMessageforUser({
-          fiscalCode,
-          newMessage
-        })
-      )
-    )
-      .mapLeft(errorsToError)
-      .chain(
-        fromPredicate(
-          response => response.status === 201,
-          () => Error(`Could not send the message to ${fiscalCode}`)
-        )
-      )
-      .map(() => undefined);
 }
