@@ -8,7 +8,7 @@ import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import * as t from "io-ts";
-import { FiscalCode, NonEmptyString } from "italia-ts-commons/lib/strings";
+import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { ulid } from "ulid";
 import { ApiClient as AdminApiClient } from "../../clients/admin";
 import { DepartmentName } from "../../generated/admin/DepartmentName";
@@ -29,8 +29,6 @@ const ServiceData = t.interface({
   organization_name: OrganizationName,
   organization_fiscal_code: OrganizationFiscalCode
 });
-
-const sandboxFiscalCode = "BCDFGH00A11Z999X" as FiscalCode;
 
 export class CreateDemo extends Command {
   public static description =
