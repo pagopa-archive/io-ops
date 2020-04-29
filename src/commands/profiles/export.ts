@@ -318,6 +318,9 @@ export default class ProfileExport extends Command {
         );
       }
     );
-    return TE.tryCatch(() => retrieveBlob, error => error as string);
+    return TE.tryCatch(
+      () => retrieveBlob,
+      error => error as string
+    );
   }
 }
