@@ -60,6 +60,7 @@ USAGE
 * [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
 * [`io-ops migrate-services METADATA`](#io-ops-migrate-services-metadata)
 * [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete-fiscalcode)
+* [`io-ops profiles:export FISCALCODE`](#io-ops-profilesexport-fiscalcode)
 * [`io-ops profiles:exist`](#io-ops-profilesexist)
 * [`io-ops profiles:list`](#io-ops-profileslist)
 * [`io-ops services:check`](#io-ops-servicescheck)
@@ -197,18 +198,6 @@ EXAMPLE
   "require_secure_channels": false }'
 ```
 
-
-- [`io-ops hello`](#io-ops-hello)
-- [`io-ops help [COMMAND]`](#io-ops-help-command)
-- [`io-ops messages:attributes`](#io-ops-messagesattributes)
-- [`io-ops messages:check-content`](#io-ops-messagescheck-content)
-- [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
-- [`io-ops profiles:delete FISCALCODE`](#io-ops-profilesdelete-fiscalcode)
-- [`io-ops profiles:export FISCALCODE`](#io-ops-profilesexport-fiscalcode)
-- [`io-ops profiles:exist`](#io-ops-profilesexist)
-- [`io-ops profiles:list`](#io-ops-profileslist)
-- [`io-ops services:details`](#io-ops-servicesdetails)
-- [`io-ops services:list`](#io-ops-serviceslist)
 _See code: [src/commands/api-services/update.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-services/update.ts)_
 
 ## `io-ops hello`
