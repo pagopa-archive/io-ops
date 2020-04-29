@@ -277,7 +277,12 @@ export default class ProfileExport extends Command {
       },
       { enableCrossPartitionQuery }
     );
-    return TE.tryCatch(() => response.toArray(), reason => String(reason));
+    return TE.tryCatch(
+      () => response.toArray(),
+      reason => {
+        return String(reason);
+      }
+    );
   };
 
   /**
