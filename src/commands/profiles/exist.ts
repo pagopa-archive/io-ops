@@ -65,9 +65,7 @@ export default class ProfilesExist extends Command {
         { cast: { boolean: castBoolean } },
         (error, output) => {
           if (error) {
-            return `some error occured while parsing this line ${
-              error.message
-            }`;
+            return `some error occured while parsing this line ${error.message}`;
           } else if (output === undefined) {
             return "row cannot be parsed";
           }

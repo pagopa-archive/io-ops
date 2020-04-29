@@ -32,9 +32,9 @@ interface ImageInfo {
 /**
  * retrive service metadata from the given service ID
  */
-export const loadServiceMetadata = (
+export function loadServiceMetadata(
   serviceId: string
-): Promise<t.Validation<ServiceMetadata>> => {
+): Promise<t.Validation<ServiceMetadata>> {
   const options = {
     uri: `${serviceContentRepoUrl}services/${serviceId
       .toLowerCase()
@@ -47,7 +47,7 @@ export const loadServiceMetadata = (
       res(value);
     });
   });
-};
+}
 
 /**
  * retrive logo from the given logouri. If it exists return image info, none otherwise
@@ -223,9 +223,7 @@ export default class ServicesDetail extends Command {
           );
         } else {
           cli.log(
-            `The service with version ${
-              visibleServices[0].version
-            } is the visible one!`
+            `The service with version ${visibleServices[0].version} is the visible one!`
           );
         }
       }

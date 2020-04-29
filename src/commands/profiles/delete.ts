@@ -319,9 +319,7 @@ export default class ProfileDelete extends Command {
     }
     cli.action.stop();
     const confirm = await cli.confirm(
-      `${itemsList.length} items found in "${
-        deleteOp.containerName
-      }" container! Are you sure you want to proceed to delete?`
+      `${itemsList.length} items found in "${deleteOp.containerName}" container! Are you sure you want to proceed to delete?`
     );
     if (!confirm) {
       return none;
