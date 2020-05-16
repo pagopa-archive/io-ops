@@ -149,15 +149,6 @@ export default class ProfileDelete extends Command {
           }
         ],
         deleteBlobs: false
-      },
-      {
-        containerName: azureConfig.cosmosSenderServicesContainer,
-        partitionKeySelector: i => i.recipientFiscalCode,
-        query: selectFromRecipientFiscalCode,
-        queryParamName: recipientFiscalCodeParamName,
-        queryParamValue: fiscalCode,
-        relatedOps: [],
-        deleteBlobs: false
       }
     ];
 
@@ -176,8 +167,6 @@ export default class ProfileDelete extends Command {
               return parsedFlags.notification;
             case "profiles":
               return parsedFlags.profile;
-            case "sender-services":
-              return parsedFlags.service;
           }
         });
 
