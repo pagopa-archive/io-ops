@@ -11,7 +11,6 @@ export interface IAzureConfig {
   cosmosNotificationContainer: string;
   cosmosNotificationStatusContainer: string;
   cosmosServicesContainer: string;
-  cosmosSenderServicesContainer: string;
   cosmosName: string;
   resourceGroup: string;
   storageMessagesContainer: string;
@@ -27,7 +26,6 @@ export const agid: IAzureConfig = {
   cosmosNotificationStatusContainer: "notification-status",
   cosmosProfilesContainer: "profiles",
   cosmosServicesContainer: "services",
-  cosmosSenderServicesContainer: "sender-services",
   cosmosName: "agid-cosmosdb-test",
   resourceGroup: "agid-rg-test",
   storageMessagesContainer: "message-content",
@@ -43,7 +41,6 @@ export const dev: IAzureConfig = {
   cosmosNotificationStatusContainer: "notification-status",
   cosmosProfilesContainer: "profiles",
   cosmosServicesContainer: "services",
-  cosmosSenderServicesContainer: "sender-services",
   cosmosName: "io-dev-cosmosdb-01",
   resourceGroup: "io-dev-rg",
   storageMessagesContainer: "message-content",
