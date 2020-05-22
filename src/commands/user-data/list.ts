@@ -30,7 +30,7 @@ export default class UserDataProcessingRequestsList extends Command {
         config.cosmosUserDataProcessingContainer
       );
       const response = container.items.query(
-        "SELECT c.fiscalCode, c.choice, c.updatedAt FROM c",
+        "SELECT c.fiscalCode, c.choice, c.updatedAt, c.status, c.version FROM c",
         {
           enableCrossPartitionQuery: true
         }
@@ -43,12 +43,26 @@ export default class UserDataProcessingRequestsList extends Command {
         return;
       }
 
+      const latest = Object.values(
+        // tslint:disable-next-line: no-any
+        result.reduce((prev, curr: any) => {
+          const isNewer =
+            !prev[curr.version] || curr.version > prev[curr.fiscalCode].version;
+          return {
+            ...prev,
+            ...(isNewer ? { [curr.fiscalCode]: curr } : {})
+          };
+        }, {})
+      );
+
       const profileContainer = database.container(
         config.cosmosProfilesContainer
       );
 
-      const ret = await Promise.all(
-        result.map(async r => {
+      // tslint:disable-next-line: readonly-array
+      const ret: object[] = await Promise.all(
+        // tslint:disable-next-line: no-any
+        latest.map(async (r: any) => {
           const record = profileContainer.items.query(
             `SELECT c.email, c.isEmailValidated FROM c WHERE c.fiscalCode = "${r.fiscalCode}"`,
             {
@@ -78,6 +92,9 @@ export default class UserDataProcessingRequestsList extends Command {
           },
           updatedAt: {
             header: "updatedAt"
+          },
+          status: {
+            header: "status"
           }
         },
         {
