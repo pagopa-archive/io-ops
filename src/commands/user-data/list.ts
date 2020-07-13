@@ -47,10 +47,10 @@ export default class UserDataProcessingRequestsList extends Command {
         // tslint:disable-next-line: no-any
         result.reduce((prev, curr: any) => {
           const isNewer =
-            !prev[curr.version] || curr.version > prev[curr.fiscalCode].version;
+            !prev[curr.fiscalCode + "-" + curr.choice] || (curr.version > prev[curr.fiscalCode + "-" + curr.choice].version);
           return {
             ...prev,
-            ...(isNewer ? { [curr.fiscalCode]: curr } : {})
+            ...(isNewer ? { [curr.fiscalCode + "-" + curr.choice]: curr } : {})
           };
         }, {})
       );
