@@ -23,16 +23,19 @@ export default class UserBonusesList extends Command {
   public async run(): Promise<void> {
     const { args, flags: parsedFlags } = this.parse(UserBonusesList);
 
-    let fiscalCode: string = "";
-
-    if (args.fiscalCode) {
-      const fiscalCodeOrErrors = FiscalCode.decode(args.fiscalCode);
-      if (fiscalCodeOrErrors.isLeft()) {
-        this.error("Invalid fiscalCode");
-        return;
-      }
-      fiscalCode = fiscalCodeOrErrors.value;
+    const fiscalCodeOrErrors = FiscalCode.decode(args.fiscalCode);
+    // if fiscalCode is defined, check if it is in a valid format
+    if (
+      args.fiscalCode &&
+      args.fiscalCode.length > 0 &&
+      fiscalCodeOrErrors.isLeft()
+    ) {
+      this.error("Invalid fiscalCode");
     }
+    const fiscalCode = fiscalCodeOrErrors.fold(
+      () => "",
+      fc => fc as string
+    );
 
     try {
       const config = await pickAzureConfig();
@@ -55,6 +58,7 @@ export default class UserBonusesList extends Command {
       };
 
       if (fiscalCode == "") {
+        // if fiscalCode is not defined
         querySpec = {
           parameters: [],
           query: "SELECT c.fiscalCode, c.isApplicant FROM c"
