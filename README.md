@@ -65,6 +65,7 @@ USAGE
 * [`io-ops services:check`](#io-ops-servicescheck)
 * [`io-ops services:details`](#io-ops-servicesdetails)
 * [`io-ops services:list`](#io-ops-serviceslist)
+* [`io-ops user-bonuses:list [FISCALCODE]`](#io-ops-user-bonuseslist-fiscalcode)
 * [`io-ops users:create`](#io-ops-userscreate)
 * [`io-ops users:get EMAIL`](#io-ops-usersget-email)
 * [`io-ops users:get-all`](#io-ops-usersget-all)
@@ -393,6 +394,27 @@ USAGE
 ```
 
 _See code: [src/commands/services/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/list.ts)_
+
+## `io-ops user-bonuses:list [FISCALCODE]`
+
+Lists all user bonuses
+
+```
+USAGE
+  $ io-ops user-bonuses:list [FISCALCODE]
+
+OPTIONS
+  -x, --extended          show extra columns
+  --columns=columns       only show provided columns (comma-separated)
+  --csv                   output is csv format [alias: --output=csv]
+  --filter=filter         filter property by partial string matching, ex: name=foo
+  --no-header             hide table header from output
+  --no-truncate           do not truncate output to fit screen
+  --output=csv|json|yaml  output in a more machine friendly format
+  --sort=sort             property to sort by (prepend '-' for descending)
+```
+
+_See code: [src/commands/user-bonuses/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/user-bonuses/list.ts)_
 
 ## `io-ops users:create`
 
