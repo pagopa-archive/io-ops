@@ -9,6 +9,7 @@
   "bugs": "https://github.com/teamdigitale/io-ops/issues",
   "dependencies": {
     "@azure/cosmos": "^2.1.5",
+    "@azure/storage-blob": "^12.2.0",
     "@oclif/command": "^1",
     "@oclif/config": "^1",
     "@oclif/plugin-help": "^2",
