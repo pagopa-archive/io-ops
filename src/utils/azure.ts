@@ -55,7 +55,6 @@ export const dev: IAzureConfig = {
   cosmosName: "io-d-cosmos-free",
   resourceGroup: "io-d-rg-common",
   storageMessagesContainer: "message-content",
-  //storageBonusRedeemedContainer: "redeemed-request",
   storageBonusRedeemedContainer: "redeemed-test",
   storageName: "devpasqualesa"
 };

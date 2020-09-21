@@ -53,6 +53,7 @@ USAGE
 * [`io-ops api-services:keys-regenerate SERVICEID`](#io-ops-api-serviceskeys-regenerate-serviceid)
 * [`io-ops api-services:logo SERVICEID`](#io-ops-api-serviceslogo-serviceid)
 * [`io-ops api-services:update`](#io-ops-api-servicesupdate)
+* [`io-ops bonuses-bv:redeem-bonuses`](#io-ops-bonuses-bvredeem-bonuses)
 * [`io-ops hello`](#io-ops-hello)
 * [`io-ops help [COMMAND]`](#io-ops-help-command)
 * [`io-ops messages:attributes`](#io-ops-messagesattributes)
@@ -198,6 +199,25 @@ EXAMPLE
 ```
 
 _See code: [src/commands/api-services/update.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/api-services/update.ts)_
+
+## `io-ops bonuses-bv:redeem-bonuses`
+
+Download redeemed bonuses
+
+```
+USAGE
+  $ io-ops bonuses-bv:redeem-bonuses
+
+OPTIONS
+  -c, --containerFolder=containerFolder  (required) Container folder
+  -k, --apiKey=apiKey                    (required) Api key
+  -o, --tmpDir=tmpDir                    (required) [default: tmp] temp directory
+
+  -u, --apiUrl=apiUrl                    (required) [default:
+                                         https://api-gad.io.italia.it/api/bonus-vacanze/v1/redeemed] Api url
+```
+
+_See code: [src/commands/bonuses-bv/redeem-bonuses.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/bonuses-bv/redeem-bonuses.ts)_
 
 ## `io-ops hello`
 
