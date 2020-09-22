@@ -90,10 +90,8 @@ export default class ProfileDelete extends Command {
     const fiscalCodeParamName = "@fiscalCode";
     const messageIdParamName = "@messageId";
     const notificationIdParamName = "@messageId";
-    const recipientFiscalCodeParamName = "@recipientFiscalCode";
     // define used queries
     const selectFromFiscalCode = `SELECT * FROM c WHERE c.fiscalCode = ${fiscalCodeParamName}`;
-    const selectFromRecipientFiscalCode = `SELECT * FROM c WHERE c.recipientFiscalCode = ${recipientFiscalCodeParamName}`;
     const azureConfig = await pickAzureConfig();
     // retrieve azure credentials
     cli.action.start("Retrieving cosmosdb credentials");
