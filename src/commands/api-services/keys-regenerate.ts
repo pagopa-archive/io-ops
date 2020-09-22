@@ -7,9 +7,9 @@ import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import { ApiClient } from "../../clients/admin";
-import { SubscriptionKeys } from "../../generated/SubscriptionKeys";
-import { SubscriptionKeyTypeEnum } from "../../generated/SubscriptionKeyType";
-import { SubscriptionKeyTypePayload } from "../../generated/SubscriptionKeyTypePayload";
+import { SubscriptionKeys } from "../../generated/admin/SubscriptionKeys";
+import { SubscriptionKeyTypeEnum } from "../../generated/admin/SubscriptionKeyType";
+import { SubscriptionKeyTypePayload } from "../../generated/admin/SubscriptionKeyTypePayload";
 import { errorsToError } from "../../utils/conversions";
 
 export class KeyRegenerate extends Command {

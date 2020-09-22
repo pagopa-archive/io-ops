@@ -81,7 +81,7 @@
   },
   "repository": "teamdigitale/io-ops",
   "scripts": {
-    "generate:openapi-models": "shx rm -rf src/generated && mkdir -p src/generated && gen-api-models --api-spec https://raw.githubusercontent.com/pagopa/io-functions-admin/master/openapi/index.yaml --out-dir src/generated --no-strict --request-types --response-decoders",
+    "generate:admin-models": "shx rm -rf src/generated/admin && mkdir -p src/generated/admin && gen-api-models --api-spec https://raw.githubusercontent.com/pagopa/io-functions-admin/master/openapi/index.yaml --out-dir src/generated/admin --no-strict --request-types --response-decoders",
     "generate:postpack": "rm -f oclif.manifest.json",
     "generate:prepack": "rm -rf lib tsconfig.tsbuildinfo && tsc -b && oclif-dev manifest && oclif-dev readme",
     "generate": "npm-run-all generate:*",

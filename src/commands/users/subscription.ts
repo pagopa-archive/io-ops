@@ -8,7 +8,7 @@ import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { ApiClient } from "../../clients/admin";
-import { Subscription } from "../../generated/Subscription";
+import { Subscription } from "../../generated/admin/Subscription";
 import { errorsToError } from "../../utils/conversions";
 
 export class UserSubscriptionCreate extends Command {

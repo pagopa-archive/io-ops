@@ -8,7 +8,7 @@ import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import { errorsToReadableMessages } from "italia-ts-commons/lib/reporters";
 import { ApiClient } from "../../clients/admin";
-import { Service as AdminService } from "../../generated/Service";
+import { Service as AdminService } from "../../generated/admin/Service";
 import { errorsToError } from "../../utils/conversions";
 
 export class ServiceCreate extends Command {

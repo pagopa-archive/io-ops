@@ -55,6 +55,7 @@ USAGE
 * [`io-ops api-services:update`](#io-ops-api-servicesupdate)
 * [`io-ops hello`](#io-ops-hello)
 * [`io-ops help [COMMAND]`](#io-ops-help-command)
+* [`io-ops io-services:create-demo`](#io-ops-io-servicescreate-demo)
 * [`io-ops messages:attributes`](#io-ops-messagesattributes)
 * [`io-ops messages:check-content`](#io-ops-messagescheck-content)
 * [`io-ops messages:list FISCALCODE`](#io-ops-messageslist-fiscalcode)
@@ -235,6 +236,27 @@ OPTIONS
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v2.2.3/src/commands/help.ts)_
+
+## `io-ops io-services:create-demo`
+
+Creates a demo account associated with a specified service
+
+```
+USAGE
+  $ io-ops io-services:create-demo
+
+OPTIONS
+  --product_name=product_name  (required) The name of product with which the user will be associated
+  --service=service            (required) JSON string containing the service data
+  --user=user                  (required) JSON string containing the user data
+
+EXAMPLE
+  $ io-ops io-services:create-demo --product_name=name-of-product --service='{ "service_name": "service name", 
+  "department_name": "Ufficio Anagrafe", "organization_name": "Comune di Vattelappesca", "organization_fiscal_code": 
+  "00000000000"}' --user='{ "email": "mario.rossi@example.com","first_name": "mario","last_name": "rossi" }'
+```
+
+_See code: [src/commands/io-services/create-demo.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/io-services/create-demo.ts)_
 
 ## `io-ops messages:attributes`
 

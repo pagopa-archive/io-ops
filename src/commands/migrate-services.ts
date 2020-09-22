@@ -18,7 +18,7 @@ import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { safeLoad } from "js-yaml";
 import fetch from "node-fetch";
 import { ApiClient } from "../clients/admin";
-import { Service } from "../generated/Service";
+import { Service } from "../generated/admin/Service";
 import { errorsToError } from "../utils/conversions";
 
 // This command is used to migrate services metadata or logos from github
