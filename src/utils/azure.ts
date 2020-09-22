@@ -42,7 +42,7 @@ export const agid: IAzureConfig = {
 
 export const dev: IAzureConfig = {
   configName: "io-d",
-  cosmosDatabaseName: "raimondo",
+  cosmosDatabaseName: "db",
   cosmosMessagesContainer: "messages",
   cosmosMessageStatusContainer: "message-status",
   cosmosNotificationContainer: "notifications",
@@ -55,8 +55,8 @@ export const dev: IAzureConfig = {
   cosmosName: "io-d-cosmos-free",
   resourceGroup: "io-d-rg-common",
   storageMessagesContainer: "message-content",
-  storageBonusRedeemedContainer: "redeemed-test",
-  storageName: "devpasqualesa"
+  storageBonusRedeemedContainer: "redeemed-request",
+  storageName: "iodsttest"
 };
 
 export const prod: IAzureConfig = {
