@@ -6,8 +6,8 @@ import * as csvStringify from "csv-stringify";
 import * as t from "io-ts";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 import * as request from "request";
-import { ServiceMetadata } from "../../definitions/ServiceMetadata";
 import { ServicePublic } from "../../definitions/ServicePublic";
+import { ServiceMetadata } from "../../generated/ServiceMetadata";
 import {
   getCosmosEndpoint,
   getCosmosReadonlyKey,

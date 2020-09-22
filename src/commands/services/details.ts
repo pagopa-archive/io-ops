@@ -8,11 +8,12 @@ import * as t from "io-ts";
 import { readableReport } from "italia-ts-commons/lib/reporters";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import * as request from "request";
-import { ServiceMetadata } from "../../definitions/ServiceMetadata";
+
 import {
   ServicePublic,
   ServicePublicFull
 } from "../../definitions/ServicePublic";
+import { ServiceMetadata } from "../../generated/ServiceMetadata";
 import {
   getCosmosEndpoint,
   getCosmosReadonlyKey,

@@ -35,7 +35,7 @@ $ npm install -g io-ops
 $ io-ops COMMAND
 running command...
 $ io-ops (-v|--version|version)
-io-ops/0.2.0 darwin-x64 node-v10.14.1
+io-ops/0.2.0 darwin-x64 node-v10.14.2
 $ io-ops --help [COMMAND]
 USAGE
   $ io-ops COMMAND
