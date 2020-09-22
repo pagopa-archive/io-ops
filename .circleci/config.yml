@@ -17,6 +17,9 @@ jobs:
       - run: ./bin/run --version
       - run: ./bin/run --help
       - run:
+          name: Generate
+          command: yarn generate
+      - run:
           name: Testing
           command: yarn test
       - run:
