@@ -11,7 +11,7 @@ interface OutputResult {
 }
 
 export default class RedeemBonuses extends Command {
-  public static description = "Download redeemed bonuses";
+  public static description = "Download and reprocess redeemed bonuses";
 
   public static args = [];
 
@@ -24,18 +24,18 @@ export default class RedeemBonuses extends Command {
     }),
     containerFolder: flags.string({
       char: "c",
-      description: "Container folder",
+      description: "container folder",
       required: true
     }),
     apiUrl: flags.string({
       char: "u",
       default: "https://api-gad.io.italia.it/api/bonus-vacanze/v1/redeemed",
-      description: "Api url",
+      description: "api url",
       required: true
     }),
     apiKey: flags.string({
       char: "k",
-      description: "Api key",
+      description: "api key",
       required: true
     })
   };
@@ -68,7 +68,7 @@ export default class RedeemBonuses extends Command {
       }
 
       this.log("\nListing blobs...");
-      cli.action.start("Downloading requests...");
+      cli.action.start("Downloading redeemed requests started...");
       // List and download the blob(s) in the container.
       for await (const blob of containerClient.listBlobsFlat({
         prefix: parsedFlags.containerFolder
@@ -80,9 +80,10 @@ export default class RedeemBonuses extends Command {
         );
         redeemedRequests.push(parsedFlags.tmpDir + "/" + blob.name);
       }
-      cli.action.stop("Downloading finished");
+      cli.action.stop("Downloading redeemed requests finished...");
 
-      cli.action.start("Sending requests...");
+      cli.action.start("Sending redeemed requests started...");
+      // Send redeemed requests
       for (const redeemedRequest of redeemedRequests) {
         this.log(redeemedRequest);
         const rawDataRequest = fs.readFileSync(
@@ -102,10 +103,10 @@ export default class RedeemBonuses extends Command {
           file: redeemedRequest,
           statusCode: rawDataResponse.status.toString()
         });
-        // pause 5 seconds
-        await this.delay(5000);
+        // pause 1 second to avoid 429 statusCode response
+        await this.delay(1000);
       }
-      cli.action.stop("Sending finished...");
+      cli.action.stop("Sending redeemed requests finished...");
 
       cli.table(
         outputResults,
@@ -119,7 +120,7 @@ export default class RedeemBonuses extends Command {
         },
         {
           printLine: this.log,
-          ...parsedFlags // parsed flags
+          ...parsedFlags
         }
       );
     } catch (e) {

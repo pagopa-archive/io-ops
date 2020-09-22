@@ -202,19 +202,19 @@ _See code: [src/commands/api-services/update.ts](https://github.com/teamdigitale
 
 ## `io-ops bonuses-bv:redeem-bonuses`
 
-Download redeemed bonuses
+Download and reprocess redeemed bonuses
 
 ```
 USAGE
   $ io-ops bonuses-bv:redeem-bonuses
 
 OPTIONS
-  -c, --containerFolder=containerFolder  (required) Container folder
-  -k, --apiKey=apiKey                    (required) Api key
+  -c, --containerFolder=containerFolder  (required) container folder
+  -k, --apiKey=apiKey                    (required) api key
   -o, --tmpDir=tmpDir                    (required) [default: tmp] temp directory
 
   -u, --apiUrl=apiUrl                    (required) [default:
-                                         https://api-gad.io.italia.it/api/bonus-vacanze/v1/redeemed] Api url
+                                         https://api-gad.io.italia.it/api/bonus-vacanze/v1/redeemed] api url
 ```
 
 _See code: [src/commands/bonuses-bv/redeem-bonuses.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/bonuses-bv/redeem-bonuses.ts)_
