@@ -3,6 +3,7 @@ import { BlobServiceClient } from "@azure/storage-blob";
 import { pickAzureConfig, getStorageConnection } from "../../utils/azure";
 import fetch from "node-fetch";
 import * as fs from "fs";
+import * as rimraf from "rimraf";
 import cli from "cli-ux";
 
 interface OutputResult {
@@ -60,12 +61,13 @@ export default class RedeemBonuses extends Command {
       );
 
       if (
-        !fs.existsSync(parsedFlags.tmpDir + "/" + parsedFlags.containerFolder)
+        fs.existsSync(parsedFlags.tmpDir + "/" + parsedFlags.containerFolder)
       ) {
-        fs.mkdirSync(parsedFlags.tmpDir + "/" + parsedFlags.containerFolder, {
-          recursive: true
-        });
+        rimraf.sync(parsedFlags.tmpDir + "/" + parsedFlags.containerFolder);
       }
+      fs.mkdirSync(parsedFlags.tmpDir + "/" + parsedFlags.containerFolder, {
+        recursive: true
+      });
 
       this.log("\nListing blobs...");
       cli.action.start("Downloading redeemed requests started...");
