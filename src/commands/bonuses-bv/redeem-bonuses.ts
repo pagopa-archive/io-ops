@@ -145,7 +145,7 @@ export default class RedeemBonuses extends Command {
               "Ocp-Apim-Subscription-Key": parsedFlags.apiKey,
               "Content-Type": "application/json"
             },
-            body: JSON.stringify(rawDataRequest)
+            body: String(rawDataRequest)
           });
 
           // save response status code
