@@ -83,7 +83,7 @@ export const prod_bonus: IAzureConfig = {
   cosmosName: "io-p-cosmos-bonus",
   resourceGroup: "io-p-rg-internal",
   storageMessagesContainer: "",
-  storageBonusRedeemedContainer: "redeemed-request",
+  storageBonusRedeemedContainer: "redeemed-requests",
   storageName: "iopstbonus"
 };
 
