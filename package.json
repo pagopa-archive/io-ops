@@ -16,7 +16,6 @@
     "@types/adm-zip": "^0.4.32",
     "@types/js-yaml": "^3.12.2",
     "@types/node-fetch": "^2.5.4",
-    "@types/rimraf": "^3.0.0",
     "azure-storage": "^2.10.3",
     "chalk": "2.4.2",
     "cli-ux": "^5.2.1",
@@ -33,7 +32,6 @@
     "js-yaml": "^3.13.1",
     "node-fetch": "^2.6.0",
     "request": "2.88.0",
-    "rimraf": "^3.0.2",
     "stream-transform": "^2.0.0",
     "tslib": "1.9.3",
     "vfile-message": "^2.0.2"
