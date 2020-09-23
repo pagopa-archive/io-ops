@@ -11,8 +11,6 @@ export interface IAzureConfig {
   cosmosNotificationContainer: string;
   cosmosNotificationStatusContainer: string;
   cosmosServicesContainer: string;
-  cosmosSenderServicesContainer: string;
-  cosmosUserDataProcessingContainer: string;
   cosmosUserBonusesContainer: string;
   cosmosName: string;
   resourceGroup: string;
@@ -30,8 +28,6 @@ export const agid: IAzureConfig = {
   cosmosNotificationStatusContainer: "notification-status",
   cosmosProfilesContainer: "profiles",
   cosmosServicesContainer: "services",
-  cosmosSenderServicesContainer: "sender-services",
-  cosmosUserDataProcessingContainer: "user-data-processing",
   cosmosUserBonusesContainer: "user-bonuses",
   cosmosName: "agid-cosmosdb-test",
   resourceGroup: "agid-rg-test",
@@ -49,8 +45,6 @@ export const dev: IAzureConfig = {
   cosmosNotificationStatusContainer: "notification-status",
   cosmosProfilesContainer: "profiles",
   cosmosServicesContainer: "services",
-  cosmosSenderServicesContainer: "sender-services",
-  cosmosUserDataProcessingContainer: "user-data-processing",
   cosmosUserBonusesContainer: "user-bonuses",
   cosmosName: "io-d-cosmos-free",
   resourceGroup: "io-d-rg-common",
@@ -68,8 +62,6 @@ export const prod: IAzureConfig = {
   cosmosNotificationStatusContainer: "",
   cosmosProfilesContainer: "",
   cosmosServicesContainer: "",
-  cosmosSenderServicesContainer: "",
-  cosmosUserDataProcessingContainer: "user-data-processing",
   cosmosUserBonusesContainer: "",
   cosmosName: "io-p-cosmos-api",
   resourceGroup: "io-p-rg-internal",
@@ -87,8 +79,6 @@ export const prod_bonus: IAzureConfig = {
   cosmosNotificationStatusContainer: "",
   cosmosProfilesContainer: "",
   cosmosServicesContainer: "",
-  cosmosSenderServicesContainer: "",
-  cosmosUserDataProcessingContainer: "",
   cosmosUserBonusesContainer: "user-bonuses",
   cosmosName: "io-p-cosmos-bonus",
   resourceGroup: "io-p-rg-internal",
