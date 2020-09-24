@@ -18,16 +18,16 @@ export default class RedeemBonuses extends Command {
   public static flags = {
     day: flags.string({
       description:
-        "filter reddem request from specified day (utc timezome, required format yyyy-MM-dd, ie 2020-05-25)",
+        "filter redeemed request from specified day (utc timezone, required format yyyy-MM-dd, ie 2020-05-25)",
       required: true
     }),
     fromTime: flags.string({
       description:
-        "filter reddem request from specified time (utc timezone, required format HH:mm, ie 09:45)"
+        "filter redeemed request from specified time (utc timezone, required format HH:mm, ie 09:45)"
     }),
     toTime: flags.string({
       description:
-        "filter reddem request to specified time (utc timezone, required format HH:mm, ie 15:35)"
+        "filter redeemed request to specified time (utc timezone, required format HH:mm, ie 15:35)"
     }),
     apiUrl: flags.string({
       default: "https://api.io.italia.it/api/bonus-vacanze/v1/redeemed",
@@ -42,10 +42,7 @@ export default class RedeemBonuses extends Command {
   public async run(): Promise<void> {
     const { flags: parsedFlags } = this.parse(RedeemBonuses);
 
-    const day = DateTime.fromFormat(
-      parsedFlags.day + " " + "utc",
-      "yyyy-MM-dd z"
-    );
+    const day = DateTime.fromFormat(`${parsedFlags.day} utc`, "yyyy-MM-dd z");
     if (!day.isValid) {
       this.error("day is not valid");
       return;
@@ -54,7 +51,7 @@ export default class RedeemBonuses extends Command {
     let fromTime = undefined;
     if (parsedFlags.fromTime !== undefined) {
       fromTime = DateTime.fromFormat(
-        parsedFlags.day + " " + parsedFlags.fromTime + " " + "utc",
+        `${parsedFlags.day} ${parsedFlags.fromTime} utc`,
         "yyyy-MM-dd HH:mm z"
       );
       if (!fromTime.isValid) {
@@ -66,7 +63,7 @@ export default class RedeemBonuses extends Command {
     let toTime = undefined;
     if (parsedFlags.toTime !== undefined) {
       toTime = DateTime.fromFormat(
-        parsedFlags.day + " " + parsedFlags.toTime + " " + "utc",
+        `${parsedFlags.day} ${parsedFlags.toTime} utc`,
         "yyyy-MM-dd HH:mm z"
       );
       if (!toTime.isValid) {
