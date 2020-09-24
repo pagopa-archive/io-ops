@@ -212,12 +212,12 @@ OPTIONS
   --apiKey=apiKey      (required) bonus vacanze api key
   --apiUrl=apiUrl      [default: https://api.io.italia.it/api/bonus-vacanze/v1/redeemed] bonus vacanze api url
 
-  --day=day            (required) filter reddem request from specified day (utc timezome, required format yyyy-MM-dd, ie
-                       2020-05-25)
+  --day=day            (required) filter redeemed request from specified day (utc timezone, required format yyyy-MM-dd,
+                       ie 2020-05-25)
 
-  --fromTime=fromTime  filter reddem request from specified time (utc timezone, required format HH:mm, ie 09:45)
+  --fromTime=fromTime  filter redeemed request from specified time (utc timezone, required format HH:mm, ie 09:45)
 
-  --toTime=toTime      filter reddem request to specified time (utc timezone, required format HH:mm, ie 15:35)
+  --toTime=toTime      filter redeemed request to specified time (utc timezone, required format HH:mm, ie 15:35)
 ```
 
 _See code: [src/commands/bonuses-bv/redeem-bonuses.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/bonuses-bv/redeem-bonuses.ts)_
