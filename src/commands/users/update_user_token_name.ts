@@ -47,13 +47,11 @@ export class UserTokenNameUpdate extends Command {
       }
     );
 
-    const servicePrincipalCreds = {
-      clientId: getRequiredStringEnv("SERVICE_PRINCIPAL_CLIENT_ID"),
-      secret: getRequiredStringEnv("SERVICE_PRINCIPAL_SECRET"),
-      tenantId: getRequiredStringEnv("SERVICE_PRINCIPAL_TENANT_ID")
-    };
-
-    return getGraphRbacManagementClient(servicePrincipalCreds)
+    return getGraphRbacManagementClient(
+      getRequiredStringEnv("ADB2C_ADMIN_USERNAME"),
+      getRequiredStringEnv("ADB2C_ADMIN_PASSWORD"),
+      getRequiredStringEnv("ADB2C_PRINCIPAL_TENANT_ID")
+    )
       .chain(client =>
         this.getUserFromList(client, args.email).chain(user =>
           fromNullable(user.userPrincipalName).foldL(

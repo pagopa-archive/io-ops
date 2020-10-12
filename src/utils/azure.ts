@@ -167,27 +167,21 @@ export const hasCosmosConnection = async (
   }
 };
 
-export interface IServicePrincipalCreds {
-  readonly clientId: string;
-  readonly secret: string;
-  readonly tenantId: string;
-}
-
 export function getGraphRbacManagementClient(
-  adb2cCreds: IServicePrincipalCreds
+  username: string,
+  password: string,
+  tenantId: string
 ): TaskEither<Error, GraphRbacManagementClient> {
   return tryCatch(
     () =>
-      msRestNodeAuth.loginWithServicePrincipalSecret(
-        adb2cCreds.clientId,
-        adb2cCreds.secret,
-        adb2cCreds.tenantId,
-        { tokenAudience: "graph" }
-      ),
+      msRestNodeAuth.loginWithUsernamePassword(username, password, {
+        domain: tenantId,
+        tokenAudience: "graph"
+      }),
     toError
   ).map(
     credentials =>
-      new GraphRbacManagementClient(credentials, adb2cCreds.tenantId, {
+      new GraphRbacManagementClient(credentials, tenantId, {
         baseUri: "https://graph.windows.net"
       })
   );
