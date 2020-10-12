@@ -9,6 +9,9 @@
   "bugs": "https://github.com/teamdigitale/io-ops/issues",
   "dependencies": {
     "@azure/cosmos": "^2.1.5",
+    "@azure/arm-apimanagement": "^5.1.1",
+    "@azure/graph": "^4.0.1",
+    "@azure/ms-rest-nodeauth": "^2.0.5",
     "@oclif/command": "^1",
     "@oclif/config": "^1",
     "@oclif/plugin-help": "^2",

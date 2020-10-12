@@ -1,6 +1,10 @@
+import { GraphRbacManagementClient } from "@azure/graph";
+import * as msRestNodeAuth from "@azure/ms-rest-nodeauth";
 import chalk from "chalk";
 import cli from "cli-ux";
 import * as execa from "execa";
+import { toError } from "fp-ts/lib/Either";
+import { TaskEither, tryCatch } from "fp-ts/lib/TaskEither";
 
 export interface IAzureConfig {
   configName: string;
@@ -162,3 +166,29 @@ export const hasCosmosConnection = async (
     return false;
   }
 };
+
+export interface IServicePrincipalCreds {
+  readonly clientId: string;
+  readonly secret: string;
+  readonly tenantId: string;
+}
+
+export function getGraphRbacManagementClient(
+  adb2cCreds: IServicePrincipalCreds
+): TaskEither<Error, GraphRbacManagementClient> {
+  return tryCatch(
+    () =>
+      msRestNodeAuth.loginWithServicePrincipalSecret(
+        adb2cCreds.clientId,
+        adb2cCreds.secret,
+        adb2cCreds.tenantId,
+        { tokenAudience: "graph" }
+      ),
+    toError
+  ).map(
+    credentials =>
+      new GraphRbacManagementClient(credentials, adb2cCreds.tenantId, {
+        baseUri: "https://graph.windows.net"
+      })
+  );
+}
