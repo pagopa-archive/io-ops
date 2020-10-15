@@ -1,14 +1,18 @@
-import { GraphRbacManagementClient } from "@azure/graph";
 import Command from "@oclif/command";
 import * as Parser from "@oclif/parser";
 import chalk from "chalk";
 import cli from "cli-ux";
 import { toError } from "fp-ts/lib/Either";
-import { fromNullable } from "fp-ts/lib/Option";
-import { fromLeft, tryCatch } from "fp-ts/lib/TaskEither";
+import {
+  fromEither,
+  fromLeft,
+  taskEither,
+  tryCatch
+} from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
-import { getGraphRbacManagementClient } from "../../utils/azure";
+import { ApiClient } from "../../clients/admin";
+import { errorsToError } from "../../utils/conversions";
 
 export class UserTokenNameUpdate extends Command {
   public static description =
@@ -47,27 +51,21 @@ export class UserTokenNameUpdate extends Command {
       }
     );
 
-    return getGraphRbacManagementClient(
-      getRequiredStringEnv("ADB2C_ADMIN_USERNAME"),
-      getRequiredStringEnv("ADB2C_ADMIN_PASSWORD"),
-      getRequiredStringEnv("ADB2C_PRINCIPAL_TENANT_ID")
+    return tryCatch(
+      () =>
+        this.getApiClient().updateUser({
+          email: args.email,
+          userUpdatePayload: {
+            token_name: args.tokenNameValue
+          }
+        }),
+      toError
     )
-      .chain(client =>
-        this.getUserFromList(client, args.email).chain(user =>
-          fromNullable(user.userPrincipalName).foldL(
-            () =>
-              fromLeft(
-                new Error("Cannot read User Principal Name from given email")
-              ),
-            userPrincipalName =>
-              this.updateUserTokenName(
-                client,
-                userPrincipalName,
-                getRequiredStringEnv("ADB2C_TOKEN_ATTRIBUTE_NAME"),
-                args.tokenNameValue
-              )
-          )
-        )
+      .chain(_ => fromEither(_).mapLeft(errorsToError))
+      .chain(response =>
+        response.status === 200
+          ? taskEither.of(response.value)
+          : fromLeft(new Error(response.value))
       )
       .fold(
         error => {
@@ -80,29 +78,9 @@ export class UserTokenNameUpdate extends Command {
       .run();
   }
 
-  private getUserFromList = (
-    client: GraphRbacManagementClient,
-    email: string
-  ) =>
-    tryCatch(
-      () =>
-        client.users.list({
-          filter: `signInNames/any(x:x/value eq '${email}')`
-        }),
-      toError
-    ).map(userList => userList[0]);
-
-  private updateUserTokenName = (
-    client: GraphRbacManagementClient,
-    userPrincipalName: string,
-    adb2cTokenAttributeName: string,
-    tokenValue: string
-  ) =>
-    tryCatch(
-      () =>
-        client.users.update(userPrincipalName, {
-          [adb2cTokenAttributeName]: tokenValue
-        }),
-      toError
-    ).map(response => response._response.status);
+  private getApiClient = () =>
+    ApiClient(
+      getRequiredStringEnv("BASE_URL_ADMIN"),
+      getRequiredStringEnv("OCP_APIM")
+    );
 }
