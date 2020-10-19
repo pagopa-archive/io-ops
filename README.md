@@ -70,6 +70,7 @@ USAGE
 * [`io-ops users:get-all`](#io-ops-usersget-all)
 * [`io-ops users:subscription EMAIL SUBSCRIPTIONID`](#io-ops-userssubscription-email-subscriptionid)
 * [`io-ops users:update-groups EMAIL`](#io-ops-usersupdate-groups-email)
+* [`io-ops users:update_user_token_name EMAIL TOKENNAMEVALUE`](#io-ops-usersupdate_user_token_name-email-tokennamevalue)
 
 ## `io-ops api-services:create`
 
@@ -486,6 +487,24 @@ EXAMPLE
 ```
 
 _See code: [src/commands/users/update-groups.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/users/update-groups.ts)_
+
+## `io-ops users:update_user_token_name EMAIL TOKENNAMEVALUE`
+
+Update the Token Name attribute associated to the User identified by the provided email
+
+```
+USAGE
+  $ io-ops users:update_user_token_name EMAIL TOKENNAMEVALUE
+
+ARGUMENTS
+  EMAIL           email
+  TOKENNAMEVALUE  tokenNameValue
+
+EXAMPLE
+  $ io-ops users:update-token-name
+```
+
+_See code: [src/commands/users/update_user_token_name.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/users/update_user_token_name.ts)_
 <!-- commandsstop -->
 
 ```

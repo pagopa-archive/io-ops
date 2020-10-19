@@ -13,7 +13,6 @@ import {
 import { ProblemJson } from "italia-ts-commons/lib/responses";
 import { Omit } from "italia-ts-commons/lib/types";
 import nodeFetch from "node-fetch";
-
 import {
   createDevelopmentProfileDefaultDecoder,
   CreateDevelopmentProfileT,
@@ -39,8 +38,10 @@ import {
   UpdateGroupsT,
   updateServiceDefaultDecoder,
   UpdateServiceT,
+  updateUserDefaultDecoder,
+  UpdateUserT,
   UploadServiceLogoT
-} from "../../src/generated/requestTypes";
+} from "../generated/requestTypes";
 
 function SubscriptionKeyHeaderProducer<P>(
   token: string
@@ -74,6 +75,7 @@ export function ApiClient(
   readonly getUser: TypeofApiCall<typeof getUserT>;
   readonly updateGroups: TypeofApiCall<typeof updateGroupsT>;
   readonly createSubscription: TypeofApiCall<typeof createSubscriptionT>;
+  readonly updateUser: TypeofApiCall<typeof updateUserT>;
 } {
   const options = {
     baseUrl,
@@ -227,6 +229,18 @@ export function ApiClient(
     url: () => `/users`
   };
 
+  const updateUserT: ReplaceRequestParams<
+    UpdateUserT,
+    Omit<RequestParams<UpdateUserT>, "SubscriptionKey">
+  > = {
+    body: params => JSON.stringify(params.userUpdatePayload),
+    headers: composeHeaderProducers(tokenHeaderProducer, ApiHeaderJson),
+    method: "put",
+    query: _ => ({}),
+    response_decoder: updateUserDefaultDecoder(),
+    url: params => `/users/${params.email}`
+  };
+
   const getUserT: ReplaceRequestParams<
     GetUserT,
     Omit<RequestParams<GetUserT>, "SubscriptionKey">
@@ -285,7 +299,8 @@ export function ApiClient(
     ),
     updateGroups: createFetchRequestForApi(updateGroupsT, options),
     updateService: createFetchRequestForApi(updateServiceT, options),
-    uploadServiceLogo: createFetchRequestForApi(uploadServiceLogoT, options)
+    uploadServiceLogo: createFetchRequestForApi(uploadServiceLogoT, options),
+    updateUser: createFetchRequestForApi(updateUserT, options)
   };
 }
 
