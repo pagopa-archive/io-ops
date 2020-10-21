@@ -1,6 +1,7 @@
 import Command from "@oclif/command";
 import chalk from "chalk";
 import cli from "cli-ux";
+import { sequenceT } from "fp-ts/lib/Apply";
 import { array } from "fp-ts/lib/Array";
 import { toError } from "fp-ts/lib/Either";
 import { Task } from "fp-ts/lib/Task";
@@ -14,10 +15,16 @@ import {
 } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
+
+import { BlobService, createBlobService } from "azure-storage";
+import { fromLeft } from "fp-ts/lib/TaskEither";
+// tslint:disable-next-line: no-submodule-imports
+import { upsertBlobFromObject } from "io-functions-commons/dist/src/utils/azure_storage";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { safeLoad } from "js-yaml";
 import fetch from "node-fetch";
 import { ApiClient } from "../clients/admin";
+import { FallbackLogo } from "../definitions/logos";
 import { Service } from "../generated/Service";
 import { errorsToError } from "../utils/conversions";
 
@@ -93,6 +100,9 @@ export class Migrate extends Command {
       getRequiredStringEnv("BASE_URL_ADMIN"),
       getRequiredStringEnv("OCP_APIM")
     );
+
+  private getBlobService = () =>
+    createBlobService(getRequiredStringEnv("AssetsStorageConnection"));
 
   // Update service
   private update = (service: Service): TaskEither<Error, Service> => {
@@ -176,10 +186,20 @@ export class Migrate extends Command {
       this.serviceLogo(
         "https://raw.githubusercontent.com/pagopa/io-services-metadata/master/logos/services",
         id
+      ).map(logo =>
+        FallbackLogo.encode({
+          logo,
+          type: "service"
+        })
       ),
       this.serviceLogo(
         "https://raw.githubusercontent.com/pagopa/io-services-metadata/master/logos/organizations",
         orgId
+      ).map(logo =>
+        FallbackLogo.encode({
+          logo,
+          type: "org"
+        })
       )
     ]);
 
@@ -207,6 +227,35 @@ export class Migrate extends Command {
         cli.log(chalk.green(`Updated logo for service: ${serviceId}`))
       );
   };
+
+  // Update logo and associate to service
+  private putOrganizationLogo = (
+    blobService: BlobService,
+    containerName: string,
+    organizationCode: string,
+    base64Logo: NonEmptyString
+  ): TaskEither<Error, void> =>
+    tryCatch(
+      () =>
+        upsertBlobFromObject(
+          blobService,
+          containerName,
+          `${organizationCode}.png`,
+          base64Logo
+        ),
+      toError
+    )
+      .chain(_ =>
+        _.fold(
+          err => fromLeft(err),
+          opt => taskEither.of(opt)
+        )
+      )
+      .map(() =>
+        cli.log(
+          chalk.green(`Updated logo for organizationCode: ${organizationCode}`)
+        )
+      );
 
   private migrateMetadata = () =>
     // Getting the services metadata from github
@@ -244,27 +293,49 @@ export class Migrate extends Command {
       const services = Object.keys(servicesMetadata).map(key => {
         // get metadata obj
         return this.service(key)
-          .map(serviceObj => {
-            // remove 00 from organization fiscal code
-            return serviceObj.organization_fiscal_code &&
-              serviceObj.organization_fiscal_code.startsWith("00")
-              ? serviceObj.organization_fiscal_code.slice(2)
-              : serviceObj.organization_fiscal_code;
-          })
+          .map(serviceObj =>
+            // remove leading zeros from organization fiscal code
+            serviceObj.organization_fiscal_code.replace(/^0+/, "")
+          )
           .chain(organizationCode =>
             this.fallBackOrganizationLogo(key, organizationCode).map(result => {
               return {
                 serviceId: key,
                 organization: organizationCode,
-                results: result.reduce<ReadonlyArray<NonEmptyString>>(
-                  (prevs, logo) =>
-                    NonEmptyString.is(logo) ? [...prevs, logo] : prevs,
+                results: result.reduce<ReadonlyArray<FallbackLogo>>(
+                  (prevs, fallbackLogo) =>
+                    NonEmptyString.is(fallbackLogo.logo)
+                      ? [...prevs, fallbackLogo]
+                      : prevs,
                   []
                 )
               };
             })
           )
-          .chain(res => this.putLogo(res.serviceId, res.results[0]));
+          .chain(res =>
+            array.sequence(taskEitherSeq)(
+              res.results.map(result => {
+                if (NonEmptyString.is(result.logo)) {
+                  return result.type === "service"
+                    ? this.putLogo(res.serviceId, result.logo)
+                    : this.putOrganizationLogo(
+                        this.getBlobService(),
+                        "/services",
+                        res.organization,
+                        result.logo
+                      );
+                }
+                return taskEither.of<Error, void>(
+                  // tslint:disable-next-line: no-use-of-empty-return-value
+                  cli.log(
+                    chalk.green(
+                      `Nothing to do on logos for service: ${res.serviceId}`
+                    )
+                  )
+                );
+              })
+            )
+          );
       });
       return array.sequence(taskEither)(services);
     });
