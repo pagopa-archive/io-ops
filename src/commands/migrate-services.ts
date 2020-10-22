@@ -1,7 +1,6 @@
 import Command from "@oclif/command";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { sequenceT } from "fp-ts/lib/Apply";
 import { array } from "fp-ts/lib/Array";
 import { toError } from "fp-ts/lib/Either";
 import { Task } from "fp-ts/lib/Task";
@@ -11,15 +10,13 @@ import {
   TaskEither,
   taskEither,
   taskEitherSeq,
+  taskify,
   tryCatch
 } from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
 import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 
 import { BlobService, createBlobService } from "azure-storage";
-import { fromLeft } from "fp-ts/lib/TaskEither";
-// tslint:disable-next-line: no-submodule-imports
-import { upsertBlobFromObject } from "io-functions-commons/dist/src/utils/azure_storage";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { safeLoad } from "js-yaml";
 import fetch from "node-fetch";
@@ -233,29 +230,20 @@ export class Migrate extends Command {
     blobService: BlobService,
     containerName: string,
     organizationCode: string,
-    base64Logo: NonEmptyString
+    base64Logo: Buffer
   ): TaskEither<Error, void> =>
-    tryCatch(
-      () =>
-        upsertBlobFromObject(
-          blobService,
-          containerName,
-          `${organizationCode}.png`,
-          base64Logo
-        ),
-      toError
-    )
-      .chain(_ =>
-        _.fold(
-          err => fromLeft(err),
-          opt => taskEither.of(opt)
-        )
+    taskify<Error, BlobService.BlobResult>(cb =>
+      blobService.createBlockBlobFromText(
+        containerName,
+        organizationCode,
+        base64Logo,
+        cb
       )
-      .map(() =>
-        cli.log(
-          chalk.green(`Updated logo for organizationCode: ${organizationCode}`)
-        )
-      );
+    )().map(() =>
+      cli.log(
+        chalk.green(`Updated logo for organizationCode: ${organizationCode}`)
+      )
+    );
 
   private migrateMetadata = () =>
     // Getting the services metadata from github
@@ -320,9 +308,9 @@ export class Migrate extends Command {
                     ? this.putLogo(res.serviceId, result.logo)
                     : this.putOrganizationLogo(
                         this.getBlobService(),
-                        "/services",
-                        res.organization,
-                        result.logo
+                        "services",
+                        `${res.organization}.png`,
+                        Buffer.from(result.logo, "base64")
                       );
                 }
                 return taskEither.of<Error, void>(
