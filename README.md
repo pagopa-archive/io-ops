@@ -35,7 +35,7 @@ $ npm install -g io-ops
 $ io-ops COMMAND
 running command...
 $ io-ops (-v|--version|version)
-io-ops/0.2.0 darwin-x64 node-v10.14.2
+io-ops/0.2.0 darwin-x64 node-v10.13.0
 $ io-ops --help [COMMAND]
 USAGE
   $ io-ops COMMAND
@@ -71,6 +71,8 @@ USAGE
 * [`io-ops users:subscription EMAIL SUBSCRIPTIONID`](#io-ops-userssubscription-email-subscriptionid)
 * [`io-ops users:update-groups EMAIL`](#io-ops-usersupdate-groups-email)
 * [`io-ops users:update_user_token_name EMAIL TOKENNAMEVALUE`](#io-ops-usersupdate_user_token_name-email-tokennamevalue)
+* [`io-ops users:write-messages EMAIL ACTION`](#io-ops-userswrite-messages-email-action)
+* [`io-ops users:write-services EMAIL ACTION`](#io-ops-userswrite-services-email-action)
 
 ## `io-ops api-services:create`
 
@@ -505,6 +507,42 @@ EXAMPLE
 ```
 
 _See code: [src/commands/users/update_user_token_name.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/users/update_user_token_name.ts)_
+
+## `io-ops users:write-messages EMAIL ACTION`
+
+Update the list of groups (permissions) associated to the User identified by the provided email
+
+```
+USAGE
+  $ io-ops users:write-messages EMAIL ACTION
+
+ARGUMENTS
+  EMAIL   email
+  ACTION  action
+
+EXAMPLE
+  $ io-ops users:write-messages example@example.it enable
+```
+
+_See code: [src/commands/users/write-messages.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/users/write-messages.ts)_
+
+## `io-ops users:write-services EMAIL ACTION`
+
+Update the list of groups (permissions) associated to the User identified by the provided email
+
+```
+USAGE
+  $ io-ops users:write-services EMAIL ACTION
+
+ARGUMENTS
+  EMAIL   email
+  ACTION  action
+
+EXAMPLE
+  $ io-ops users:write-services example@example.it enable
+```
+
+_See code: [src/commands/users/write-services.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/users/write-services.ts)_
 <!-- commandsstop -->
 
 ```
