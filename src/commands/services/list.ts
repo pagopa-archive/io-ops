@@ -228,13 +228,21 @@ export default class ServicesList extends Command {
             header: "organizationFiscalCode"
           },
           organizationName: {
-            header: "organizationName"
+            header: "organizationName",
+            get: row =>
+              row.organizationName === undefined
+                ? "undefined"
+                : row.organizationName.split('"').join("")
           },
           serviceId: {
             header: "serviceId"
           },
           serviceName: {
-            header: "serviceName"
+            header: "serviceName",
+            get: row =>
+              row.serviceName === undefined
+                ? "undefined"
+                : row.serviceName.split('"').join("")
           },
           isVisible: {
             header: "isVisible"
@@ -259,7 +267,11 @@ export default class ServicesList extends Command {
           },
           privacy_url: {
             header: "privacy_url",
-            get: row => row.serviceMetadata && row.serviceMetadata.privacy_url
+            get: row =>
+              row.serviceMetadata &&
+              row.serviceMetadata.privacy_url === undefined
+                ? "undefined"
+                : row.serviceMetadata.privacy_url.split('"').join("")
           },
           description: {
             header: "description",
@@ -283,7 +295,11 @@ export default class ServicesList extends Command {
           },
           support_url: {
             header: "support_url",
-            get: row => row.serviceMetadata && row.serviceMetadata.support_url
+            get: row =>
+              row.serviceMetadata &&
+              row.serviceMetadata.support_url === undefined
+                ? "undefined"
+                : row.serviceMetadata.support_url.split('"').join("")
           },
           userEmail: {
             header: "userEmail"
