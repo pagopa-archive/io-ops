@@ -203,6 +203,21 @@ export default class ServicesList extends Command {
           `Error: report.length=${report.length} !== visible.length=${visible.length}`
         );
         cli.action.stop();
+
+        let servicesToCheck = new Array();
+        for (let k = 0; k < visible.length; k++) {
+          if (
+            report.filter(x => x.serviceId === visible[k].serviceId).length ===
+            0
+          ) {
+            servicesToCheck.push(visible[k].serviceId);
+          }
+        }
+
+        cli.action.start(
+          `Error: serviceIds to check: ${servicesToCheck.join()}`
+        );
+        cli.action.stop();
       }
 
       // map informations
@@ -248,7 +263,9 @@ export default class ServicesList extends Command {
           },
           description: {
             header: "description",
-            get: row => row.serviceMetadata && row.serviceMetadata.description
+            get: row =>
+              row.serviceMetadata &&
+              row.serviceMetadata.description.split('"').join("")
           },
           phone: {
             header: "phone",
