@@ -265,7 +265,9 @@ export default class ServicesList extends Command {
             header: "description",
             get: row =>
               row.serviceMetadata &&
-              row.serviceMetadata.description.split('"').join("")
+              row.serviceMetadata.description === undefined
+                ? "undefined"
+                : row.serviceMetadata.description.split('"').join("")
           },
           phone: {
             header: "phone",
