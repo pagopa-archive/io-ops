@@ -35,7 +35,7 @@ $ npm install -g io-ops
 $ io-ops COMMAND
 running command...
 $ io-ops (-v|--version|version)
-io-ops/0.2.0 darwin-x64 node-v10.13.0
+io-ops/0.2.0 darwin-x64 node-v12.18.0
 $ io-ops --help [COMMAND]
 USAGE
   $ io-ops COMMAND
@@ -388,11 +388,29 @@ _See code: [src/commands/services/details.ts](https://github.com/teamdigitale/io
 
 ## `io-ops services:list`
 
-List all services in csv format
+Lists all services
 
 ```
 USAGE
   $ io-ops services:list
+
+OPTIONS
+  -x, --extended          show extra columns
+  --columns=columns       only show provided columns (comma-separated)
+  --csv                   output is csv format [alias: --output=csv]
+
+  --day=day               filter services from specified day (Europe/Rome timezone, required format yyyy-MM-dd, ie
+                          2020-05-25)
+
+  --filter=filter         filter property by partial string matching, ex: name=foo
+
+  --no-header             hide table header from output
+
+  --no-truncate           do not truncate output to fit screen
+
+  --output=csv|json|yaml  output in a more machine friendly format
+
+  --sort=sort             property to sort by (prepend '-' for descending)
 ```
 
 _See code: [src/commands/services/list.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/list.ts)_
