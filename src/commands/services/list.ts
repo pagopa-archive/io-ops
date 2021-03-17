@@ -254,8 +254,8 @@ export default class ServicesList extends Command {
                 "yyyy-MM-dd HH:mm:ss"
               )
           },
-          max_allowed_payment_amount: {
-            header: "max_allowed_payment_amount"
+          maxAllowedPaymentAmount: {
+            header: "maxAllowedPaymentAmount"
           },
           authorizedCIDRs: {
             header: "authorizedCIDRs",
@@ -265,13 +265,13 @@ export default class ServicesList extends Command {
             header: "scope",
             get: row => row.serviceMetadata && row.serviceMetadata.scope
           },
-          privacy_url: {
-            header: "privacy_url",
+          privacyUrl: {
+            header: "privacyUrl",
             get: row =>
               row.serviceMetadata &&
-              row.serviceMetadata.privacy_url === undefined
+              row.serviceMetadata.privacyUrl === undefined
                 ? "undefined"
-                : row.serviceMetadata.privacy_url.split('"').join("")
+                : row.serviceMetadata.privacyUrl.split('"').join("")
           },
           description: {
             header: "description",
@@ -285,21 +285,21 @@ export default class ServicesList extends Command {
             header: "phone",
             get: row => row.serviceMetadata && row.serviceMetadata.phone
           },
-          mail: {
-            header: "mail",
-            get: row => row.serviceMetadata && row.serviceMetadata.mail
+          email: {
+            header: "email",
+            get: row => row.serviceMetadata && row.serviceMetadata.email
           },
           pec: {
             header: "pec",
             get: row => row.serviceMetadata && row.serviceMetadata.pec
           },
-          support_url: {
-            header: "support_url",
+          supportUrl: {
+            header: "supportUrl",
             get: row =>
               row.serviceMetadata &&
-              row.serviceMetadata.support_url === undefined
+              row.serviceMetadata.supportUrl === undefined
                 ? "undefined"
-                : row.serviceMetadata.support_url.split('"').join("")
+                : row.serviceMetadata.supportUrl.split('"').join("")
           },
           userEmail: {
             header: "userEmail"
