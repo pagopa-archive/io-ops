@@ -57,7 +57,7 @@ export default class ServicesList extends Command {
       const container = database.container(config.cosmosServicesContainer);
       const response = container.items.query(
         // query services by timestamp
-        `SELECT * FROM c WHERE c._ts < ${day.toMillis() / 1000}`,
+        `SELECT * FROM c WHERE c._ts < ${day.toMillis() / 1000 - 1}`,
         {
           enableCrossPartitionQuery: true
         }
