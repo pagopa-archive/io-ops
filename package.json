@@ -62,7 +62,7 @@
     "shx": "^0.3.2",
     "ts-node": "^8",
     "tslint": "^5.1.0",
-    "typescript": "3.5.1"
+    "typescript": "^3.8.0"
   },
   "engines": {
     "node": ">=8.0.0"
