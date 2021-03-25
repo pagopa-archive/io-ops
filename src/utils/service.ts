@@ -25,7 +25,7 @@ export async function getServices(
     `SELECT * FROM c ${day
       // tslint:disable-next-line: no-nested-template-literals
       .map(_ => `WHERE c._ts < ${_.toMillis() / 1000 - 1}`)
-      .getOrElse("")} OFFSET 0 LIMIT 100`,
+      .getOrElse("")}`,
     {
       enableCrossPartitionQuery: true
     }
