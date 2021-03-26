@@ -99,12 +99,9 @@ export default class VisibleServicesExport extends Command {
       // tslint:disable-next-line: no-console
       console.log(
         JSON.stringify(
-          Object.values(organizationMap).sort((a, b) => {
-            if (a.o > b.o) {
-              return 1;
-            }
-            return -1;
-          })
+          Object.values(organizationMap).sort((a, b) =>
+            a.o.toLowerCase().localeCompare(b.o.toLowerCase())
+          )
         )
       );
     } catch (e) {
