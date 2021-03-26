@@ -118,7 +118,8 @@ function getServiceMapper(
       return {
         i: service.serviceId,
         n: service.serviceName,
-        d: service.serviceMetadata?.description
+        d: service.serviceMetadata?.description,
+        sc: service.serviceMetadata?.scope || ServiceScopeEnum.NATIONAL
       };
     }
     return {

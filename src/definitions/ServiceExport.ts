@@ -3,6 +3,8 @@ import {
   NonEmptyString,
   OrganizationFiscalCode
 } from "italia-ts-commons/lib/strings";
+import { enumType } from "italia-ts-commons/lib/types";
+import { ServiceScopeEnum } from "../generated/ServiceScope";
 
 const ServiceExportR = t.interface({
   i: NonEmptyString,
@@ -11,7 +13,8 @@ const ServiceExportR = t.interface({
 type ServiceExportR = t.TypeOf<typeof ServiceExportR>;
 
 const ServiceExportO = t.partial({
-  d: NonEmptyString
+  d: NonEmptyString,
+  sc: enumType<ServiceScopeEnum>(ServiceScopeEnum, "ServiceScope")
 });
 type ServiceExportO = t.TypeOf<typeof ServiceExportO>;
 

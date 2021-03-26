@@ -9,7 +9,7 @@ export const serviceContentRepoUrl =
   "https://raw.githubusercontent.com/teamdigitale/io-services-metadata/master/";
 
 export async function getServices(
-  day: Option<DateTime>
+  date: Option<DateTime>
 ): Promise<Option<ReadonlyArray<RetrievedService>>> {
   const config = await pickAzureConfig();
   const { endpoint, key } = await getCosmosConnection(
@@ -22,7 +22,7 @@ export async function getServices(
   const container = database.container(config.cosmosServicesContainer);
   const response = container.items.query(
     // query services by timestamp
-    `SELECT * FROM c ${day
+    `SELECT * FROM c ${date
       // tslint:disable-next-line: no-nested-template-literals
       .map(_ => `WHERE c._ts < ${_.toMillis() / 1000 - 1}`)
       .getOrElse("")}`,
