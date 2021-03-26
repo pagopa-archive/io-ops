@@ -23,7 +23,7 @@ export default class ServicesList extends Command {
 
   public static flags = {
     ...cli.table.flags(),
-    day: flags.string({
+    date: flags.string({
       description:
         "filter services from specified day (Europe/Rome timezone, required format yyyy-MM-dd, ie 2020-05-25)",
       required: false
@@ -33,18 +33,18 @@ export default class ServicesList extends Command {
   public async run(): Promise<void> {
     const { flags: parsedFlags } = this.parse(ServicesList);
 
-    const day = fromNullable(parsedFlags.day).map(_ =>
+    const date = fromNullable(parsedFlags.date).map(_ =>
       DateTime.fromFormat(`${_} Europe/Rome`, "yyyy-MM-dd z")
     );
 
-    if (isSome(day) && !day.value.isValid) {
+    if (isSome(date) && !date.value.isValid) {
       this.error("day is not valid");
       return;
     }
 
     try {
       cli.action.start("Querying services...");
-      const services = await getServices(day);
+      const services = await getServices(date);
       cli.action.stop();
       if (isNone(services)) {
         this.error("No result");

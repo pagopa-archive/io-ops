@@ -396,10 +396,10 @@ USAGE
   $ io-ops services:export
 
 OPTIONS
-  -s, --scope=ALL|LOCAL|NATIONAL  [default: ALL] The service scope metadata
+  -s, --scope=NATIONAL|LOCAL|ALL  [default: ALL] The service scope metadata
   -x, --extended                  show extra columns
 
-  --day=day                       filter services from specified day (Europe/Rome timezone, required format yyyy-MM-dd,
+  --date=date                     filter services from specified day (Europe/Rome timezone, required format yyyy-MM-dd,
                                   ie 2020-05-25)
 ```
 
@@ -418,7 +418,7 @@ OPTIONS
   --columns=columns       only show provided columns (comma-separated)
   --csv                   output is csv format [alias: --output=csv]
 
-  --day=day               filter services from specified day (Europe/Rome timezone, required format yyyy-MM-dd, ie
+  --date=date             filter services from specified day (Europe/Rome timezone, required format yyyy-MM-dd, ie
                           2020-05-25)
 
   --filter=filter         filter property by partial string matching, ex: name=foo
