@@ -11,11 +11,10 @@ import { getServices } from "../../utils/service";
 
 dotenv.config();
 
-enum ScopeFilter {
-  ALL = "ALL",
-  LOCAL = "LOCAL",
-  NATIONAL = "NATIONAL"
-}
+const ServiceScope = {
+  ...ServiceScopeEnum,
+  ALL: "ALL"
+};
 
 export default class VisibleServicesExport extends Command {
   public static description = "Export visible services";
@@ -31,8 +30,8 @@ export default class VisibleServicesExport extends Command {
       char: "s",
       description: "The service scope metadata",
       required: false,
-      default: ScopeFilter.ALL,
-      options: [ScopeFilter.ALL, ScopeFilter.LOCAL, ScopeFilter.NATIONAL]
+      default: ServiceScope.ALL,
+      options: Object.values(ServiceScope)
     })
   };
 
@@ -64,17 +63,14 @@ export default class VisibleServicesExport extends Command {
         if (x.isVisible === false) {
           return false;
         }
-        if (parsedFlags.scope === ScopeFilter.LOCAL) {
-          return x.serviceMetadata?.scope === ServiceScopeEnum.LOCAL;
+        if (parsedFlags.scope === ServiceScope.ALL) {
+          return true;
         }
-        if (parsedFlags.scope === ScopeFilter.NATIONAL) {
-          // Services without metadata are considered NATIONAL scoped
-          return (
-            x.serviceMetadata?.scope === ServiceScopeEnum.NATIONAL ||
-            x.serviceMetadata === undefined
-          );
+        if (x.serviceMetadata?.scope) {
+          return x.serviceMetadata.scope === parsedFlags.scope;
         }
-        return true;
+        // Services without metadata are considered NATIONAL scoped
+        return parsedFlags.scope === ServiceScope.NATIONAL;
       });
       cli.action.stop();
 
