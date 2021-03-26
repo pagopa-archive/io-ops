@@ -1,8 +1,8 @@
-import * as cosmos from "@azure/cosmos";
 import { Command, flags } from "@oclif/command";
 import chalk from "chalk";
 import cli from "cli-ux";
 import * as dotenv from "dotenv";
+import { fromNullable, isNone, isSome } from "fp-ts/lib/Option";
 import { Task } from "fp-ts/lib/Task";
 import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 import { DateTime } from "luxon";
@@ -10,8 +10,8 @@ import { ApiClient } from "../../clients/admin";
 import { EmailAddress } from "../../generated/EmailAddress";
 import { UserCollection } from "../../generated/UserCollection";
 import { UserInfo } from "../../generated/UserInfo";
-import { getCosmosConnection, pickAzureConfig } from "../../utils/azure";
 import { errorsToError } from "../../utils/conversions";
+import { getServices } from "../../utils/service";
 
 dotenv.config();
 
@@ -23,7 +23,7 @@ export default class ServicesList extends Command {
 
   public static flags = {
     ...cli.table.flags(),
-    day: flags.string({
+    date: flags.string({
       description:
         "filter services from specified day (Europe/Rome timezone, required format yyyy-MM-dd, ie 2020-05-25)",
       required: false
@@ -33,58 +33,26 @@ export default class ServicesList extends Command {
   public async run(): Promise<void> {
     const { flags: parsedFlags } = this.parse(ServicesList);
 
-    const day = DateTime.fromFormat(
-      `${parsedFlags.day} Europe/Rome`,
-      "yyyy-MM-dd z"
+    const date = fromNullable(parsedFlags.date).map(_ =>
+      DateTime.fromFormat(`${_} Europe/Rome`, "yyyy-MM-dd z")
     );
-    if (!day.isValid) {
+
+    if (isSome(date) && !date.value.isValid) {
       this.error("day is not valid");
       return;
     }
 
     try {
-      const config = await pickAzureConfig();
-      cli.action.start("Retrieving cosmosdb credentials");
-      const { endpoint, key } = await getCosmosConnection(
-        config.resourceGroup,
-        config.cosmosName
-      );
-      cli.action.stop();
-
       cli.action.start("Querying services...");
-      const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
-      const database = client.database(config.cosmosDatabaseName);
-      const container = database.container(config.cosmosServicesContainer);
-      const response = container.items.query(
-        // query services by timestamp
-        `SELECT * FROM c WHERE c._ts < ${day.toMillis() / 1000 - 1}`,
-        {
-          enableCrossPartitionQuery: true
-        }
-      );
-      const result = (await response.toArray()).result;
-
+      const services = await getServices(date);
       cli.action.stop();
-      if (result === undefined) {
+      if (isNone(services)) {
         this.error("No result");
         return;
       }
 
-      const latest: any[] = Object.values(
-        // tslint:disable-next-line: no-any
-        result.reduce((prev, curr: any) => {
-          const isNewer =
-            !prev[curr.serviceId] ||
-            curr.version > prev[curr.serviceId].version;
-          return {
-            ...prev,
-            ...(isNewer ? { [curr.serviceId]: curr } : {})
-          };
-        }, {})
-      );
-
       // get all visible services
-      const visible = latest.filter(x => x.isVisible === true);
+      const visible = services.value.filter(x => x.isVisible === true);
 
       // all apim users (without subscriptions and groups)
       let users = new Array();
@@ -93,7 +61,7 @@ export default class ServicesList extends Command {
 
       // latest lenght is greater then max users (1 user -> n subscriptions)
       // loop end when next result is empty
-      for (let i = 0; i < latest.length; i++) {
+      for (let i = 0; i < services.value.length; i++) {
         cli.action.start(`Querying users... cursor: ${cursor}`);
         const curr = (await this.getUsers(cursor)
           .fold(

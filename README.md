@@ -35,7 +35,7 @@ $ npm install -g io-ops
 $ io-ops COMMAND
 running command...
 $ io-ops (-v|--version|version)
-io-ops/0.2.0 darwin-x64 node-v12.18.0
+io-ops/0.2.0 darwin-x64 node-v10.14.2
 $ io-ops --help [COMMAND]
 USAGE
   $ io-ops COMMAND
@@ -64,6 +64,7 @@ USAGE
 * [`io-ops profiles:list`](#io-ops-profileslist)
 * [`io-ops services:check`](#io-ops-servicescheck)
 * [`io-ops services:details`](#io-ops-servicesdetails)
+* [`io-ops services:export`](#io-ops-servicesexport)
 * [`io-ops services:list`](#io-ops-serviceslist)
 * [`io-ops users:create`](#io-ops-userscreate)
 * [`io-ops users:get EMAIL`](#io-ops-usersget-email)
@@ -386,6 +387,24 @@ OPTIONS
 
 _See code: [src/commands/services/details.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/details.ts)_
 
+## `io-ops services:export`
+
+Export visible services
+
+```
+USAGE
+  $ io-ops services:export
+
+OPTIONS
+  -s, --scope=NATIONAL|LOCAL|ALL  [default: ALL] The service scope metadata
+  -x, --extended                  show extra columns
+
+  --date=date                     filter services from specified day (Europe/Rome timezone, required format yyyy-MM-dd,
+                                  ie 2020-05-25)
+```
+
+_See code: [src/commands/services/export.ts](https://github.com/teamdigitale/io-ops/blob/v0.2.0/src/commands/services/export.ts)_
+
 ## `io-ops services:list`
 
 Lists all services
@@ -399,7 +418,7 @@ OPTIONS
   --columns=columns       only show provided columns (comma-separated)
   --csv                   output is csv format [alias: --output=csv]
 
-  --day=day               filter services from specified day (Europe/Rome timezone, required format yyyy-MM-dd, ie
+  --date=date             filter services from specified day (Europe/Rome timezone, required format yyyy-MM-dd, ie
                           2020-05-25)
 
   --filter=filter         filter property by partial string matching, ex: name=foo
