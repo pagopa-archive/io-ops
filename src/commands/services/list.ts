@@ -27,6 +27,16 @@ export default class ServicesList extends Command {
       description:
         "filter services from specified day (Europe/Rome timezone, required format yyyy-MM-dd, ie 2020-05-25)",
       required: false
+    }),
+    only_services: flags.string({
+      description: "get only services data",
+      default: "false",
+      required: false
+    }),
+    visible: flags.string({
+      description: "get only visible services data",
+      default: "true",
+      required: false
     })
   };
 
@@ -44,141 +54,147 @@ export default class ServicesList extends Command {
 
     try {
       cli.action.start("Querying services...");
-      const services = await getServices(date);
+      const allServices = await getServices(date);
       cli.action.stop();
-      if (isNone(services)) {
+      if (isNone(allServices)) {
         this.error("No result");
         return;
       }
 
-      // get all visible services
-      const visible = services.value.filter(x => x.isVisible === true);
-
-      // all apim users (without subscriptions and groups)
-      let users = new Array();
-      // getUsers api returns max 100 users for call, so we need to call api until next result is empty
-      let cursor = 0;
-
-      // latest lenght is greater then max users (1 user -> n subscriptions)
-      // loop end when next result is empty
-      for (let i = 0; i < services.value.length; i++) {
-        cli.action.start(`Querying users... cursor: ${cursor}`);
-        const curr = (await this.getUsers(cursor)
-          .fold(
-            error => {
-              cli.action.stop(chalk.red(`Error : ${error}`));
-            },
-            result => {
-              return result;
-            }
-          )
-          .run()) as any;
-
-        // build users array
-        curr.items.forEach((element: any) => {
-          users.push(element);
-        });
-
-        cursor = cursor + 100;
-        cli.action.stop();
-        if (curr.next === undefined) {
-          // exit loop when next element is empty
-          break;
-        }
-      }
+      // get filtered visible services
+      const filteredServices =
+        parsedFlags.visible === "true"
+          ? allServices.value.filter(x => x.isVisible === true)
+          : allServices.value;
 
       // final report array
       // tslint:disable-next-line: no-let
       let report = new Array();
 
-      // for each user get subscriptions and groups
-      // tslint:disable-next-line: no-let
-      for (let i = 0; i < users.length; i++) {
-        cli.action.start(`Querying user... user: ${i}`);
-        const curr = (await this.getUser(users[i].email)
-          .fold(
-            error => {
-              cli.action.stop(chalk.red(`Error : ${error}`));
-            },
-            result => {
-              return result;
-            }
-          )
-          .run()) as any;
+      if (parsedFlags.only_services === "true") {
+        // report = filteredServices;
+        report = [...filteredServices];
+      } else {
+        // all apim users (without subscriptions and groups)
+        let users = new Array();
+        // getUsers api returns max 100 users for call, so we need to call api until next result is empty
+        let usersCursor = 0;
 
-        if (curr !== undefined) {
-          const isInvioMassivo =
-            curr.groups.filter(
-              (x: { display_name: string }) =>
-                x.display_name === "ApiMessageWrite"
-            ).length === 1 &&
-            curr.groups.filter(
-              (x: { display_name: string }) =>
-                x.display_name === "ApiLimitedMessageWrite"
-            ).length === 0;
+        // latest lenght is greater then max users (1 user -> n subscriptions)
+        // loop end when next result is empty
+        do {
+          cli.action.start(`Querying users... cursor: ${usersCursor}`);
+          const curr = (await this.getUsers(usersCursor)
+            .fold(
+              error => {
+                cli.action.stop(chalk.red(`Error : ${error}`));
+              },
+              result => {
+                return result;
+              }
+            )
+            .run()) as any;
 
-          const isSubFeed =
-            curr.groups.filter(
-              (x: { display_name: string }) =>
-                x.display_name === "ApiSubscriptionsFeedRead"
-            ).length === 1;
+          // build users array
+          users = [...users, ...curr.items];
 
-          const isOnboardingMassivo =
-            curr.groups.filter(
-              (x: { display_name: string }) =>
-                x.display_name === "ApiServiceRead"
-            ).length === 1 &&
-            curr.groups.filter(
-              (x: { display_name: string }) =>
-                x.display_name === "ApiServiceWrite"
-            ).length === 1;
+          usersCursor = usersCursor + 100;
+          cli.action.stop();
+          if (curr.next === undefined) {
+            // exit loop when next element is empty
+            break;
+          }
+        } while (true);
 
-          const isAdmin =
-            curr.groups.filter(
-              (x: { display_name: string }) => x.display_name === "ApiAdmin"
-            ).length === 1;
+        // for each user get subscriptions and groups
+        // tslint:disable-next-line: no-let
+        for (let i = 0; i < users.length; i++) {
+          cli.action.start(`Querying user... user: ${i}`);
+          let curr: any = undefined;
+          curr = (await this.getUser(users[i].email)
+            .fold(
+              error => {
+                cli.action.stop(chalk.red(`Error : ${error}`));
+              },
+              result => {
+                return result;
+              }
+            )
+            .run()) as any;
+          if (curr !== undefined) {
+            const isInvioMassivo =
+              curr.groups.filter(
+                (x: { display_name: string }) =>
+                  x.display_name === "ApiMessageWrite"
+              ).length === 1 &&
+              curr.groups.filter(
+                (x: { display_name: string }) =>
+                  x.display_name === "ApiLimitedMessageWrite"
+              ).length === 0;
 
-          const createdService = isOnboardingMassivo
-            ? users[i].email
-            : "PagoPA";
+            const isSubFeed =
+              curr.groups.filter(
+                (x: { display_name: string }) =>
+                  x.display_name === "ApiSubscriptionsFeedRead"
+              ).length === 1;
 
-          // for each subscription add visible service info, if serviceId matches with subscriptions.id
-          // tslint:disable-next-line: prefer-for-of
-          for (let k = 0; k < curr.subscriptions.length; k++) {
-            const service = visible.filter(
-              x => x.serviceId === curr.subscriptions[k].id
-            );
-            if (service.length > 0) {
-              report.push({
-                ...service[0],
-                userEmail: users[i].email,
-                userGroups: curr.groups,
-                userIsInvioMassivo: isInvioMassivo,
-                userIsSubFeed: isSubFeed,
-                userIsOnboardingMassivo: isOnboardingMassivo,
-                userIsAdmin: isAdmin,
-                userCreatedService: createdService
-              });
+            const isOnboardingMassivo =
+              curr.groups.filter(
+                (x: { display_name: string }) =>
+                  x.display_name === "ApiServiceRead"
+              ).length === 1 &&
+              curr.groups.filter(
+                (x: { display_name: string }) =>
+                  x.display_name === "ApiServiceWrite"
+              ).length === 1;
+
+            const isAdmin =
+              curr.groups.filter(
+                (x: { display_name: string }) => x.display_name === "ApiAdmin"
+              ).length === 1;
+
+            const createdService = isOnboardingMassivo
+              ? users[i].email
+              : "PagoPA";
+
+            // for each subscription add visible service info, if serviceId matches with subscriptions.id
+            // tslint:disable-next-line: prefer-for-of
+            for (let k = 0; k < curr.subscriptions.length; k++) {
+              const service = filteredServices.filter(
+                x => x.serviceId === curr.subscriptions[k].id
+              );
+              if (service.length > 0) {
+                report.push({
+                  ...service[0],
+                  userEmail: users[i].email,
+                  userGroups: curr.groups,
+                  userIsInvioMassivo: isInvioMassivo,
+                  userIsSubFeed: isSubFeed,
+                  userIsOnboardingMassivo: isOnboardingMassivo,
+                  userIsAdmin: isAdmin,
+                  userCreatedService: createdService
+                });
+              }
             }
           }
+          cli.action.stop();
         }
-        cli.action.stop();
       }
 
       // check final report length must be equal to visible services
-      if (report.length !== visible.length) {
+      if (report.length !== filteredServices.length) {
         cli.action.start(
-          `Error: report.length=${report.length} !== visible.length=${visible.length}`
+          `Error: report.length=${report.length} !== visible.length=${filteredServices.length}`
         );
         cli.action.stop();
 
         let servicesToCheck = new Array();
-        for (let k = 0; k < visible.length; k++) {
+        for (let k = 0; k < filteredServices.length; k++) {
           if (
-            report.filter(x => x.serviceId === visible[k].serviceId).length ===
-            0
+            report.filter(x => x.serviceId === filteredServices[k].serviceId)
+              .length === 0
           ) {
-            servicesToCheck.push(visible[k].serviceId);
+            servicesToCheck.push(filteredServices[k].serviceId);
           }
         }
 
@@ -193,27 +209,42 @@ export default class ServicesList extends Command {
         report,
         {
           organizationFiscalCode: {
-            header: "organizationFiscalCode"
+            header: "organization_fiscal_code",
+            get: row =>
+              row.organizationFiscalCode === undefined
+                ? "undefined"
+                : row.organizationFiscalCode.split('"').join("")
           },
           organizationName: {
-            header: "organizationName",
+            header: "organization_name",
             get: row =>
               row.organizationName === undefined
                 ? "undefined"
                 : row.organizationName.split('"').join("")
           },
           serviceId: {
-            header: "serviceId"
+            header: "service_id",
+            get: row =>
+              row.serviceId === undefined
+                ? "undefined"
+                : row.serviceId.split('"').join("")
           },
           serviceName: {
-            header: "serviceName",
+            header: "service_name",
             get: row =>
               row.serviceName === undefined
                 ? "undefined"
                 : row.serviceName.split('"').join("")
           },
+          departmentName: {
+            header: "department_name",
+            get: row =>
+              row.departmentName === undefined
+                ? "undefined"
+                : row.departmentName.split('"').join("")
+          },
           isVisible: {
-            header: "isVisible"
+            header: "is_visible"
           },
           timestamp: {
             header: "timestamp",
@@ -223,31 +254,35 @@ export default class ServicesList extends Command {
               )
           },
           maxAllowedPaymentAmount: {
-            header: "maxAllowedPaymentAmount"
+            header: "max_allowed_payment_amount"
           },
           authorizedCIDRs: {
-            header: "authorizedCIDRs",
+            header: "authorized_cidrs",
             get: row => (row.authorizedCIDRs as readonly string[]).length
           },
           scope: {
             header: "scope",
-            get: row => row.serviceMetadata && row.serviceMetadata.scope
-          },
-          privacyUrl: {
-            header: "privacyUrl",
             get: row =>
               row.serviceMetadata &&
-              row.serviceMetadata.privacyUrl === undefined
+              (row.serviceMetadata.scope === undefined
                 ? "undefined"
-                : row.serviceMetadata.privacyUrl.split('"').join("")
+                : row.serviceMetadata.scope)
+          },
+          privacyUrl: {
+            header: "privacy_url",
+            get: row =>
+              row.serviceMetadata &&
+              (row.serviceMetadata.privacyUrl === undefined
+                ? "undefined"
+                : row.serviceMetadata.privacyUrl.split('"').join(""))
           },
           description: {
             header: "description",
             get: row =>
               row.serviceMetadata &&
-              row.serviceMetadata.description === undefined
+              (row.serviceMetadata.description === undefined
                 ? "undefined"
-                : row.serviceMetadata.description.split('"').join("")
+                : row.serviceMetadata.description.split('"').join(""))
           },
           phone: {
             header: "phone",
@@ -262,12 +297,63 @@ export default class ServicesList extends Command {
             get: row => row.serviceMetadata && row.serviceMetadata.pec
           },
           supportUrl: {
-            header: "supportUrl",
+            header: "support_url",
             get: row =>
               row.serviceMetadata &&
-              row.serviceMetadata.supportUrl === undefined
+              (row.serviceMetadata.supportUrl === undefined
                 ? "undefined"
-                : row.serviceMetadata.supportUrl.split('"').join("")
+                : row.serviceMetadata.supportUrl.split('"').join(""))
+          },
+          requireSecureChannels: {
+            header: "require_secure_channels"
+          },
+          webUrl: {
+            header: "web_url",
+            get: row =>
+              row.serviceMetadata &&
+              (row.serviceMetadata.webUrl === undefined
+                ? "undefined"
+                : row.serviceMetadata.webUrl.split('"').join(""))
+          },
+          appIos: {
+            header: "app_ios",
+            get: row =>
+              row.serviceMetadata &&
+              (row.serviceMetadata.appIos === undefined
+                ? "undefined"
+                : row.serviceMetadata.appIos.split('"').join(""))
+          },
+          appAndroid: {
+            header: "app_android",
+            get: row =>
+              row.serviceMetadata &&
+              (row.serviceMetadata.appAndroid === undefined
+                ? "undefined"
+                : row.serviceMetadata.appAndroid.split('"').join(""))
+          },
+          tosUrl: {
+            header: "tos_url",
+            get: row =>
+              row.serviceMetadata &&
+              (row.serviceMetadata.tosUrl === undefined
+                ? "undefined"
+                : row.serviceMetadata.tosUrl.split('"').join(""))
+          },
+          cta: {
+            header: "cta",
+            get: row =>
+              row.serviceMetadata &&
+              (row.serviceMetadata.cta === undefined
+                ? "undefined"
+                : row.serviceMetadata.cta.split('"').join(""))
+          },
+          tokenName: {
+            header: "token_name",
+            get: row =>
+              row.serviceMetadata &&
+              (row.serviceMetadata.tokenName === undefined
+                ? "undefined"
+                : row.serviceMetadata.tokenName.split('"').join(""))
           },
           userEmail: {
             header: "userEmail"
