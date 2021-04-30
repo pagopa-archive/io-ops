@@ -1,4 +1,6 @@
 import Command from "@oclif/command";
+// tslint:disable-next-line: no-submodule-imports
+import { getRequiredStringEnv } from "@pagopa/io-functions-commons/dist/src/utils/env";
 import chalk from "chalk";
 import cli from "cli-ux";
 import { array } from "fp-ts/lib/Array";
@@ -13,8 +15,6 @@ import {
   taskify,
   tryCatch
 } from "fp-ts/lib/TaskEither";
-// tslint:disable-next-line: no-submodule-imports
-import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 
 import { BlobService, createBlobService } from "azure-storage";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";

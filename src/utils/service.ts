@@ -1,7 +1,7 @@
 import * as cosmos from "@azure/cosmos";
-import { none, Option, some } from "fp-ts/lib/Option";
 // tslint:disable-next-line: no-submodule-imports
-import { RetrievedService } from "io-functions-commons/dist/src/models/service";
+import { RetrievedService } from "@pagopa/io-functions-commons/dist/src/models/service";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { DateTime } from "luxon";
 import { getCosmosConnection, pickAzureConfig } from "./azure";
 

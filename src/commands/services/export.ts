@@ -1,10 +1,12 @@
 import { Command, flags } from "@oclif/command";
+import {
+  RetrievedService,
+  ValidService
+  // tslint:disable-next-line: no-submodule-imports
+} from "@pagopa/io-functions-commons/dist/src/models/service";
 import cli from "cli-ux";
 import * as dotenv from "dotenv";
 import { fromNullable, isNone, isSome } from "fp-ts/lib/Option";
-// tslint:disable-next-line: no-submodule-imports
-import { RetrievedService } from "io-functions-commons/dist/src/models/service";
-import { ValidService } from "@pagopa/io-functions-commons/dist/src/models/service";
 import { DateTime } from "luxon";
 import { ServiceExport, ServicesExport } from "../../definitions/ServiceExport";
 import { ServiceScopeEnum } from "../../generated/ServiceScope";
@@ -121,13 +123,19 @@ function getServiceMapper(
         n: service.serviceName,
         d: service.serviceMetadata?.description,
         sc: service.serviceMetadata?.scope || ServiceScopeEnum.NATIONAL,
-        q: ValidService.is(service) // ? 1 : 0
+        q: ValidService.decode(service).fold(
+          _ => 0,
+          _ => 1
+        )
       };
     }
     return {
       i: service.serviceId,
       n: service.serviceName,
-      q: ValidService.is(service) // ? 1 : 0
+      q: ValidService.decode(service).fold(
+        _ => 0,
+        _ => 1
+      )
     };
   };
 }

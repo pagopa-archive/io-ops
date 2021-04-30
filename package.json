@@ -29,7 +29,6 @@
     "execa": "sindresorhus/execa#0d39fdffeb053215a56a631db8d2cf32ea119a95",
     "fp-ts": "1.12.0",
     "image-size": "0.7.4",
-    "io-functions-commons": "^14.6.0",
     "io-ts": "1.8.5",
     "italia-ts-commons": "5.1.9",
     "italia-tslint-rules": "^1.1.3",
