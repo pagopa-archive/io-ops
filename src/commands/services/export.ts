@@ -4,6 +4,7 @@ import * as dotenv from "dotenv";
 import { fromNullable, isNone, isSome } from "fp-ts/lib/Option";
 // tslint:disable-next-line: no-submodule-imports
 import { RetrievedService } from "io-functions-commons/dist/src/models/service";
+import { ValidService } from "@pagopa/io-functions-commons/dist/src/models/service";
 import { DateTime } from "luxon";
 import { ServiceExport, ServicesExport } from "../../definitions/ServiceExport";
 import { ServiceScopeEnum } from "../../generated/ServiceScope";
@@ -119,12 +120,14 @@ function getServiceMapper(
         i: service.serviceId,
         n: service.serviceName,
         d: service.serviceMetadata?.description,
-        sc: service.serviceMetadata?.scope || ServiceScopeEnum.NATIONAL
+        sc: service.serviceMetadata?.scope || ServiceScopeEnum.NATIONAL,
+        q: ValidService.is(service) // ? 1 : 0
       };
     }
     return {
       i: service.serviceId,
-      n: service.serviceName
+      n: service.serviceName,
+      q: ValidService.is(service) // ? 1 : 0
     };
   };
 }

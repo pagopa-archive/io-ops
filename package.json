@@ -15,6 +15,7 @@
     "@oclif/command": "^1",
     "@oclif/config": "^1",
     "@oclif/plugin-help": "^2",
+    "@pagopa/io-functions-commons": "^20.2.0",
     "@pagopa/ts-commons": "^9.1.0",
     "@types/adm-zip": "^0.4.32",
     "@types/js-yaml": "^3.12.2",
