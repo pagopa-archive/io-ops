@@ -250,12 +250,12 @@ export default class ServicesList extends Command {
           isVisible: {
             header: "is_visible"
           },
-          isIncoming: {
-            header: "is_incoming",
+          isQuality: {
+            header: "is_quality",
             get: row =>
               ValidService.decode(row).fold(
-                _ => true,
-                _ => false
+                _ => false,
+                _ => true
               )
           },
           timestamp: {
