@@ -12,6 +12,10 @@ import { UserCollection } from "../../generated/UserCollection";
 import { UserInfo } from "../../generated/UserInfo";
 import { errorsToError } from "../../utils/conversions";
 import { getServices } from "../../utils/service";
+import {
+  ValidService
+  // tslint:disable-next-line: no-submodule-imports
+} from "@pagopa/io-functions-commons/dist/src/models/service";
 
 dotenv.config();
 
@@ -245,6 +249,14 @@ export default class ServicesList extends Command {
           },
           isVisible: {
             header: "is_visible"
+          },
+          isIncoming: {
+            header: "is_incoming",
+            get: row =>
+              ValidService.decode(row).fold(
+                _ => true,
+                _ => false
+              )
           },
           timestamp: {
             header: "timestamp",

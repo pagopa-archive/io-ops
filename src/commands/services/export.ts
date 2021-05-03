@@ -124,8 +124,8 @@ function getServiceMapper(
         d: service.serviceMetadata?.description,
         sc: service.serviceMetadata?.scope || ServiceScopeEnum.NATIONAL,
         q: ValidService.decode(service).fold(
-          _ => 0,
-          _ => 1
+          _ => 1,
+          _ => 0
         )
       };
     }
@@ -133,8 +133,8 @@ function getServiceMapper(
       i: service.serviceId,
       n: service.serviceName,
       q: ValidService.decode(service).fold(
-        _ => 0,
-        _ => 1
+        _ => 1,
+        _ => 0
       )
     };
   };
