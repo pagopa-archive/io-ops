@@ -298,15 +298,27 @@ export default class ServicesList extends Command {
           },
           phone: {
             header: "phone",
-            get: row => row.serviceMetadata && row.serviceMetadata.phone
+            get: row =>
+              row.serviceMetadata &&
+              (row.serviceMetadata.phone === undefined
+                ? "undefined"
+                : row.serviceMetadata.phone.split('"').join(""))
           },
           email: {
             header: "email",
-            get: row => row.serviceMetadata && row.serviceMetadata.email
+            get: row =>
+              row.serviceMetadata &&
+              (row.serviceMetadata.email === undefined
+                ? "undefined"
+                : row.serviceMetadata.email.split('"').join(""))
           },
           pec: {
             header: "pec",
-            get: row => row.serviceMetadata && row.serviceMetadata.pec
+            get: row =>
+              row.serviceMetadata &&
+              (row.serviceMetadata.pec === undefined
+                ? "undefined"
+                : row.serviceMetadata.pec.split('"').join(""))
           },
           supportUrl: {
             header: "support_url",
