@@ -21,6 +21,9 @@ dotenv.config();
 
 const BASE_URL_ADMIN = process.env.BASE_URL_ADMIN || "";
 const OCP_APIM = process.env.OCP_APIM || "";
+// List of service_ids ; separeted
+const SERVICEID_EXCLUSION_LIST =
+  process.env.SERVICEID_EXCLUSION_LIST?.split(";") || [];
 
 export default class ServicesList extends Command {
   public static description = "Lists all services";
@@ -253,10 +256,12 @@ export default class ServicesList extends Command {
           isQuality: {
             header: "is_quality",
             get: row =>
-              ValidService.decode(row).fold(
-                _ => false,
-                _ => true
-              )
+              SERVICEID_EXCLUSION_LIST.indexOf(row.serviceId) === 0
+                ? true
+                : ValidService.decode(row).fold(
+                    _ => false, // quality ok
+                    _ => true // quality ko
+                  )
           },
           timestamp: {
             header: "timestamp",

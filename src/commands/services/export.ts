@@ -14,6 +14,10 @@ import { getServices } from "../../utils/service";
 
 dotenv.config();
 
+// List of service_ids ; separeted
+const SERVICEID_EXCLUSION_LIST =
+  process.env.SERVICEID_EXCLUSION_LIST?.split(";") || [];
+
 const ServiceScope = {
   ...ServiceScopeEnum,
   ALL: "ALL"
@@ -123,19 +127,25 @@ function getServiceMapper(
         n: service.serviceName,
         d: service.serviceMetadata?.description,
         sc: service.serviceMetadata?.scope || ServiceScopeEnum.NATIONAL,
-        q: ValidService.decode(service).fold(
-          _ => 0,
-          _ => 1
-        )
+        q:
+          SERVICEID_EXCLUSION_LIST.indexOf(service.serviceId) === 0
+            ? 0
+            : ValidService.decode(service).fold(
+                _ => 0, // quality ok
+                _ => 1 // quality ko
+              )
       };
     }
     return {
       i: service.serviceId,
       n: service.serviceName,
-      q: ValidService.decode(service).fold(
-        _ => 0,
-        _ => 1
-      )
+      q:
+        SERVICEID_EXCLUSION_LIST.indexOf(service.serviceId) === 0
+          ? 0
+          : ValidService.decode(service).fold(
+              _ => 0, // quality ok
+              _ => 1 // quality ko
+            )
     };
   };
 }
