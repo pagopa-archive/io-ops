@@ -256,11 +256,11 @@ export default class ServicesList extends Command {
           isQuality: {
             header: "is_quality",
             get: row =>
-              SERVICEID_EXCLUSION_LIST.indexOf(row.serviceId) === 0
+              SERVICEID_EXCLUSION_LIST.indexOf(row.serviceId) > -1
                 ? true
                 : ValidService.decode(row).fold(
-                    _ => false, // quality ok
-                    _ => true // quality ko
+                    _ => false, // quality ko
+                    _ => true // quality ok
                   )
           },
           timestamp: {

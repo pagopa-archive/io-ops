@@ -128,11 +128,11 @@ function getServiceMapper(
         d: service.serviceMetadata?.description,
         sc: service.serviceMetadata?.scope || ServiceScopeEnum.NATIONAL,
         q:
-          SERVICEID_EXCLUSION_LIST.indexOf(service.serviceId) === 0
-            ? 0
+          SERVICEID_EXCLUSION_LIST.indexOf(service.serviceId) > -1
+            ? 1
             : ValidService.decode(service).fold(
-                _ => 0, // quality ok
-                _ => 1 // quality ko
+                _ => 0, // quality ko
+                _ => 1 // quality ok
               )
       };
     }
@@ -140,11 +140,11 @@ function getServiceMapper(
       i: service.serviceId,
       n: service.serviceName,
       q:
-        SERVICEID_EXCLUSION_LIST.indexOf(service.serviceId) === 0
-          ? 0
+        SERVICEID_EXCLUSION_LIST.indexOf(service.serviceId) > -1
+          ? 1
           : ValidService.decode(service).fold(
-              _ => 0, // quality ok
-              _ => 1 // quality ko
+              _ => 0, // quality ko
+              _ => 1 // quality ok
             )
     };
   };
