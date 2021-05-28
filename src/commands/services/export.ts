@@ -39,6 +39,11 @@ export default class VisibleServicesExport extends Command {
       required: false,
       default: ServiceScope.ALL,
       options: Object.values(ServiceScope)
+    }),
+    azureConfig: flags.string({
+      char: "a",
+      description: "Select Azure Config",
+      required: false
     })
   };
 
@@ -56,7 +61,7 @@ export default class VisibleServicesExport extends Command {
     }
     try {
       cli.action.start("Querying services...");
-      const services = await getServices(date);
+      const services = await getServices(date, parsedFlags.azureConfig);
       cli.action.stop();
 
       if (isNone(services)) {

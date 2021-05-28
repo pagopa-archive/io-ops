@@ -66,13 +66,20 @@ interface IConfigs {
 }
 const configs: IConfigs = { agid, dev, prod };
 
-export const pickAzureConfig = async (): Promise<IAzureConfig> => {
+export const pickAzureConfig = async (
+  defaultAzureConfig?: string
+): Promise<IAzureConfig> => {
   const options = Object.keys(configs)
     .map((c, i) => `${i + 1} - ${c}`)
     .join("\n");
-  const choice = await cli.prompt(`select azure config:\n${options}\n`, {
-    default: "0"
-  });
+  let choice;
+  if (defaultAzureConfig) {
+    choice = defaultAzureConfig;
+  } else {
+    choice = await cli.prompt(`select azure config:\n${options}\n`, {
+      default: "0"
+    });
+  }
   const defaultValue = configs[Object.keys(configs)[0]];
   if (isNaN(choice)) {
     return defaultValue;

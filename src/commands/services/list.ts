@@ -44,6 +44,11 @@ export default class ServicesList extends Command {
       description: "get only visible services data",
       default: "true",
       required: false
+    }),
+    azureConfig: flags.string({
+      char: "a",
+      description: "Select Azure Config",
+      required: false
     })
   };
 
@@ -61,7 +66,7 @@ export default class ServicesList extends Command {
 
     try {
       cli.action.start("Querying services...");
-      const allServices = await getServices(date);
+      const allServices = await getServices(date, parsedFlags.azureConfig);
       cli.action.stop();
       if (isNone(allServices)) {
         this.error("No result");

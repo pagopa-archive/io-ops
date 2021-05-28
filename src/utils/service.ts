@@ -9,9 +9,10 @@ export const serviceContentRepoUrl =
   "https://raw.githubusercontent.com/teamdigitale/io-services-metadata/master/";
 
 export async function getServices(
-  date: Option<DateTime>
+  date: Option<DateTime>,
+  azureConfig?: string
 ): Promise<Option<ReadonlyArray<RetrievedService>>> {
-  const config = await pickAzureConfig();
+  const config = await pickAzureConfig(azureConfig);
   const { endpoint, key } = await getCosmosConnection(
     config.resourceGroup,
     config.cosmosName
