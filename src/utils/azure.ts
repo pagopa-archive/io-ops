@@ -113,14 +113,14 @@ export const getCosmosReadonlyKey = async (
 ) =>
   (
     await execa(
-      `az cosmosdb list-keys -g ${resourceGroup} -n ${name} --query primaryReadonlyMasterKey -o tsv`
+      `az cosmosdb keys list -g ${resourceGroup} -n ${name} --type read-only-keys -o tsv --query secondaryReadonlyMasterKey`
     )
   ).stdout;
 
 export const getCosmosWriteKey = async (resourceGroup: string, name: string) =>
   (
     await execa(
-      `az cosmosdb list-keys -g ${resourceGroup} -n ${name} --query primaryMasterKey -o tsv`
+      `az cosmosdb keys list -g ${resourceGroup} -n ${name} --type keys -o tsv --query secondaryMasterKey`
     )
   ).stdout;
 
