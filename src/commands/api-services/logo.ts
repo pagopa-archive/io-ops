@@ -1,13 +1,13 @@
 import Command, { flags } from "@oclif/command";
 import * as Parser from "@oclif/parser";
+// tslint:disable-next-line: no-submodule-imports
+import { getRequiredStringEnv } from "@pagopa/io-functions-commons/dist/src/utils/env";
 import chalk from "chalk";
 import cli from "cli-ux";
 import { IOEither, tryCatch2v as IOtryCatch2v } from "fp-ts/lib/IOEither";
 import { Task } from "fp-ts/lib/Task";
 import { fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
 import * as fs from "fs";
-// tslint:disable-next-line: no-submodule-imports
-import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import { NonEmptyString } from "italia-ts-commons/lib/strings";
 import { ApiClient } from "../../clients/admin";
 import { errorsToError } from "../../utils/conversions";

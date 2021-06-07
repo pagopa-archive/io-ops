@@ -12,11 +12,18 @@ import { UserCollection } from "../../generated/UserCollection";
 import { UserInfo } from "../../generated/UserInfo";
 import { errorsToError } from "../../utils/conversions";
 import { getServices } from "../../utils/service";
+import {
+  ValidService
+  // tslint:disable-next-line: no-submodule-imports
+} from "@pagopa/io-functions-commons/dist/src/models/service";
 
 dotenv.config();
 
 const BASE_URL_ADMIN = process.env.BASE_URL_ADMIN || "";
 const OCP_APIM = process.env.OCP_APIM || "";
+// List of service_ids ; separeted
+const SERVICEID_EXCLUSION_LIST =
+  process.env.SERVICEID_EXCLUSION_LIST?.split(";") || [];
 
 export default class ServicesList extends Command {
   public static description = "Lists all services";
@@ -37,6 +44,11 @@ export default class ServicesList extends Command {
       description: "get only visible services data",
       default: "true",
       required: false
+    }),
+    azureConfig: flags.string({
+      char: "a",
+      description: "Select Azure Config",
+      required: false
     })
   };
 
@@ -54,7 +66,7 @@ export default class ServicesList extends Command {
 
     try {
       cli.action.start("Querying services...");
-      const allServices = await getServices(date);
+      const allServices = await getServices(date, parsedFlags.azureConfig);
       cli.action.stop();
       if (isNone(allServices)) {
         this.error("No result");
@@ -246,6 +258,16 @@ export default class ServicesList extends Command {
           isVisible: {
             header: "is_visible"
           },
+          isQuality: {
+            header: "is_quality",
+            get: row =>
+              SERVICEID_EXCLUSION_LIST.indexOf(row.serviceId) > -1
+                ? true
+                : ValidService.decode(row).fold(
+                    _ => false, // quality ko
+                    _ => true // quality ok
+                  )
+          },
           timestamp: {
             header: "timestamp",
             get: row =>
@@ -286,15 +308,27 @@ export default class ServicesList extends Command {
           },
           phone: {
             header: "phone",
-            get: row => row.serviceMetadata && row.serviceMetadata.phone
+            get: row =>
+              row.serviceMetadata &&
+              (row.serviceMetadata.phone === undefined
+                ? "undefined"
+                : row.serviceMetadata.phone.split('"').join(""))
           },
           email: {
             header: "email",
-            get: row => row.serviceMetadata && row.serviceMetadata.email
+            get: row =>
+              row.serviceMetadata &&
+              (row.serviceMetadata.email === undefined
+                ? "undefined"
+                : row.serviceMetadata.email.split('"').join(""))
           },
           pec: {
             header: "pec",
-            get: row => row.serviceMetadata && row.serviceMetadata.pec
+            get: row =>
+              row.serviceMetadata &&
+              (row.serviceMetadata.pec === undefined
+                ? "undefined"
+                : row.serviceMetadata.pec.split('"').join(""))
           },
           supportUrl: {
             header: "support_url",

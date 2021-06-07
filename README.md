@@ -397,6 +397,7 @@ USAGE
   $ io-ops services:export
 
 OPTIONS
+  -a, --azureConfig=azureConfig   Select Azure Config
   -s, --scope=NATIONAL|LOCAL|ALL  [default: ALL] The service scope metadata
   -x, --extended                  show extra columns
 
@@ -415,6 +416,7 @@ USAGE
   $ io-ops services:list
 
 OPTIONS
+  -a, --azureConfig=azureConfig  Select Azure Config
   -x, --extended                 show extra columns
   --columns=columns              only show provided columns (comma-separated)
   --csv                          output is csv format [alias: --output=csv]

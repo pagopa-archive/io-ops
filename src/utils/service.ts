@@ -1,7 +1,7 @@
 import * as cosmos from "@azure/cosmos";
-import { none, Option, some } from "fp-ts/lib/Option";
 // tslint:disable-next-line: no-submodule-imports
-import { RetrievedService } from "io-functions-commons/dist/src/models/service";
+import { RetrievedService } from "@pagopa/io-functions-commons/dist/src/models/service";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { DateTime } from "luxon";
 import { getCosmosConnection, pickAzureConfig } from "./azure";
 
@@ -9,9 +9,10 @@ export const serviceContentRepoUrl =
   "https://raw.githubusercontent.com/teamdigitale/io-services-metadata/master/";
 
 export async function getServices(
-  date: Option<DateTime>
+  date: Option<DateTime>,
+  azureConfig?: string
 ): Promise<Option<ReadonlyArray<RetrievedService>>> {
-  const config = await pickAzureConfig();
+  const config = await pickAzureConfig(azureConfig);
   const { endpoint, key } = await getCosmosConnection(
     config.resourceGroup,
     config.cosmosName

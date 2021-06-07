@@ -1,15 +1,22 @@
 import { Command, flags } from "@oclif/command";
+import {
+  RetrievedService,
+  ValidService
+  // tslint:disable-next-line: no-submodule-imports
+} from "@pagopa/io-functions-commons/dist/src/models/service";
 import cli from "cli-ux";
 import * as dotenv from "dotenv";
 import { fromNullable, isNone, isSome } from "fp-ts/lib/Option";
-// tslint:disable-next-line: no-submodule-imports
-import { RetrievedService } from "io-functions-commons/dist/src/models/service";
 import { DateTime } from "luxon";
 import { ServiceExport, ServicesExport } from "../../definitions/ServiceExport";
 import { ServiceScopeEnum } from "../../generated/ServiceScope";
 import { getServices } from "../../utils/service";
 
 dotenv.config();
+
+// List of service_ids ; separeted
+const SERVICEID_EXCLUSION_LIST =
+  process.env.SERVICEID_EXCLUSION_LIST?.split(";") || [];
 
 const ServiceScope = {
   ...ServiceScopeEnum,
@@ -32,6 +39,11 @@ export default class VisibleServicesExport extends Command {
       required: false,
       default: ServiceScope.ALL,
       options: Object.values(ServiceScope)
+    }),
+    azureConfig: flags.string({
+      char: "a",
+      description: "Select Azure Config",
+      required: false
     })
   };
 
@@ -49,7 +61,7 @@ export default class VisibleServicesExport extends Command {
     }
     try {
       cli.action.start("Querying services...");
-      const services = await getServices(date);
+      const services = await getServices(date, parsedFlags.azureConfig);
       cli.action.stop();
 
       if (isNone(services)) {
@@ -119,12 +131,26 @@ function getServiceMapper(
         i: service.serviceId,
         n: service.serviceName,
         d: service.serviceMetadata?.description,
-        sc: service.serviceMetadata?.scope || ServiceScopeEnum.NATIONAL
+        sc: service.serviceMetadata?.scope || ServiceScopeEnum.NATIONAL,
+        q:
+          SERVICEID_EXCLUSION_LIST.indexOf(service.serviceId) > -1
+            ? 1
+            : ValidService.decode(service).fold(
+                _ => 0, // quality ko
+                _ => 1 // quality ok
+              )
       };
     }
     return {
       i: service.serviceId,
-      n: service.serviceName
+      n: service.serviceName,
+      q:
+        SERVICEID_EXCLUSION_LIST.indexOf(service.serviceId) > -1
+          ? 1
+          : ValidService.decode(service).fold(
+              _ => 0, // quality ko
+              _ => 1 // quality ok
+            )
     };
   };
 }

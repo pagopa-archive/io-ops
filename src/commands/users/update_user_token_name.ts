@@ -1,5 +1,7 @@
 import Command from "@oclif/command";
 import * as Parser from "@oclif/parser";
+// tslint:disable-next-line: no-submodule-imports
+import { getRequiredStringEnv } from "@pagopa/io-functions-commons/dist/src/utils/env";
 import chalk from "chalk";
 import cli from "cli-ux";
 import { toError } from "fp-ts/lib/Either";
@@ -9,8 +11,6 @@ import {
   taskEither,
   tryCatch
 } from "fp-ts/lib/TaskEither";
-// tslint:disable-next-line: no-submodule-imports
-import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
 import { ApiClient } from "../../clients/admin";
 import { errorsToError } from "../../utils/conversions";
 
