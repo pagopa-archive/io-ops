@@ -20,7 +20,7 @@
     "@types/node-fetch": "^2.5.4",
     "azure-storage": "^2.10.3",
     "chalk": "2.4.2",
-    "cli-ux": "^5.2.1",
+    "cli-ux": "^5.4.10",
     "csv-parse": "^4.4.1",
     "csv-stringify": "^5.3.0",
     "dotenv": "^8.2.0",
