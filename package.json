@@ -18,7 +18,7 @@
     "@types/adm-zip": "^0.4.32",
     "@types/js-yaml": "^3.12.2",
     "@types/node-fetch": "^2.5.4",
-    "azure-storage": "^2.10.3",
+    "azure-storage": "^2.10.4",
     "chalk": "2.4.2",
     "cli-ux": "^5.2.1",
     "csv-parse": "^4.4.1",
@@ -27,17 +27,18 @@
     "execa": "sindresorhus/execa#0d39fdffeb053215a56a631db8d2cf32ea119a95",
     "fp-ts": "1.12.0",
     "image-size": "0.7.4",
-    "io-functions-commons": "^14.6.0",
+    "io-functions-commons": "^16.0.0",
     "io-ts": "1.8.5",
     "italia-ts-commons": "5.1.9",
     "italia-tslint-rules": "^1.1.3",
     "italia-utils": "^4.1.0",
     "js-yaml": "^3.13.1",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.7",
     "request": "2.88.0",
-    "stream-transform": "^2.0.0",
+    "stream-transform": "^2.1.0",
     "tslib": "1.9.3",
-    "vfile-message": "^2.0.2"
+    "vfile-message": "^2.0.2",
+    "@snyk/protect": "latest"
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1",
@@ -91,10 +92,13 @@
     "generate": "npm-run-all generate:*",
     "posttest": "tslint -p test -t stylish",
     "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
-    "version": "oclif-dev readme && git add README.md"
+    "version": "oclif-dev readme && git add README.md",
+    "prepare": "yarn run snyk-protect",
+    "snyk-protect": "snyk-protect"
   },
   "types": "lib/index.d.ts",
   "resolutions": {
     "fp-ts": "1.12.0"
-  }
+  },
+  "snyk": true
 }
