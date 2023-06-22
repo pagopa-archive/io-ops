@@ -1,25 +1,27 @@
 import * as cosmos from "@azure/cosmos";
-import { Command, flags } from "@oclif/command";
+import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { none, Option, some } from "fp-ts/lib/Option";
+import * as O from "fp-ts/lib/Option";
+import * as E from "fp-ts/lib/Either";
 import * as imageSize from "image-size";
 import * as t from "io-ts";
-import { readableReport } from "italia-ts-commons/lib/reporters";
-import { NonEmptyString } from "italia-ts-commons/lib/strings";
+import { readableReport } from "@pagopa/ts-commons/lib/reporters";
+import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 import * as request from "request";
 
 import {
   ServicePublic,
-  ServicePublicFull
+  ServicePublicFull,
 } from "../../definitions/ServicePublic";
 import { ServiceMetadata } from "../../generated/ServiceMetadata";
 import {
   getCosmosEndpoint,
   getCosmosReadonlyKey,
-  pickAzureConfig
+  pickAzureConfig,
 } from "../../utils/azure";
 import { serviceContentRepoUrl } from "../../utils/service";
+import { pipe } from "fp-ts/lib/function";
 
 // tslint:disable-next-line: interface-name
 interface ImageInfo {
@@ -40,7 +42,7 @@ export function loadServiceMetadata(
     uri: `${serviceContentRepoUrl}services/${serviceId
       .toLowerCase()
       .trim()}.json`,
-    json: true
+    json: true,
   };
   return new Promise((res, _) => {
     request(options, (__, ___, body) => {
@@ -53,28 +55,33 @@ export function loadServiceMetadata(
 /**
  * retrive logo from the given logouri. If it exists return image info, none otherwise
  */
-export const loadImageInfo = (imageUri: string): Promise<Option<ImageInfo>> => {
+export const loadImageInfo = (
+  imageUri: string
+): Promise<O.Option<ImageInfo>> => {
   const options = {
     uri: imageUri,
-    encoding: null
+    encoding: null,
   };
   return new Promise((res, _) => {
     request(options, (__, req, body) => {
       if (req && req.statusCode === 200) {
         try {
-          const imageInfo = imageSize(body);
+          const imageInfo = imageSize.imageSize(body);
           res(
-            some({
+            O.some({
               ...imageInfo,
+              type: imageInfo.type ? imageInfo.type : "",
+              width: imageInfo.width ? imageInfo.width : 0,
+              height: imageInfo.height ? imageInfo.height : 0,
               uri: options.uri,
-              sizeInByte: body.length
+              sizeInByte: body ? body.length : "",
             })
           );
         } catch {
-          res(none);
+          res(O.none);
         }
       } else {
-        res(none);
+        res(O.none);
       }
     });
   });
@@ -85,29 +92,29 @@ export default class ServicesDetail extends Command {
     "Retrieve service info and metadata from a given service ID";
 
   public static flags = {
-    serviceId: flags.string({
+    serviceId: Flags.string({
       char: "i",
-      description: "The service ID"
-    })
+      description: "The service ID",
+    }),
   };
 
   public async run(): Promise<void> {
-    const { flags: parsedFlags } = this.parse(ServicesDetail);
-    const maybeServiceId = NonEmptyString.decode(parsedFlags.serviceId);
+    const { flags } = await this.parse(ServicesDetail);
+    const maybeServiceId = NonEmptyString.decode(flags.serviceId);
 
     // check if the given ID is valid
-    if (maybeServiceId.isLeft()) {
+    if (E.isLeft(maybeServiceId)) {
       cli.error(chalk.red("service ID cannot be empty"));
       this.exit();
       return;
     }
     const config = await pickAzureConfig();
-    const serviceId = maybeServiceId.value;
+    const serviceId = maybeServiceId.right;
     try {
       cli.action.start(chalk.cyanBright("Retrieving cosmosdb credentials"));
       const [endpoint, key] = await Promise.all([
         getCosmosEndpoint(config.resourceGroup, config.cosmosName),
-        getCosmosReadonlyKey(config.resourceGroup, config.cosmosName)
+        getCosmosReadonlyKey(config.resourceGroup, config.cosmosName),
       ]);
       cli.action.stop();
 
@@ -124,7 +131,7 @@ export default class ServicesDetail extends Command {
       ): Promise<ReadonlyArray<T>> => {
         const response = container.items.query({
           parameters: [{ name: "@serviceId", value: sId }],
-          query: `SELECT * FROM c WHERE c.serviceId = @serviceId`
+          query: `SELECT * FROM c WHERE c.serviceId = @serviceId`,
         });
         const { result: itemsList } = await response.toArray();
         if (itemsList === undefined) {
@@ -132,12 +139,12 @@ export default class ServicesDetail extends Command {
         }
         return itemsList.reduce((acc, current) => {
           const maybeService = codec.decode(current);
-          if (maybeService.isRight()) {
-            return [...acc, maybeService.value];
+          if (E.isRight(maybeService)) {
+            return [...acc, maybeService.right];
           }
           // if the decoding fails we raise an exception with an Error
           // describing what is happened
-          throw new Error(readableReport(maybeService.value));
+          throw new Error(readableReport(maybeService.left));
         }, []);
       };
 
@@ -171,7 +178,7 @@ export default class ServicesDetail extends Command {
         (acc, curr) => {
           return {
             min: Math.min(curr.version, acc.min),
-            max: Math.max(curr.version, acc.min)
+            max: Math.max(curr.version, acc.min),
           };
         },
         { min: 0, max: 0 }
@@ -184,31 +191,34 @@ export default class ServicesDetail extends Command {
 
       // print service items informations
       cli.log(chalk.blueBright(`${services.length} services items`));
-      services.forEach(s => cli.log(JSON.stringify(s, null, 2)));
+      services.forEach((s) => cli.log(JSON.stringify(s, null, 2)));
       cli.log("\n");
 
       // retrieve services metadata
       cli.action.start(chalk.cyanBright("getting service metadata...."));
       const servicesMetadata = await loadServiceMetadata(serviceId);
       cli.action.stop();
-      servicesMetadata.fold(
-        error => {
-          cli.log(
-            `${chalk.red(
-              "services metadata not found or cannot be decoded:"
-            )} ${chalk.bold(readableReport(error))}`
-          );
-        },
-        metadata => {
-          const content = `services metadata\n
+      pipe(
+        servicesMetadata,
+        E.fold(
+          (error) => {
+            cli.log(
+              `${chalk.red(
+                "services metadata not found or cannot be decoded:"
+              )} ${chalk.bold(readableReport(error))}`
+            );
+          },
+          (metadata) => {
+            const content = `services metadata\n
           ${chalk.white(JSON.stringify(metadata, null, 2))}`;
-          cli.log(`${chalk.blueBright(content)}`);
-        }
+            cli.log(`${chalk.blueBright(content)}`);
+          }
+        )
       );
 
       // check about visibility: it would be good to have
       // only a service visible
-      const visibleServices = services.filter(s => s.isVisible);
+      const visibleServices = services.filter((s) => s.isVisible);
       if (visibleServices.length === 0) {
         cli.log(chalk.redBright("None of these services is visible!"));
       } else {
@@ -218,7 +228,7 @@ export default class ServicesDetail extends Command {
               `There are ${
                 visibleServices.length
               } services visible: version [${visibleServices
-                .map(s => s.version)
+                .map((s) => s.version)
                 .join()}]`
             )
           );
@@ -231,7 +241,9 @@ export default class ServicesDetail extends Command {
 
       // to access organizationFiscalCode and serviceId fields we pick
       // the service with max version in list
-      const lastService = services.find(s => s.version === serviceVersion.max);
+      const lastService = services.find(
+        (s) => s.version === serviceVersion.max
+      );
       if (lastService !== undefined) {
         cli.action.start(
           chalk.cyanBright("getting service and organization logo....")
@@ -244,16 +256,19 @@ export default class ServicesDetail extends Command {
           `${serviceContentRepoUrl}logos/organizations/${ofc}.png`
         );
 
-        const logOrganizationLogo = maybeOrganizationLogo.fold(
-          chalk.red("❌ organization logo not found!"),
-          imageInfo =>
-            chalk.white(
-              `✅ organization logo found, here the details\n ${JSON.stringify(
-                imageInfo,
-                null,
-                2
-              )}`
-            )
+        const logOrganizationLogo = pipe(
+          maybeOrganizationLogo,
+          O.fold(
+            () => chalk.red("❌ organization logo not found!"),
+            (imageInfo) =>
+              chalk.white(
+                `✅ organization logo found, here the details\n ${JSON.stringify(
+                  imageInfo,
+                  null,
+                  2
+                )}`
+              )
+          )
         );
 
         const maybeServiceLogo = await loadImageInfo(
@@ -262,16 +277,19 @@ export default class ServicesDetail extends Command {
             .trim()}.png`
         );
 
-        const logServiceLogo = maybeServiceLogo.fold(
-          chalk.red("❌ service logo not found!"),
-          imageInfo =>
-            chalk.white(
-              `✅ service logo found, here the details\n ${JSON.stringify(
-                imageInfo,
-                null,
-                2
-              )}`
-            )
+        const logServiceLogo = pipe(
+          maybeServiceLogo,
+          O.fold(
+            () => chalk.red("❌ service logo not found!"),
+            (imageInfo) =>
+              chalk.white(
+                `✅ service logo found, here the details\n ${JSON.stringify(
+                  imageInfo,
+                  null,
+                  2
+                )}`
+              )
+          )
         );
 
         cli.action.stop();
@@ -279,7 +297,7 @@ export default class ServicesDetail extends Command {
         cli.log(logServiceLogo);
       }
     } catch (e) {
-      this.error(e);
+      this.error(String(e));
     }
 
     return Promise.resolve();

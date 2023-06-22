@@ -1,5 +1,5 @@
 import * as cosmos from "@azure/cosmos";
-import { Command, flags } from "@oclif/command";
+import { Command, Flags } from "@oclif/core";
 import cli from "cli-ux";
 import * as parse from "csv-parse";
 import * as csvStringify from "csv-stringify";
@@ -12,28 +12,28 @@ export default class ProfilesExist extends Command {
     "Returns the input CSV with a new column that is true if a profile for that fiscal code exists.";
 
   public static flags = {
-    input: flags.string({
+    input: Flags.string({
       char: "i",
       description:
-        "Input file (CSV, with the CF as first column) - defaults to stdin"
+        "Input file (CSV, with the CF as first column) - defaults to stdin",
     }),
-    parallel: flags.integer({
+    parallel: Flags.integer({
       char: "p",
       default: 1,
-      description: "Number of parallel workers to run"
-    })
+      description: "Number of parallel workers to run",
+    }),
   };
 
   public async run(): Promise<void> {
-    const { flags: parsedFlags } = this.parse(ProfilesExist);
+    const { flags } = await this.parse(ProfilesExist);
 
-    const inputStream = parsedFlags.input
-      ? fs.createReadStream(parsedFlags.input)
+    const inputStream = flags.input
+      ? fs.createReadStream(flags.input)
       : process.stdin;
 
-    const parser = parse({
+    const parser = parse.parse({
       trim: true,
-      skip_empty_lines: true
+      skip_empty_lines: true,
     });
 
     try {
@@ -52,7 +52,7 @@ export default class ProfilesExist extends Command {
       const hasProfile = async (fiscalCode: string): Promise<boolean> => {
         const response = container.items.query({
           parameters: [{ name: "@fiscalCode", value: fiscalCode }],
-          query: `SELECT VALUE COUNT(1) FROM c WHERE c.fiscalCode = @fiscalCode AND c.version = 0`
+          query: `SELECT VALUE COUNT(1) FROM c WHERE c.fiscalCode = @fiscalCode AND c.version = 0`,
         });
         const { result: item } = await response.current();
         return item === 1;
@@ -61,7 +61,7 @@ export default class ProfilesExist extends Command {
       const castBoolean = (value: boolean, _: csvStringify.CastingContext) =>
         value ? "true" : "false";
       // return the output (csv string) if no error occurred
-      const transformer = csvStringify(
+      const transformer = csvStringify.stringify(
         { cast: { boolean: castBoolean } },
         (error, output) => {
           if (error) {
@@ -78,25 +78,25 @@ export default class ProfilesExist extends Command {
        * the fiscalCode is into the database. As side operation it
        * returns the fiscalCode in upperCase format
        */
-      const checker = transform(
+      const checker = transform.transform(
         {
-          parallel: parsedFlags.parallel
+          parallel: flags.parallel,
         },
         (record, cb) =>
           (async () => {
             const fiscalCode = record[0] as string;
             const formattedRecord: ReadonlyArray<string> = [
               fiscalCode.toUpperCase(),
-              ...record.slice(1)
+              ...record.slice(1),
             ];
             const exists = await hasProfile(fiscalCode.trim().toUpperCase());
             return [...formattedRecord, exists];
           })()
-            .then(_ => cb(null, _))
+            .then((_) => cb(null, _))
             .catch(() => cb(null, undefined))
       );
       // if the stream is the stdin, ask to input a fiscal code
-      if (parsedFlags.input === undefined) {
+      if (flags.input === undefined) {
         cli.log("Provide a fiscal code:");
       }
 
@@ -108,7 +108,7 @@ export default class ProfilesExist extends Command {
       // tslint:disable-next-line: no-inferred-empty-object-type
       await new Promise((res, _) => parser.on("end", res));
     } catch (e) {
-      this.error(e);
+      this.error(String(e));
     }
   }
 }

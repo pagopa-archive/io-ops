@@ -1,15 +1,15 @@
-import Command from "@oclif/command";
-import * as Parser from "@oclif/parser";
+import { Command, Args } from "@oclif/core";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { Task } from "fp-ts/lib/Task";
-import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
+import * as TE from "fp-ts/lib/TaskEither";
+import * as E from "fp-ts/lib/Either";
 // tslint:disable-next-line: no-submodule-imports
-import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
+import { getRequiredStringEnv } from "@pagopa/io-functions-commons/dist/src/utils/env";
 import { ApiClient } from "../../clients/admin";
 import { EmailAddress } from "../../generated/EmailAddress";
 import { UserInfo } from "../../generated/UserInfo";
 import { errorsToError } from "../../utils/conversions";
+import { flow, pipe } from "fp-ts/lib/function";
 
 export class UserGet extends Command {
   public static description =
@@ -19,34 +19,40 @@ export class UserGet extends Command {
   public static examples = ["$ io-ops users:get example@example.it"];
 
   // tslint:disable-next-line: readonly-array
-  public static args: Parser.args.IArg[] = [
-    {
+  public static args = {
+    email: Args.string({
       description: "email",
       name: "email",
-      required: true
-    }
-  ];
+      required: true,
+    }),
+  };
 
   public async run(): Promise<void> {
-    const { args } = this.parse(UserGet);
+    const { args } = await this.parse(UserGet);
     // tslint:disable-next-line: no-console
     cli.action.start(
       chalk.blue.bold(`Getting user by ${args.email}`),
       chalk.blueBright.bold("Running"),
       {
-        stdout: true
+        stdout: true,
       }
     );
-    return this.get(args.email)
-      .fold(
-        error => {
+    return pipe(
+      args.email,
+      EmailAddress.decode,
+      E.mapLeft(errorsToError),
+      TE.fromEither,
+      TE.chain((email) => this.get(email)),
+      TE.bimap(
+        (error) => {
           cli.action.stop(chalk.red(`Error : ${error}`));
         },
-        result => {
+        (result) => {
           cli.action.stop(chalk.green(`Response: ${JSON.stringify(result)}`));
         }
-      )
-      .run();
+      ),
+      TE.toUnion
+    )();
   }
 
   private getApiClient = () =>
@@ -55,16 +61,17 @@ export class UserGet extends Command {
       getRequiredStringEnv("OCP_APIM")
     );
 
-  private get = (email: EmailAddress): TaskEither<Error, UserInfo> =>
-    new TaskEither(new Task(() => this.getApiClient().getUser({ email })))
-      .mapLeft(errorsToError)
-      .chain(
-        fromPredicate(
-          response => response.status === 200,
+  private get = (email: EmailAddress): TE.TaskEither<Error, UserInfo> =>
+    pipe(
+      TE.tryCatch(() => this.getApiClient().getUser({ email }), E.toError),
+      TE.chain(flow(E.mapLeft(errorsToError), TE.fromEither)),
+      TE.chain(
+        TE.fromPredicate(
+          (response) => response.status === 200,
           () => Error(`Could not read user ${email}`)
         )
-      )
-      .chain(response =>
-        fromEither(UserInfo.decode(response.value)).mapLeft(errorsToError)
-      );
+      ),
+      TE.map((response) => response.value),
+      TE.chain(flow(UserInfo.decode, E.mapLeft(errorsToError), TE.fromEither))
+    );
 }

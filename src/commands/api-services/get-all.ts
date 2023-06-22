@@ -1,13 +1,14 @@
-import Command from "@oclif/command";
+import { Command } from "@oclif/core";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { Task } from "fp-ts/lib/Task";
-import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
+import * as TE from "fp-ts/lib/TaskEither";
+import * as E from "fp-ts/lib/Either";
 // tslint:disable-next-line: no-submodule-imports
-import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
+import { getRequiredStringEnv } from "@pagopa/io-functions-commons/dist/src/utils/env";
 import { ApiClient } from "../../clients/admin";
 import { ServiceCollection } from "../../generated/ServiceCollection";
 import { errorsToError } from "../../utils/conversions";
+import { flow, pipe } from "fp-ts/lib/function";
 
 export class ServiceGet extends Command {
   public static description = "Get all services";
@@ -21,19 +22,22 @@ export class ServiceGet extends Command {
       chalk.blue.bold(`Getting all services`),
       chalk.blueBright.bold("Running"),
       {
-        stdout: true
+        stdout: true,
       }
     );
-    return this.get()
-      .fold(
-        error => {
+
+    return pipe(
+      this.get(),
+      TE.bimap(
+        (error) => {
           cli.action.stop(chalk.red(`Error : ${error}`));
         },
-        result => {
+        (result) => {
           cli.action.stop(chalk.green(`Response: ${JSON.stringify(result)}`));
         }
-      )
-      .run();
+      ),
+      TE.toUnion
+    )();
   }
 
   private getApiClient = () =>
@@ -42,18 +46,19 @@ export class ServiceGet extends Command {
       getRequiredStringEnv("OCP_APIM")
     );
 
-  private get = (): TaskEither<Error, ServiceCollection> =>
-    new TaskEither(new Task(() => this.getApiClient().getServices({})))
-      .mapLeft(errorsToError)
-      .chain(
-        fromPredicate(
-          response => response.status === 200,
+  private get = (): TE.TaskEither<Error, ServiceCollection> =>
+    pipe(
+      TE.tryCatch(() => this.getApiClient().getServices({}), E.toError),
+      TE.chain(flow(E.mapLeft(errorsToError), TE.fromEither)),
+      TE.chain(
+        TE.fromPredicate(
+          (response) => response.status === 200,
           () => Error("Could not read the services")
         )
+      ),
+      TE.map((response) => response.value),
+      TE.chain(
+        flow(ServiceCollection.decode, E.mapLeft(errorsToError), TE.fromEither)
       )
-      .chain(response =>
-        fromEither(ServiceCollection.decode(response.value)).mapLeft(
-          errorsToError
-        )
-      );
+    );
 }

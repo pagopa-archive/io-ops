@@ -1,15 +1,17 @@
 import * as dotenv from "dotenv";
-import Command from "@oclif/command";
-import * as Parser from "@oclif/parser";
+import { Command, Args } from "@oclif/core";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { Task } from "fp-ts/lib/Task";
-import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
+import * as E from "fp-ts/lib/Either";
+import * as O from "fp-ts/lib/Option";
+import * as TE from "fp-ts/lib/TaskEither";
+import * as B from "fp-ts/lib/boolean";
 import { ApiClient } from "../../clients/admin";
 import { EmailAddress } from "../../generated/EmailAddress";
 import { UserInfo } from "../../generated/UserInfo";
 import { GroupCollection } from "../../generated/GroupCollection";
 import { errorsToError } from "../../utils/conversions";
+import { flow, pipe } from "fp-ts/lib/function";
 
 dotenv.config();
 
@@ -18,7 +20,7 @@ const OCP_APIM = process.env.OCP_APIM || "";
 
 enum Action {
   enable = "enable",
-  disable = "disable"
+  disable = "disable",
 }
 
 export class WriteMessages extends Command {
@@ -26,27 +28,27 @@ export class WriteMessages extends Command {
     "Update the list of groups (permissions) associated to the User identified by the provided email";
 
   // tslint:disable-next-line: readonly-array
-  public static args: Parser.args.IArg[] = [
-    {
+  public static args = {
+    email: Args.string({
       description: "email",
       name: "email",
-      required: true
-    },
-    {
+      required: true,
+    }),
+    action: Args.string({
       description: "action",
       name: "action",
-      required: true
-    }
-  ];
+      required: true,
+    }),
+  };
 
   // tslint:disable-next-line: readonly-array
   public static examples = [
-    `$ io-ops users:write-messages example@example.it enable`
+    `$ io-ops users:write-messages example@example.it enable`,
   ];
 
   public async run(): Promise<void> {
     // tslint:disable-next-line: no-shadowed-variable
-    const { args } = this.parse(WriteMessages);
+    const { args } = await this.parse(WriteMessages);
 
     const mayBeAction: Action | undefined = (<any>Action)[args.action];
     if (mayBeAction === undefined) {
@@ -59,84 +61,91 @@ export class WriteMessages extends Command {
       ),
       chalk.blueBright.bold("Running"),
       {
-        stdout: true
+        stdout: true,
       }
     );
 
-    return this.get(args.email)
-      .fold(
-        error => {
+    return pipe(
+      args.email,
+      EmailAddress.decode,
+      E.mapLeft(errorsToError),
+      TE.fromEither,
+      TE.chain((email) => this.get(email)),
+      TE.chain((result) =>
+        pipe(
+          result.groups,
+          O.fromNullable,
+          O.map(
+            (groups) =>
+              groups
+                .map((x) => x.display_name)
+                .filter((x) => x != "ApiMessageWrite")
+                .filter((x) => x != "ApiLimitedMessageWrite") as string[]
+          ),
+          O.map((groupsPermission) =>
+            pipe(
+              args.action !== "enable",
+              B.fold(
+                () => groupsPermission.concat("ApiMessageWrite"),
+                () => groupsPermission.concat("ApiLimitedMessageWrite")
+              )
+            )
+          ),
+          TE.fromOption(() => Error(`No User Groups found!`))
+        )
+      ),
+      TE.chain((groupsPermission) => this.put(args.email, groupsPermission)),
+      TE.bimap(
+        (error) => {
           cli.action.stop(chalk.red(`Error : ${error}`));
         },
-        result => {
-          if (result.groups !== undefined) {
-            let groupsPermission = result.groups
-              .map(x => x.display_name)
-              .filter(x => x != "ApiMessageWrite")
-              .filter(x => x != "ApiLimitedMessageWrite") as string[];
-            if (args.action == "enable") {
-              //enable
-              groupsPermission = groupsPermission.concat("ApiMessageWrite");
-            } else {
-              //disable
-              groupsPermission = groupsPermission.concat(
-                "ApiLimitedMessageWrite"
-              );
-            }
-
-            this.put(args.email, groupsPermission)
-              .fold(
-                error => {
-                  cli.action.stop(chalk.red(`Error : ${error}`));
-                },
-                result => {
-                  cli.action.stop(chalk.green(`Response: ${args.action}`));
-                }
-              )
-              .run();
-          }
+        () => {
+          cli.action.stop(chalk.green(`Response: ${args.action}`));
         }
-      )
-      .run();
+      ),
+      TE.toUnion
+    )();
   }
 
   private getApiClient = () => ApiClient(BASE_URL_ADMIN, OCP_APIM);
 
-  private get = (email: EmailAddress): TaskEither<Error, UserInfo> =>
-    new TaskEither(new Task(() => this.getApiClient().getUser({ email })))
-      .mapLeft(errorsToError)
-      .chain(
-        fromPredicate(
-          response => response.status === 200,
+  private get = (email: EmailAddress): TE.TaskEither<Error, UserInfo> =>
+    pipe(
+      TE.tryCatch(() => this.getApiClient().getUser({ email }), E.toError),
+      TE.chain(flow(E.mapLeft(errorsToError), TE.fromEither)),
+      TE.chain(
+        TE.fromPredicate(
+          (response) => response.status === 200,
           () => Error(`Could not read user ${email}`)
         )
-      )
-      .chain(response =>
-        fromEither(UserInfo.decode(response.value)).mapLeft(errorsToError)
-      );
+      ),
+      TE.map((response) => response.value),
+      TE.chain(flow(UserInfo.decode, E.mapLeft(errorsToError), TE.fromEither))
+    );
 
   private put = (
     email: string,
     groupsPermission: readonly string[]
-  ): TaskEither<Error, GroupCollection> =>
-    new TaskEither(
-      new Task(() =>
-        this.getApiClient().updateGroups({
-          email,
-          userGroupsPayload: { groups: groupsPermission }
-        })
-      )
-    )
-      .mapLeft(errorsToError)
-      .chain(
-        fromPredicate(
-          response => response.status === 200,
+  ): TE.TaskEither<Error, GroupCollection> =>
+    pipe(
+      TE.tryCatch(
+        () =>
+          this.getApiClient().updateGroups({
+            email,
+            body: { groups: groupsPermission },
+          }),
+        E.toError
+      ),
+      TE.chain(flow(E.mapLeft(errorsToError), TE.fromEither)),
+      TE.chain(
+        TE.fromPredicate(
+          (response) => response.status === 200,
           () => Error("Could not update groups")
         )
+      ),
+      TE.map((response) => response.value),
+      TE.chain(
+        flow(GroupCollection.decode, E.mapLeft(errorsToError), TE.fromEither)
       )
-      .chain(response =>
-        fromEither(GroupCollection.decode(response.value)).mapLeft(
-          errorsToError
-        )
-      );
+    );
 }

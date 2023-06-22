@@ -1,8 +1,8 @@
 import * as t from "io-ts";
 import {
   NonEmptyString,
-  OrganizationFiscalCode
-} from "italia-ts-commons/lib/strings";
+  OrganizationFiscalCode,
+} from "@pagopa/ts-commons/lib/strings";
 
 const serviceAttributesRequired = t.interface({
   serviceId: NonEmptyString,
@@ -10,11 +10,11 @@ const serviceAttributesRequired = t.interface({
   organizationName: NonEmptyString,
   departmentName: NonEmptyString,
   organizationFiscalCode: OrganizationFiscalCode,
-  version: t.Integer
+  version: t.Integer,
 });
 
 const serviceAttributesOptional = t.partial({
-  isVisible: t.boolean
+  isVisible: t.boolean,
 });
 
 export const ServicePublic = t.exact(
@@ -22,7 +22,7 @@ export const ServicePublic = t.exact(
 );
 export const ServicePublicFull = t.intersection([
   serviceAttributesRequired,
-  serviceAttributesOptional
+  serviceAttributesOptional,
 ]);
 
 export type ServicePublic = t.TypeOf<typeof ServicePublic>;
