@@ -3,12 +3,15 @@ import { Command, Args } from "@oclif/core";
 import cli from "cli-ux";
 import { FiscalCode } from "@pagopa/ts-commons/lib/strings";
 import * as E from "fp-ts/lib/Either";
+import * as RA from "fp-ts/lib/ReadonlyArray";
 
+import { pickAzureConfig } from "../../utils/azure";
 import {
-  getCosmosEndpoint,
-  getCosmosReadonlyKey,
-  pickAzureConfig,
-} from "../../utils/azure";
+  asyncIteratorToArray,
+  flattenAsyncIterator,
+  mapAsyncIterable,
+} from "@pagopa/io-functions-commons/dist/src/utils/async";
+import { getRequiredStringEnv } from "@pagopa/io-functions-commons/dist/src/utils/env";
 
 export default class MessagesList extends Command {
   public static description = "List messages for a fiscalCode";
@@ -40,23 +43,32 @@ export default class MessagesList extends Command {
     try {
       cli.action.start("Retrieving credentials");
       const config = await pickAzureConfig();
-      const [endpoint, key] = await Promise.all([
-        getCosmosEndpoint(config.resourceGroup, config.cosmosName),
-        getCosmosReadonlyKey(config.resourceGroup, config.cosmosName),
-      ]);
       cli.action.stop();
 
-      const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
+      const cosmosConnectionString = getRequiredStringEnv(
+        "COSMOS_CONNECTION_STRING"
+      );
+      const client = new cosmos.CosmosClient(cosmosConnectionString);
       const database = client.database(config.cosmosDatabaseName);
       const container = database.container(config.cosmosMessagesContainer);
 
       cli.action.start("Querying messages...");
-      const response = container.items.query({
-        parameters: [{ name: "@fiscalCode", value: fiscalCode }],
-        query:
-          "SELECT c.id, c.createdAt, c.isPending FROM c WHERE c.fiscalCode = @fiscalCode",
-      });
-      const result = (await response.toArray()).result;
+      const responseIterator = container.items
+        .query({
+          parameters: [{ name: "@fiscalCode", value: fiscalCode }],
+          query:
+            "SELECT c.id, c.createdAt, c.isPending FROM c WHERE c.fiscalCode = @fiscalCode",
+        })
+        .getAsyncIterator();
+      const result = await asyncIteratorToArray(
+        flattenAsyncIterator(
+          mapAsyncIterable(
+            responseIterator,
+            (feedResponse) => feedResponse.resources
+          )[Symbol.asyncIterator]()
+        )
+      );
+
       cli.action.stop();
 
       if (result === undefined) {
@@ -65,7 +77,7 @@ export default class MessagesList extends Command {
       }
 
       cli.table(
-        result,
+        RA.toArray(result),
         {
           path: {
             // tslint:disable-next-line:no-any

@@ -5,12 +5,9 @@ import * as parse from "csv-parse";
 import * as fs from "fs";
 import * as transform from "stream-transform";
 
-import {
-  getCosmosEndpoint,
-  getCosmosWriteKey,
-  pickAzureConfig,
-} from "../../utils/azure";
+import { pickAzureConfig } from "../../utils/azure";
 import { parseMessagePath } from "../../utils/parser";
+import { getRequiredStringEnv } from "@pagopa/io-functions-commons/dist/src/utils/env";
 
 export default class MessagesAttributes extends Command {
   public static description = "Update message attributes";
@@ -87,21 +84,20 @@ export default class MessagesAttributes extends Command {
 
     try {
       const config = await pickAzureConfig();
-      cli.action.start("Retrieving credentials");
-      const [endpoint, key] = await Promise.all([
-        getCosmosEndpoint(config.resourceGroup, config.cosmosName),
-        getCosmosWriteKey(config.resourceGroup, config.cosmosName),
-      ]);
+
       cli.action.stop();
 
-      const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
+      const cosmosConnectionString = getRequiredStringEnv(
+        "COSMOS_CONNECTION_STRING"
+      );
+      const client = new cosmos.CosmosClient(cosmosConnectionString);
       const database = client.database(config.cosmosDatabaseName);
       const container = database.container(config.cosmosMessagesContainer);
 
       const updateMessage = async (fiscalCode: string, messageId: string) => {
         const messageItem = container.item(messageId, fiscalCode);
 
-        const messageJson = (await messageItem.read()).body;
+        const messageJson = (await messageItem.read()).resource;
         const updatedMessage = {
           ...messageJson,
           ...messageDelta,

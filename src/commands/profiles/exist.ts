@@ -5,7 +5,8 @@ import * as parse from "csv-parse";
 import * as csvStringify from "csv-stringify";
 import * as fs from "fs";
 import * as transform from "stream-transform";
-import { getCosmosConnection, pickAzureConfig } from "../../utils/azure";
+import { pickAzureConfig } from "../../utils/azure";
+import { getRequiredStringEnv } from "@pagopa/io-functions-commons/dist/src/utils/env";
 
 export default class ProfilesExist extends Command {
   public static description =
@@ -39,13 +40,12 @@ export default class ProfilesExist extends Command {
     try {
       const config = await pickAzureConfig();
       cli.action.start("Retrieving cosmosdb credentials");
-      const { endpoint, key } = await getCosmosConnection(
-        config.resourceGroup,
-        config.cosmosName
-      );
       cli.action.stop();
 
-      const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
+      const cosmosConnectionString = getRequiredStringEnv(
+        "COSMOS_CONNECTION_STRING"
+      );
+      const client = new cosmos.CosmosClient(cosmosConnectionString);
       const database = client.database(config.cosmosDatabaseName);
       const container = database.container(config.cosmosProfilesContainer);
 
@@ -54,7 +54,7 @@ export default class ProfilesExist extends Command {
           parameters: [{ name: "@fiscalCode", value: fiscalCode }],
           query: `SELECT VALUE COUNT(1) FROM c WHERE c.fiscalCode = @fiscalCode AND c.version = 0`,
         });
-        const { result: item } = await response.current();
+        const item = (await response.fetchNext()).resources[0];
         return item === 1;
       };
 

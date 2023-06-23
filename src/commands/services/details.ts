@@ -15,13 +15,15 @@ import {
   ServicePublicFull,
 } from "../../definitions/ServicePublic";
 import { ServiceMetadata } from "../../generated/ServiceMetadata";
-import {
-  getCosmosEndpoint,
-  getCosmosReadonlyKey,
-  pickAzureConfig,
-} from "../../utils/azure";
+import { pickAzureConfig } from "../../utils/azure";
 import { serviceContentRepoUrl } from "../../utils/service";
 import { pipe } from "fp-ts/lib/function";
+import { getRequiredStringEnv } from "@pagopa/io-functions-commons/dist/src/utils/env";
+import {
+  asyncIteratorToArray,
+  flattenAsyncIterator,
+  mapAsyncIterable,
+} from "@pagopa/io-functions-commons/dist/src/utils/async";
 
 // tslint:disable-next-line: interface-name
 interface ImageInfo {
@@ -112,13 +114,11 @@ export default class ServicesDetail extends Command {
     const serviceId = maybeServiceId.right;
     try {
       cli.action.start(chalk.cyanBright("Retrieving cosmosdb credentials"));
-      const [endpoint, key] = await Promise.all([
-        getCosmosEndpoint(config.resourceGroup, config.cosmosName),
-        getCosmosReadonlyKey(config.resourceGroup, config.cosmosName),
-      ]);
       cli.action.stop();
-
-      const client = new cosmos.CosmosClient({ endpoint, auth: { key } });
+      const cosmosConnectionString = getRequiredStringEnv(
+        "COSMOS_CONNECTION_STRING"
+      );
+      const client = new cosmos.CosmosClient(cosmosConnectionString);
       const database = client.database(config.cosmosDatabaseName);
       const container = database.container(config.cosmosServicesContainer);
 
@@ -129,11 +129,22 @@ export default class ServicesDetail extends Command {
         // tslint:disable-next-line: no-any
         codec: t.Type<any, T, unknown>
       ): Promise<ReadonlyArray<T>> => {
-        const response = container.items.query({
-          parameters: [{ name: "@serviceId", value: sId }],
-          query: `SELECT * FROM c WHERE c.serviceId = @serviceId`,
-        });
-        const { result: itemsList } = await response.toArray();
+        const responseIterator = container.items
+          .query({
+            parameters: [{ name: "@serviceId", value: sId }],
+            query: `SELECT * FROM c WHERE c.serviceId = @serviceId`,
+          })
+          .getAsyncIterator();
+
+        const itemsList = await asyncIteratorToArray(
+          flattenAsyncIterator(
+            mapAsyncIterable(
+              responseIterator,
+              (feedResponse) => feedResponse.resources
+            )[Symbol.asyncIterator]()
+          )
+        );
+
         if (itemsList === undefined) {
           return [];
         }
