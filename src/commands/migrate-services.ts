@@ -2,7 +2,6 @@ import { Command, Args } from "@oclif/core";
 import chalk from "chalk";
 import cli from "cli-ux";
 import * as AR from "fp-ts/lib/Array";
-import * as A from "fp-ts/lib/Applicative";
 import * as E from "fp-ts/lib/Either";
 import * as TE from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
