@@ -507,7 +507,7 @@
     debug "^4.1.1"
     semver "^7.5.2"
 
-"@oclif/config@1.18.10", "@oclif/config@^1.18.2":
+"@oclif/config@1.18.10", "@oclif/config@^1.18.10", "@oclif/config@^1.18.2":
   version "1.18.10"
   resolved "https://registry.yarnpkg.com/@oclif/config/-/config-1.18.10.tgz#c0f6c2045abff6381689eb01bf2ffe742a8fb793"
   integrity sha512-SjDtdeQwUnHh5rjqqRaBVH6JrBjxtZlHoIwiosOTFcxooLJhW+qcJ/VFOyYw2h/7Jfl95lSKYq+xnMW4aJZd9w==
@@ -696,6 +696,13 @@
     strip-ansi "^6.0.0"
     widest-line "^3.1.0"
     wrap-ansi "^6.2.0"
+
+"@oclif/plugin-help@^5.2.10":
+  version "5.2.10"
+  resolved "https://registry.yarnpkg.com/@oclif/plugin-help/-/plugin-help-5.2.10.tgz#f31b35409c8b523d72d5f901efe85dd8ab396635"
+  integrity sha512-l3hnloPkXOLGGrepLLdj8NsBpVhhEpg4jclIeIBaZzIo6+c+/uqcL2LjvOogmSEf5g4zooRtxivwUpcFiBSaBg==
+  dependencies:
+    "@oclif/core" "^2.8.7"
 
 "@oclif/screen@^1.0.4", "@oclif/screen@^1.0.4 ":
   version "1.0.4"

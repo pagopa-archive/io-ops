@@ -12,6 +12,7 @@
     "@azure/cosmos": "^2.1.5",
     "@azure/graph": "^4.0.1",
     "@azure/ms-rest-nodeauth": "^2.0.5",
+    "@oclif/plugin-help": "^5.2.10",
     "@oclif/core": "^2.8.7",
     "@pagopa/ts-commons": "^12.0.0",
     "@pagopa/openapi-codegen-ts": "^13.0.1",
@@ -36,6 +37,7 @@
   },
   "devDependencies": {
     "@oclif/dev-cli": "^1.26.10",
+    "@oclif/config": "^1.18.10",
     "@oclif/test": "^2.3.23",
     "@oclif/tslint": "^3.1.1",
     "@types/chai": "^4.3.5",
@@ -86,8 +88,6 @@
     "generate:postpack": "rm -f oclif.manifest.json",
     "generate:prepack": "rm -rf lib tsconfig.tsbuildinfo && tsc -b && oclif-dev manifest && oclif-dev readme",
     "generate": "npm-run-all generate:*",
-    "posttest": "tslint -p test -t stylish",
-    "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif-dev readme && git add README.md"
   },
   "types": "lib/index.d.ts"
