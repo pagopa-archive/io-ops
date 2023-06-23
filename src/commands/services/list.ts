@@ -1,17 +1,19 @@
 import * as cosmos from "@azure/cosmos";
-import { Command } from "@oclif/command";
+import { Command } from "@oclif/core";
 import chalk from "chalk";
 import cli from "cli-ux";
+import * as E from "fp-ts/lib/Either";
+import * as O from "fp-ts/lib/Option";
 import * as csvStringify from "csv-stringify";
 import * as t from "io-ts";
-import { readableReport } from "italia-ts-commons/lib/reporters";
+import { readableReport } from "@pagopa/ts-commons/lib/reporters";
 import * as request from "request";
 import { ServicePublic } from "../../definitions/ServicePublic";
 import { ServiceMetadata } from "../../generated/ServiceMetadata";
 import {
   getCosmosEndpoint,
   getCosmosReadonlyKey,
-  pickAzureConfig
+  pickAzureConfig,
 } from "../../utils/azure";
 import { sequential } from "../../utils/promise";
 import { serviceContentRepoUrl } from "../../utils/service";
@@ -48,7 +50,7 @@ const groupByPredicates: IGroupOptions = {
       return 1;
     }
     return 0;
-  }
+  },
 };
 
 /**
@@ -57,10 +59,10 @@ const groupByPredicates: IGroupOptions = {
  */
 const loadServiceMetadata = (
   uri: string
-): Promise<t.Validation<ServiceMetadata>> | undefined => {
+): Promise<t.Validation<ServiceMetadata> | undefined> => {
   const options = {
     uri,
-    json: true
+    json: true,
   };
   return new Promise((res, _) => {
     request(options, (__, response, body) => {
@@ -84,7 +86,7 @@ export default class ServicesList extends Command {
       cli.action.start(chalk.cyanBright("Retrieving cosmosdb credentials"));
       const [endpoint, key] = await Promise.all([
         getCosmosEndpoint(config.resourceGroup, config.cosmosName),
-        getCosmosReadonlyKey(config.resourceGroup, config.cosmosName)
+        getCosmosReadonlyKey(config.resourceGroup, config.cosmosName),
       ]);
       cli.action.stop();
 
@@ -95,7 +97,7 @@ export default class ServicesList extends Command {
       // retrieve all visible services
       const response = container.items.query(
         {
-          query: `SELECT * FROM c`
+          query: `SELECT * FROM c`,
         },
         { enableCrossPartitionQuery: true }
       );
@@ -109,30 +111,30 @@ export default class ServicesList extends Command {
       const services = itemsList.reduce(
         (acc: ReadonlyArray<ServicePublic>, current) => {
           const maybeService = ServicePublic.decode(current);
-          if (maybeService.isRight()) {
+          if (E.isRight(maybeService)) {
             // we want to keep only services with max version
             const versionIndex = acc.findIndex(
-              s => s.serviceId === maybeService.value.serviceId
+              (s) => s.serviceId === maybeService.right.serviceId
             );
             // if we have already collected the same service (same id) with a less version
             // we remove it from the collection in place of the new one
             if (
               versionIndex >= 0 &&
-              acc[versionIndex].version < maybeService.value.version
+              acc[versionIndex].version < maybeService.right.version
             ) {
               return [
                 ...acc.filter(
-                  s => s.serviceId !== maybeService.value.serviceId
+                  (s) => s.serviceId !== maybeService.right.serviceId
                 ),
-                maybeService.value
+                maybeService.right,
               ];
             }
 
-            return [...acc, maybeService.value];
+            return [...acc, maybeService.right];
           } else {
             // if the decoding fails we raise an exception with an Error
             // describing what is happened
-            throw new Error(readableReport(maybeService.value));
+            throw new Error(readableReport(maybeService.left));
           }
         },
         []
@@ -140,7 +142,7 @@ export default class ServicesList extends Command {
       cli.action.start(chalk.cyanBright("Retrieving services metadata..."));
       const result = await sequential<ServicePublic, ICheck>(
         services,
-        async s => {
+        async (s) => {
           const serviceMetadatUrl = `${serviceContentRepoUrl}services/${s.serviceId
             .toLowerCase()
             .trim()}.json`;
@@ -158,15 +160,15 @@ export default class ServicesList extends Command {
             metadataUrl:
               hasMetadata === undefined
                 ? "n/a"
-                : hasMetadata.isRight()
+                : E.isRight(hasMetadata)
                 ? serviceMetadatUrl
                 : `metadata malformed ${serviceMetadatUrl}`,
-            organizationLogoUrl: maybeOrganizationLogo.isSome()
+            organizationLogoUrl: O.isSome(maybeOrganizationLogo)
               ? organizationLogoUrl
               : undefined,
-            serviceLogoUrl: maybeServiceLogo.isSome()
+            serviceLogoUrl: O.isSome(maybeServiceLogo)
               ? serviceLogoUrl
-              : undefined
+              : undefined,
           };
         }
       );
@@ -202,45 +204,45 @@ export default class ServicesList extends Command {
       const csvColumns: csvStringify.ColumnOption[] = [
         {
           key: "organizationName",
-          header: "organization name"
+          header: "organization name",
         },
         {
           key: "organizationFiscalCode",
-          header: "organization fiscalcode"
+          header: "organization fiscalcode",
         },
         {
           key: "serviceName",
-          header: "service name"
+          header: "service name",
         },
         {
           key: "isVisible",
-          header: "visible"
+          header: "visible",
         },
         {
           key: "serviceId",
-          header: "service id"
+          header: "service id",
         },
         {
           key: "version",
-          header: "service version"
+          header: "service version",
         },
         {
           key: "metadataUrl",
-          header: "service metadata"
+          header: "service metadata",
         },
         {
           key: "serviceLogoUrl",
-          header: "service logo"
+          header: "service logo",
         },
         {
           key: "organizationLogoUrl",
-          header: "organization logo"
-        }
+          header: "organization logo",
+        },
       ];
       const castBoolean = (value: boolean, _: csvStringify.CastingContext) =>
         value ? "true" : "false";
 
-      csvStringify(
+      csvStringify.stringify(
         servicesSorted,
         { cast: { boolean: castBoolean }, header: true, columns: csvColumns },
 
@@ -253,7 +255,7 @@ export default class ServicesList extends Command {
         }
       );
     } catch (e) {
-      this.error(e);
+      this.error(String(e));
     }
 
     return Promise.resolve();

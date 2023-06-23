@@ -1,65 +1,64 @@
 {
   "name": "io-ops",
   "description": "IO operations tool",
-  "version": "0.2.0",
-  "author": "Federico Feroldi @cloudify",
+  "version": "1.0.0",
+  "author": "PagoPA",
   "bin": {
     "io-ops": "./bin/run"
   },
-  "bugs": "https://github.com/teamdigitale/io-ops/issues",
+  "bugs": "https://github.com/pagopa/io-ops/issues",
   "dependencies": {
     "@azure/arm-apimanagement": "^5.1.1",
     "@azure/cosmos": "^2.1.5",
     "@azure/graph": "^4.0.1",
     "@azure/ms-rest-nodeauth": "^2.0.5",
-    "@oclif/command": "^1",
-    "@oclif/config": "^1",
-    "@oclif/plugin-help": "^2",
-    "@types/adm-zip": "^0.4.32",
-    "@types/js-yaml": "^3.12.2",
-    "@types/node-fetch": "^2.5.4",
+    "@oclif/core": "^2.8.7",
+    "@oclif/plugin-help": "^5.2.10",
+    "@oclif/plugin-plugins": "^2.4.7",
+    "@pagopa/io-functions-commons": "^28.2.0",
+    "@pagopa/openapi-codegen-ts": "^13.0.1",
+    "@pagopa/ts-commons": "^12.0.0",
     "azure-storage": "^2.10.3",
     "chalk": "2.4.2",
-    "cli-ux": "^5.2.1",
-    "csv-parse": "^4.4.1",
-    "csv-stringify": "^5.3.0",
-    "dotenv": "^8.2.0",
+    "cli-ux": "^6.0.9",
+    "csv-parse": "^5.4.0",
+    "csv-stringify": "^6.4.0",
+    "dotenv": "^16.3.1",
     "execa": "sindresorhus/execa#0d39fdffeb053215a56a631db8d2cf32ea119a95",
-    "fp-ts": "1.12.0",
-    "image-size": "0.7.4",
-    "io-functions-commons": "^14.6.0",
-    "io-ts": "1.8.5",
-    "italia-ts-commons": "5.1.9",
+    "fp-ts": "^2.16.0",
+    "globby": "^13.2.0",
+    "image-size": "^1.0.2",
+    "io-ts": "^2.2.20",
     "italia-tslint-rules": "^1.1.3",
-    "italia-utils": "^4.1.0",
-    "js-yaml": "^3.13.1",
+    "js-yaml": "^4.1.0",
     "node-fetch": "^2.6.0",
-    "request": "2.88.0",
-    "stream-transform": "^2.0.0",
-    "tslib": "1.9.3",
-    "vfile-message": "^2.0.2"
+    "request": "^2.88.2",
+    "stream-transform": "^3.2.6",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.5.3",
+    "vfile-message": "^4.0.1"
   },
   "devDependencies": {
-    "@oclif/dev-cli": "^1",
-    "@oclif/test": "^1",
-    "@oclif/tslint": "^3",
-    "@types/chai": "^4",
-    "@types/express": "^4.11.1",
-    "@types/image-size": "0.7.0",
-    "@types/mocha": "^5",
-    "@types/node": "^10",
-    "@types/request": "2.48.2",
-    "chai": "^4",
-    "globby": "^8",
+    "@oclif/test": "^2.3.23",
+    "@oclif/tslint": "^3.1.1",
+    "@types/adm-zip": "^0.4.32",
+    "@types/chai": "^4.3.5",
+    "@types/image-size": "^0.8.0",
+    "@types/js-yaml": "^3.12.2",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20.3.1",
+    "@types/node-fetch": "^2.6.4",
+    "@types/request": "^2.48.8",
+    "chai": "^4.3.7",
     "italia-tslint-rules": "^1.1.3",
-    "mocha": "^5",
+    "mocha": "^10.2.0",
     "npm-run-all": "^4.1.5",
-    "nyc": "^13",
-    "prettier": "^1.12.1",
-    "shx": "^0.3.2",
-    "ts-node": "^8",
-    "tslint": "^5.1.0",
-    "typescript": "3.5.1"
+    "nyc": "^15.1.0",
+    "oclif": "^3.9.1",
+    "prettier": "^2.8.8",
+    "shx": "^0.3.4",
+    "tslint": "^6.1.3",
+    "typescript": "^5.1.3"
   },
   "engines": {
     "node": ">=8.0.0"
@@ -70,7 +69,7 @@
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
-  "homepage": "https://github.com/teamdigitale/io-ops",
+  "homepage": "https://github.com/pagopa/io-ops",
   "keywords": [
     "oclif"
   ],
@@ -80,21 +79,17 @@
     "commands": "./lib/commands",
     "bin": "io-ops",
     "plugins": [
-      "@oclif/plugin-help"
+      "@oclif/plugin-help",
+      "@oclif/plugin-plugins"
     ]
   },
-  "repository": "teamdigitale/io-ops",
+  "repository": "pagopa/io-ops",
   "scripts": {
-    "generate:openapi-models": "shx rm -rf src/generated && mkdir -p src/generated && gen-api-models --api-spec https://raw.githubusercontent.com/pagopa/io-functions-admin/master/openapi/index.yaml --out-dir src/generated --no-strict --request-types --response-decoders",
+    "generate:openapi-models": "shx rm -rf src/generated && mkdir -p src/generated && gen-api-models --api-spec https://raw.githubusercontent.com/pagopa/io-functions-admin/master/openapi/index.yaml --out-dir src/generated --no-strict --request-types --response-decoders --client",
     "generate:postpack": "rm -f oclif.manifest.json",
-    "generate:prepack": "rm -rf lib tsconfig.tsbuildinfo && tsc -b && oclif-dev manifest && oclif-dev readme",
+    "generate:prepack": "rm -rf lib tsconfig.tsbuildinfo && tsc -b && oclif manifest && oclif readme",
     "generate": "npm-run-all generate:*",
-    "posttest": "tslint -p test -t stylish",
-    "test": "nyc --extension .ts mocha --forbid-only \"test/**/*.test.ts\"",
     "version": "oclif-dev readme && git add README.md"
   },
-  "types": "lib/index.d.ts",
-  "resolutions": {
-    "fp-ts": "1.12.0"
-  }
+  "types": "lib/index.d.ts"
 }

@@ -3,16 +3,17 @@
  * and print them in a csv format
  */
 import * as cosmos from "@azure/cosmos";
-import { Command } from "@oclif/command";
+import { Command } from "@oclif/core";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { readableReport } from "italia-ts-commons/lib/reporters";
+import { readableReport } from "@pagopa/ts-commons/lib/reporters";
 import { ServicePublic } from "../../definitions/ServicePublic";
 import {
   getCosmosEndpoint,
   getCosmosReadonlyKey,
-  pickAzureConfig
+  pickAzureConfig,
 } from "../../utils/azure";
+import * as E from "fp-ts/lib/Either";
 
 interface IGroupOptions {
   [key: string]: (a: ServicePublic, b: ServicePublic) => number;
@@ -46,7 +47,7 @@ const groupByPredicates: IGroupOptions = {
       return 1;
     }
     return 0;
-  }
+  },
 };
 
 export default class ServicesCheck extends Command {
@@ -57,7 +58,7 @@ export default class ServicesCheck extends Command {
       cli.action.start(chalk.cyanBright("Retrieving cosmosdb credentials"));
       const [endpoint, key] = await Promise.all([
         getCosmosEndpoint(config.resourceGroup, config.cosmosName),
-        getCosmosReadonlyKey(config.resourceGroup, config.cosmosName)
+        getCosmosReadonlyKey(config.resourceGroup, config.cosmosName),
       ]);
       cli.action.stop();
 
@@ -68,7 +69,7 @@ export default class ServicesCheck extends Command {
       // retrieve all visible services
       const response = container.items.query(
         {
-          query: `SELECT * FROM c`
+          query: `SELECT * FROM c`,
         },
         { enableCrossPartitionQuery: true }
       );
@@ -81,31 +82,31 @@ export default class ServicesCheck extends Command {
       const services = itemsList.reduce(
         (acc: ReadonlyArray<ServicePublic>, current) => {
           const maybeService = ServicePublic.decode(current);
-          if (maybeService.isRight()) {
+          if (E.isRight(maybeService)) {
             // we want to keep only services with max version
             const versionIndex = acc.findIndex(
-              s => s.serviceId === maybeService.value.serviceId
+              (s) => s.serviceId === maybeService.right.serviceId
             );
             // if we have already collected the same service (same id) with a less version
             // we remove it from the collection in place of the new one
 
             if (
               versionIndex >= 0 &&
-              acc[versionIndex].version < maybeService.value.version
+              acc[versionIndex].version < maybeService.right.version
             ) {
               return [
                 ...acc.filter(
-                  s => s.serviceId !== maybeService.value.serviceId
+                  (s) => s.serviceId !== maybeService.right.serviceId
                 ),
-                maybeService.value
+                maybeService.right,
               ];
             }
 
-            return [...acc, maybeService.value];
+            return [...acc, maybeService.right];
           } else {
             // if the decoding fails we raise an exception with an Error
             // describing what is happened
-            throw new Error(readableReport(maybeService.value));
+            throw new Error(readableReport(maybeService.left));
           }
         },
         []
@@ -116,19 +117,19 @@ export default class ServicesCheck extends Command {
           header: "Organization Name",
           // tslint:disable-next-line: no-any
           get: (row: any) =>
-            `${row.organizationName} [${row.organizationFiscalCode}]`
+            `${row.organizationName} [${row.organizationFiscalCode}]`,
         },
         name: {
           header: "Service Name",
           // tslint:disable-next-line: no-any
           get: (row: any) =>
-            `${row.serviceName} [${row.version} - ${row.serviceId}]`
+            `${row.serviceName} [${row.version} - ${row.serviceId}]`,
         },
         isVisible: {
           header: "is Visible",
           // tslint:disable-next-line: no-any
-          get: (row: any) => (row.isVisible ? "✅" : "❌")
-        }
+          get: (row: any) => (row.isVisible ? "✅" : "❌"),
+        },
       };
       const predicatesName = Object.keys(groupByPredicates);
       const groupOptions = predicatesName
@@ -156,8 +157,8 @@ export default class ServicesCheck extends Command {
       );
       cli.table(servicesSortedByOrganizationName, columns);
     } catch (e) {
-      cli.log(e.body);
-      this.error(e);
+      cli.log(String(e));
+      this.error(String(e));
     }
 
     return Promise.resolve();

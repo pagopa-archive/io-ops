@@ -1,5 +1,5 @@
 import * as cosmos from "@azure/cosmos";
-import { Command } from "@oclif/command";
+import { Command } from "@oclif/core";
 import cli from "cli-ux";
 
 import { getCosmosConnection, pickAzureConfig } from "../../utils/azure";
@@ -8,11 +8,11 @@ export default class ProfilesList extends Command {
   public static description = "Lists all profiles";
 
   public static flags = {
-    ...cli.table.flags()
+    ...cli.table.flags,
   };
 
   public async run(): Promise<void> {
-    const { flags } = this.parse(ProfilesList);
+    const { flags } = await this.parse(ProfilesList);
 
     try {
       const config = await pickAzureConfig();
@@ -30,7 +30,7 @@ export default class ProfilesList extends Command {
       const response = container.items.query(
         "SELECT c.fiscalCode, c._ts FROM c WHERE c.version = 0",
         {
-          enableCrossPartitionQuery: true
+          enableCrossPartitionQuery: true,
         }
       );
       const result = (await response.toArray()).result;
@@ -45,23 +45,23 @@ export default class ProfilesList extends Command {
         {
           fiscalCode: {
             minWidth: 16,
-            header: "fiscalCode"
+            header: "fiscalCode",
           },
           createdAt: {
             header: "createdAt",
             // tslint:disable-next-line: no-any
             get: (row: any) =>
               row._ts && new Date(row._ts * 1000).toISOString(),
-            extended: true
-          }
+            extended: true,
+          },
         },
         {
           printLine: this.log,
-          ...flags // parsed flags
+          ...flags, // parsed flags
         }
       );
     } catch (e) {
-      this.error(e);
+      this.error(String(e));
     }
   }
 }

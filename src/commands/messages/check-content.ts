@@ -1,4 +1,4 @@
-import { Command, flags } from "@oclif/command";
+import { Command, Flags } from "@oclif/core";
 import * as storage from "azure-storage";
 import cli from "cli-ux";
 import * as parse from "csv-parse";
@@ -11,32 +11,29 @@ import { parseMessagePath } from "../../utils/parser";
 export default class MessagesCheckContent extends Command {
   public static description = "Checks validity of messages";
 
-  // tslint:disable-next-line:readonly-array
-  public static args = [];
-
   public static flags = {
-    input: flags.string({
+    input: Flags.string({
       char: "i",
       description:
-        "Input file (CSV, with path as first column) - defaults to stdin"
+        "Input file (CSV, with path as first column) - defaults to stdin",
     }),
-    parallel: flags.integer({
+    parallel: Flags.integer({
       char: "p",
       default: 1,
-      description: "Number of parallel workers to run"
-    })
+      description: "Number of parallel workers to run",
+    }),
   };
 
   public run = async () => {
-    const { flags: parsedFlags } = this.parse(MessagesCheckContent);
+    const { flags } = await this.parse(MessagesCheckContent);
 
-    const inputStream = parsedFlags.input
-      ? fs.createReadStream(parsedFlags.input)
+    const inputStream = flags.input
+      ? fs.createReadStream(flags.input)
       : process.stdin;
 
-    const parser = parse({
+    const parser = parse.parse({
       trim: true,
-      skip_empty_lines: true
+      skip_empty_lines: true,
     });
 
     try {
@@ -55,9 +52,9 @@ export default class MessagesCheckContent extends Command {
             (err, blobResult) => (err ? reject(err) : resolve(blobResult))
           )
         );
-      const transformer = transform(
+      const transformer = transform.transform(
         {
-          parallel: parsedFlags.parallel
+          parallel: flags.parallel,
         },
         (record, cb) =>
           (async () => {
@@ -68,20 +65,17 @@ export default class MessagesCheckContent extends Command {
 
             return `${path},${hasContent === true}\n`;
           })()
-            .then(_ => cb(null, _))
+            .then((_) => cb(null, _))
             .catch(() => cb(null, undefined)) // skip invalid lines
       );
 
       process.stdout.write("path,hasContent\n");
-      inputStream
-        .pipe(parser)
-        .pipe(transformer)
-        .pipe(process.stdout);
+      inputStream.pipe(parser).pipe(transformer).pipe(process.stdout);
 
       // tslint:disable-next-line: no-inferred-empty-object-type
       await new Promise((res, _) => parser.on("end", res));
     } catch (e) {
-      this.error(e);
+      this.error(String(e));
     }
   };
 }

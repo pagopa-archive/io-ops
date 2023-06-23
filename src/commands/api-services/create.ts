@@ -1,12 +1,13 @@
-import Command, { flags } from "@oclif/command";
+import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { Either } from "fp-ts/lib/Either";
-import { Task } from "fp-ts/lib/Task";
-import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
+import * as E from "fp-ts/lib/Either";
+import { flow, pipe } from "fp-ts/function";
+
+import * as TE from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
-import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
-import { errorsToReadableMessages } from "italia-ts-commons/lib/reporters";
+import { getRequiredStringEnv } from "@pagopa/io-functions-commons/dist/src/utils/env";
+import { errorsToReadableMessages } from "@pagopa/ts-commons/lib/reporters";
 import { ApiClient } from "../../clients/admin";
 import { Service as AdminService } from "../../generated/Service";
 import { errorsToError } from "../../utils/conversions";
@@ -16,43 +17,44 @@ export class ServiceCreate extends Command {
 
   // tslint:disable-next-line: readonly-array
   public static examples = [
-    `$ io-ops api-service:create  --json='{ "authorized_cidrs": [], "authorized_recipients": [], "department_name": "department_test", "organization_fiscal_code": "12345670013", "organization_name": "organization_name", "service_id": "test-api-123", "service_name": "test_name", "is_visible": false, "max_allowed_payment_amount": 0, "require_secure_channels": false }'`
+    `$ io-ops api-service:create  --json='{ "authorized_cidrs": [], "authorized_recipients": [], "department_name": "department_test", "organization_fiscal_code": "12345670013", "organization_name": "organization_name", "service_id": "test-api-123", "service_name": "test_name", "is_visible": false, "max_allowed_payment_amount": 0, "require_secure_channels": false }'`,
   ];
 
   public static flags = {
-    json: flags.string({
+    payload: Flags.string({
       description: "JSON string rapresentation of a service",
       required: true,
-      parse: input => JSON.parse(input)
-    })
+      parse: (input) => JSON.parse(input),
+    }),
   };
 
   public async run(): Promise<void> {
-    const { flags: commandLineFlags } = this.parse(ServiceCreate);
+    const { flags } = await this.parse(ServiceCreate);
 
     cli.action.start(
       chalk.blue.bold(`Creating a service`),
       chalk.blueBright.bold("Running"),
       {
-        stdout: true
+        stdout: true,
       }
     );
 
-    const errorOrService: Either<Error, AdminService> = AdminService.decode(
-      commandLineFlags.json
-    ).mapLeft(errors => Error(errorsToReadableMessages(errors).join(" /")));
-
-    return fromEither(errorOrService)
-      .chain(this.post)
-      .fold(
-        error => {
+    return pipe(
+      flags.payload,
+      AdminService.decode,
+      E.mapLeft((errors) => Error(errorsToReadableMessages(errors).join(" /"))),
+      TE.fromEither,
+      TE.chain(this.post),
+      TE.bimap(
+        (error) => {
           cli.action.stop(chalk.red(`Error : ${error}`));
         },
-        result => {
+        (result) => {
           cli.action.stop(chalk.green(`Response: ${JSON.stringify(result)}`));
         }
-      )
-      .run();
+      ),
+      TE.toUnion
+    )();
   }
 
   private getApiClient = () =>
@@ -61,18 +63,22 @@ export class ServiceCreate extends Command {
       getRequiredStringEnv("OCP_APIM")
     );
 
-  private post = (service: AdminService): TaskEither<Error, AdminService> =>
-    new TaskEither(
-      new Task(() => this.getApiClient().createService({ service }))
-    )
-      .mapLeft(errorsToError)
-      .chain(
-        fromPredicate(
-          response => response.status === 200,
+  private post = (service: AdminService): TE.TaskEither<Error, AdminService> =>
+    pipe(
+      TE.tryCatch(
+        () => this.getApiClient().createService({ body: service }),
+        E.toError
+      ),
+      TE.chain(flow(E.mapLeft(errorsToError), TE.fromEither)),
+      TE.chain(
+        TE.fromPredicate(
+          (response) => response.status === 200,
           () => Error(`Could not create the service ${service.service_id}`)
         )
+      ),
+      TE.map((response) => response.value),
+      TE.chain(
+        flow(AdminService.decode, E.mapLeft(errorsToError), TE.fromEither)
       )
-      .chain(response =>
-        fromEither(AdminService.decode(response.value)).mapLeft(errorsToError)
-      );
+    );
 }

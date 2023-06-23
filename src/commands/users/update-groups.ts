@@ -1,43 +1,44 @@
-import Command, { flags } from "@oclif/command";
-import * as Parser from "@oclif/parser";
+import { Command, Flags, Args } from "@oclif/core";
+
 import chalk from "chalk";
 import cli from "cli-ux";
-import { Task } from "fp-ts/lib/Task";
-import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
+import * as E from "fp-ts/lib/Either";
+import * as TE from "fp-ts/lib/TaskEither";
 // tslint:disable-next-line: no-submodule-imports
-import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
+import { getRequiredStringEnv } from "@pagopa/io-functions-commons/dist/src/utils/env";
 import { ApiClient } from "../../clients/admin";
 import { GroupCollection } from "../../generated/GroupCollection";
 import { errorsToError } from "../../utils/conversions";
+import { flow, pipe } from "fp-ts/lib/function";
 
 export class UserGroupUpdate extends Command {
   public static description =
     "Update the list of groups (permissions) associated to the User identified by the provided email";
 
   // tslint:disable-next-line: readonly-array
-  public static args: Parser.args.IArg[] = [
-    {
+  public static args = {
+    email: Args.string({
       description: "email",
       name: "email",
-      required: true
-    }
-  ];
+      required: true,
+    }),
+  };
 
   // tslint:disable-next-line: readonly-array
   public static examples = [
-    `$ io-ops users:update-groups  --groups=ApiInfoRead,ApiLimitedMessageWrite,ApiMessageRead`
+    `$ io-ops users:update-groups  --groups=ApiInfoRead,ApiLimitedMessageWrite,ApiMessageRead`,
   ];
 
   public static flags = {
-    groups: flags.string({
+    groups: Flags.string({
       description: "A comma separeted list of groups",
-      required: true
-    })
+      required: true,
+    }),
   };
 
   public async run(): Promise<void> {
     // tslint:disable-next-line: no-shadowed-variable
-    const { args, flags: commandLineFlags } = this.parse(UserGroupUpdate);
+    const { args, flags } = await this.parse(UserGroupUpdate);
 
     cli.action.start(
       chalk.blue.bold(
@@ -45,22 +46,24 @@ export class UserGroupUpdate extends Command {
       ),
       chalk.blueBright.bold("Running"),
       {
-        stdout: true
+        stdout: true,
       }
     );
 
-    const groupsPermission = commandLineFlags.groups.split(",");
+    const groupsPermission = flags.groups.split(",");
 
-    return this.put(args.email, groupsPermission)
-      .fold(
-        error => {
+    return pipe(
+      this.put(args.email, groupsPermission),
+      TE.bimap(
+        (error) => {
           cli.action.stop(chalk.red(`Error : ${error}`));
         },
-        result => {
+        (result) => {
           cli.action.stop(chalk.green(`Response: ${JSON.stringify(result)}`));
         }
-      )
-      .run();
+      ),
+      TE.toUnion
+    )();
   }
 
   private getApiClient = () =>
@@ -72,25 +75,26 @@ export class UserGroupUpdate extends Command {
   private put = (
     email: string,
     groupsPermission: readonly string[]
-  ): TaskEither<Error, GroupCollection> =>
-    new TaskEither(
-      new Task(() =>
-        this.getApiClient().updateGroups({
-          email,
-          userGroupsPayload: { groups: groupsPermission }
-        })
-      )
-    )
-      .mapLeft(errorsToError)
-      .chain(
-        fromPredicate(
-          response => response.status === 200,
+  ): TE.TaskEither<Error, GroupCollection> =>
+    pipe(
+      TE.tryCatch(
+        () =>
+          this.getApiClient().updateGroups({
+            email,
+            body: { groups: groupsPermission },
+          }),
+        E.toError
+      ),
+      TE.chain(flow(E.mapLeft(errorsToError), TE.fromEither)),
+      TE.chain(
+        TE.fromPredicate(
+          (response) => response.status === 200,
           () => Error("Could not update groups")
         )
+      ),
+      TE.map((response) => response.value),
+      TE.chain(
+        flow(GroupCollection.decode, E.mapLeft(errorsToError), TE.fromEither)
       )
-      .chain(response =>
-        fromEither(GroupCollection.decode(response.value)).mapLeft(
-          errorsToError
-        )
-      );
+    );
 }

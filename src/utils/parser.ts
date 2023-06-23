@@ -1,4 +1,6 @@
 import * as t from "io-ts";
+import * as E from "fp-ts/lib/Either";
+import { pipe } from "fp-ts/lib/function";
 
 export const parseMessagePath = (
   value: unknown
@@ -7,9 +9,13 @@ export const parseMessagePath = (
   fiscalCode: string;
   messageId: string;
 } => {
-  const path = t.string.decode(value).getOrElseL(() => {
-    throw Error(`Record is not a string [${value}]`);
-  });
+  const path = pipe(
+    value,
+    t.string.decode,
+    E.getOrElseW(() => {
+      throw Error(`Record is not a string [${value}]`);
+    })
+  );
   const parts = path.split("/");
   if (
     parts.length !== 2 ||
@@ -20,6 +26,6 @@ export const parseMessagePath = (
   return {
     path,
     fiscalCode: parts[0],
-    messageId: parts[1]
+    messageId: parts[1],
   };
 };

@@ -1,13 +1,14 @@
-import Command, { flags } from "@oclif/command";
+import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import cli from "cli-ux";
-import { Task } from "fp-ts/lib/Task";
-import { fromEither, fromPredicate, TaskEither } from "fp-ts/lib/TaskEither";
+import * as TE from "fp-ts/lib/TaskEither";
+import * as E from "fp-ts/lib/Either";
 // tslint:disable-next-line: no-submodule-imports
-import { getRequiredStringEnv } from "io-functions-commons/dist/src/utils/env";
+import { getRequiredStringEnv } from "@pagopa/io-functions-commons/dist/src/utils/env";
 import { ApiClient } from "../../clients/admin";
 import { UserCollection } from "../../generated/UserCollection";
 import { errorsToError } from "../../utils/conversions";
+import { flow, pipe } from "fp-ts/lib/function";
 
 export class UsersGet extends Command {
   public static description =
@@ -16,36 +17,38 @@ export class UsersGet extends Command {
   // tslint:disable-next-line: readonly-array
   public static examples = [
     "$ io-ops users:get-all",
-    "$ io-ops users:get-all --cursor=100"
+    "$ io-ops users:get-all --cursor=100",
   ];
 
   public static flags = {
-    cursor: flags.integer({
+    cursor: Flags.integer({
       description: "Items to skip",
-      required: false
-    })
+      required: false,
+    }),
   };
 
   public async run(): Promise<void> {
-    const { flags: commandLineFlags } = this.parse(UsersGet);
+    const { flags } = await this.parse(UsersGet);
     // tslint:disable-next-line: no-console
     cli.action.start(
       chalk.blue.bold(`Getting users`),
       chalk.blueBright.bold("Running"),
       {
-        stdout: true
+        stdout: true,
       }
     );
-    return this.get(commandLineFlags.cursor)
-      .fold(
-        error => {
+    return pipe(
+      this.get(flags.cursor),
+      TE.bimap(
+        (error) => {
           cli.action.stop(chalk.red(`Error : ${error}`));
         },
-        result => {
+        (result) => {
           cli.action.stop(chalk.green(`Response: ${JSON.stringify(result)}`));
         }
-      )
-      .run();
+      ),
+      TE.toUnion
+    )();
   }
 
   private getApiClient = () =>
@@ -54,16 +57,19 @@ export class UsersGet extends Command {
       getRequiredStringEnv("OCP_APIM")
     );
 
-  private get = (cursor: number = 0): TaskEither<Error, UserCollection> =>
-    new TaskEither(new Task(() => this.getApiClient().getUsers({ cursor })))
-      .mapLeft(errorsToError)
-      .chain(
-        fromPredicate(
-          response => response.status === 200,
+  private get = (cursor: number = 0): TE.TaskEither<Error, UserCollection> =>
+    pipe(
+      TE.tryCatch(() => this.getApiClient().getUsers({ cursor }), E.toError),
+      TE.chain(flow(E.mapLeft(errorsToError), TE.fromEither)),
+      TE.chain(
+        TE.fromPredicate(
+          (response) => response.status === 200,
           () => Error("Could read users")
         )
+      ),
+      TE.map((res) => res.value),
+      TE.chain(
+        flow(UserCollection.decode, E.mapLeft(errorsToError), TE.fromEither)
       )
-      .chain(response =>
-        fromEither(UserCollection.decode(response.value)).mapLeft(errorsToError)
-      );
+    );
 }

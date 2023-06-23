@@ -1,47 +1,48 @@
 import * as cosmos from "@azure/cosmos";
-import { Command } from "@oclif/command";
+import { Command, Args } from "@oclif/core";
 import cli from "cli-ux";
-import { FiscalCode } from "italia-ts-commons/lib/strings";
+import { FiscalCode } from "@pagopa/ts-commons/lib/strings";
+import * as E from "fp-ts/lib/Either";
 
 import {
   getCosmosEndpoint,
   getCosmosReadonlyKey,
-  pickAzureConfig
+  pickAzureConfig,
 } from "../../utils/azure";
 
 export default class MessagesList extends Command {
   public static description = "List messages for a fiscalCode";
 
   // tslint:disable-next-line:readonly-array
-  public static args = [
-    {
+  public static args = {
+    fiscalCode: Args.string({
       name: "fiscalCode",
-      required: true
-    }
-  ];
+      required: true,
+    }),
+  };
 
   public static flags = {
-    ...cli.table.flags()
+    ...cli.table.flags,
   };
 
   public run = async () => {
-    const { args, flags: parsedFlags } = this.parse(MessagesList);
+    const { args, flags } = await this.parse(MessagesList);
 
     const fiscalCodeOrErrors = FiscalCode.decode(args.fiscalCode);
 
-    if (fiscalCodeOrErrors.isLeft()) {
+    if (E.isLeft(fiscalCodeOrErrors)) {
       this.error("Invalid fiscalCode");
       return;
     }
 
-    const fiscalCode = fiscalCodeOrErrors.value;
+    const fiscalCode = fiscalCodeOrErrors.right;
 
     try {
       cli.action.start("Retrieving credentials");
       const config = await pickAzureConfig();
       const [endpoint, key] = await Promise.all([
         getCosmosEndpoint(config.resourceGroup, config.cosmosName),
-        getCosmosReadonlyKey(config.resourceGroup, config.cosmosName)
+        getCosmosReadonlyKey(config.resourceGroup, config.cosmosName),
       ]);
       cli.action.stop();
 
@@ -53,7 +54,7 @@ export default class MessagesList extends Command {
       const response = container.items.query({
         parameters: [{ name: "@fiscalCode", value: fiscalCode }],
         query:
-          "SELECT c.id, c.createdAt, c.isPending FROM c WHERE c.fiscalCode = @fiscalCode"
+          "SELECT c.id, c.createdAt, c.isPending FROM c WHERE c.fiscalCode = @fiscalCode",
       });
       const result = (await response.toArray()).result;
       cli.action.stop();
@@ -69,20 +70,20 @@ export default class MessagesList extends Command {
           path: {
             // tslint:disable-next-line:no-any
             get: (row: any) => `${fiscalCode}/${row.id}`,
-            header: "path"
+            header: "path",
           },
           isPending: {
             extended: true,
-            header: "isPending"
-          }
+            header: "isPending",
+          },
         },
         {
           printLine: this.log,
-          ...parsedFlags // parsed flags
+          ...flags,
         }
       );
     } catch (e) {
-      this.error(e);
+      this.error(String(e));
     }
   };
 }
