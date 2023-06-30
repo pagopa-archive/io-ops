@@ -101,10 +101,12 @@ export class ListDelete extends Command {
                 TE.chain(() =>
                   this.deleteAllServiceVersion(container, subscriptionId)
                 ),
-                TE.map(() => cli.log(chalk.blue.bold(`Completed!`))),
+                TE.map(() =>
+                  cli.log(chalk.blue.bold(`Completed! ${subscriptionId}`))
+                ),
                 TE.chain(() =>
                   pipe(
-                    TE.fromTask(T.delay(2000)(T.of(void 0))),
+                    TE.fromTask(T.delay(500)(T.of(void 0))),
                     TE.mapLeft(() =>
                       Error("Error while waiting for another delete")
                     )
