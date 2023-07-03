@@ -114,7 +114,7 @@ export class ListDelete extends Command {
       TE.chain((subscriptionList) =>
         pipe(
           cli.log(
-            chalk.blue.bold(`Parsed subscriptonList: ${subscriptionList}`)
+            chalk.blue.bold(`Parsed subscriptionList: ${subscriptionList}`)
           ),
           () =>
             this.getOrCreateStatefulTableSubscriptionsIfNotExists(
