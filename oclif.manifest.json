@@ -455,6 +455,12 @@
           "description": "CSV Input file containing subscription list",
           "required": true
         },
+        "delayOnDelete": {
+          "name": "delayOnDelete",
+          "description": "The delay between delete's operations",
+          "required": false,
+          "default": 500
+        },
         "ownerEmail": {
           "name": "ownerEmail",
           "description": "Email of the subscriptions owner",
