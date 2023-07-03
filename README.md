@@ -74,6 +74,7 @@ USAGE
 * [`io-ops services:check`](#io-ops-servicescheck)
 * [`io-ops services:details`](#io-ops-servicesdetails)
 * [`io-ops services:list`](#io-ops-serviceslist)
+* [`io-ops subscriptions:list-delete DELETEFILEPATH [OWNEREMAIL]`](#io-ops-subscriptionslist-delete-deletefilepath-owneremail)
 * [`io-ops users:create`](#io-ops-userscreate)
 * [`io-ops users:get EMAIL`](#io-ops-usersget-email)
 * [`io-ops users:get-all`](#io-ops-usersget-all)
@@ -679,6 +680,27 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/services/list.ts](https://github.com/pagopa/io-ops/blob/v1.0.0/src/commands/services/list.ts)_
+
+## `io-ops subscriptions:list-delete DELETEFILEPATH [OWNEREMAIL]`
+
+Migrate metadata or logos from github
+
+```
+USAGE
+  $ io-ops subscriptions:list-delete DELETEFILEPATH [OWNEREMAIL]
+
+ARGUMENTS
+  DELETEFILEPATH  CSV Input file containing subscription list
+  OWNEREMAIL      Email of the subscriptions owner
+
+DESCRIPTION
+  Migrate metadata or logos from github
+
+EXAMPLES
+  $ io-ops subscriptions:list-delete -inputListPath=/tmp/input.csv
+```
+
+_See code: [src/commands/subscriptions/list-delete.ts](https://github.com/pagopa/io-ops/blob/v1.0.0/src/commands/subscriptions/list-delete.ts)_
 
 ## `io-ops users:create`
 

@@ -13,6 +13,12 @@ import {
   pickAzureConfig,
 } from "../../utils/azure";
 import { sequential, sequentialSum } from "../../utils/promise";
+import { getRequiredStringEnv } from "@pagopa/io-functions-commons/dist/src/utils/env";
+import {
+  asyncIteratorToArray,
+  flattenAsyncIterator,
+  mapAsyncIterable,
+} from "@pagopa/io-functions-commons/dist/src/utils/async";
 
 interface IContainer {
   query: string;
@@ -138,7 +144,7 @@ export default class ProfileDelete extends Command {
         query: selectFromFiscalCode,
         queryParamName: fiscalCodeParamName,
         queryParamValue: fiscalCode,
-        queryOptions: { enableCrossPartitionQuery: true },
+        queryOptions: {},
         relatedOps: [
           {
             containerName: azureConfig.cosmosNotificationStatusContainer,
@@ -174,10 +180,10 @@ export default class ProfileDelete extends Command {
     }
 
     // init cosmos client
-    const client = new cosmos.CosmosClient({
-      endpoint: connection.endpoint,
-      auth: { key: connection.key },
-    });
+    const cosmosConnectionString = getRequiredStringEnv(
+      "COSMOS_CONNECTION_STRING"
+    );
+    const client = new cosmos.CosmosClient(cosmosConnectionString);
 
     const database = client.database(azureConfig.cosmosDatabaseName);
 
@@ -254,7 +260,7 @@ export default class ProfileDelete extends Command {
         parameters: [{ name: deleteOp.queryParamName, value: i.id }],
         query: deleteOp.query,
       });
-      const { result: item } = await response.current();
+      const item = (await response.fetchNext()).resources[0];
       return item || undefined;
     });
     // remove from queyResults all items that are undefined (query result was empty)
@@ -292,16 +298,27 @@ export default class ProfileDelete extends Command {
     // get the container of the delete operation
     const container = database.container(deleteOp.containerName);
     // query the container
-    const response = container.items.query(
-      {
-        parameters: [
-          { name: deleteOp.queryParamName, value: deleteOp.queryParamValue },
-        ],
-        query: deleteOp.query,
-      },
-      deleteOp.queryOptions
+    const responseIterator = container.items
+      .query(
+        {
+          parameters: [
+            { name: deleteOp.queryParamName, value: deleteOp.queryParamValue },
+          ],
+          query: deleteOp.query,
+        },
+        deleteOp.queryOptions
+      )
+      .getAsyncIterator();
+
+    const itemsList = await asyncIteratorToArray(
+      flattenAsyncIterator(
+        mapAsyncIterable(
+          responseIterator,
+          (feedResponse) => feedResponse.resources
+        )[Symbol.asyncIterator]()
+      )
     );
-    const { result: itemsList } = await response.toArray();
+
     if (itemsList === undefined || itemsList.length === 0) {
       cli.action.stop(
         `No items found in "${deleteOp.containerName}" container`

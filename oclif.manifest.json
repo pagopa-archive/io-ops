@@ -437,6 +437,31 @@
       "flags": {},
       "args": {}
     },
+    "subscriptions:list-delete": {
+      "id": "subscriptions:list-delete",
+      "description": "Migrate metadata or logos from github",
+      "strict": true,
+      "pluginName": "io-ops",
+      "pluginAlias": "io-ops",
+      "pluginType": "core",
+      "aliases": [],
+      "examples": [
+        "$ io-ops subscriptions:list-delete -inputListPath=/tmp/input.csv"
+      ],
+      "flags": {},
+      "args": {
+        "deleteFilePath": {
+          "name": "deleteFilePath",
+          "description": "CSV Input file containing subscription list",
+          "required": true
+        },
+        "ownerEmail": {
+          "name": "ownerEmail",
+          "description": "Email of the subscriptions owner",
+          "required": false
+        }
+      }
+    },
     "users:create": {
       "id": "users:create",
       "description": "Create a new user with a random password in the Active Directory Azure B2C, then create a corresponding user on the API management resource.",
