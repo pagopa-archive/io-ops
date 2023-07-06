@@ -21,8 +21,32 @@ import {
   flattenAsyncIterator,
   mapAsyncIterable,
 } from "@pagopa/io-functions-commons/dist/src/utils/async";
-import { Service } from "../../generated/Service";
+import knex from "knex";
+import getPool, { queryDataTable } from "../../utils/postgre";
+import { Pool } from "pg";
 
+export const createDeleteSql = (serviceId: NonEmptyString): NonEmptyString =>
+  knex({
+    client: "pg",
+  })
+    .withSchema(getRequiredStringEnv("POSTGRE_DB_SCHEMA"))
+    .table(getRequiredStringEnv("POSTGRE_DB_TABLE"))
+    .where("id", serviceId)
+    .delete()
+    .toQuery() as NonEmptyString;
+
+export const deleteOnPostgresql =
+  (pool: Pool) =>
+  (subscriptionId: NonEmptyString): TE.TaskEither<Error, true> => {
+    return pipe(
+      createDeleteSql(subscriptionId),
+      (sql) => queryDataTable(pool, sql),
+      TE.bimap(E.toError, () => {
+        cli.log(chalk.blue.bold(`Subscription deleted from DB`));
+        return true;
+      })
+    );
+  };
 export class ListDelete extends Command {
   public static description = "Migrate metadata or logos from github";
 
@@ -58,6 +82,7 @@ export class ListDelete extends Command {
     const container = database.container(
       getRequiredStringEnv("COSMOSDB_SERVICES_CONTAINER_NAME")
     );
+    const pool = getPool();
 
     cli.log("Done");
 
@@ -95,12 +120,13 @@ export class ListDelete extends Command {
             subscriptionList.map((subscriptionId) =>
               pipe(
                 cli.log(
-                  chalk.blue.bold(`Deleting subscriptionId ${subscriptionId}`)
+                  chalk.blue.bold(`Deleting subscriptionId: ${subscriptionId}`)
                 ),
                 () => this.deleteSubscription(apimClient, subscriptionId),
                 TE.chain(() =>
                   this.deleteAllServiceVersion(container, subscriptionId)
                 ),
+                TE.chain(() => deleteOnPostgresql(pool)(subscriptionId)),
                 TE.map(() =>
                   cli.log(chalk.blue.bold(`Completed! ${subscriptionId}`))
                 ),
