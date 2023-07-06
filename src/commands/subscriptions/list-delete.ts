@@ -37,11 +37,14 @@ export const createDeleteSql = (serviceId: NonEmptyString): NonEmptyString =>
 
 export const deleteOnPostgresql =
   (pool: Pool) =>
-  (serviceId: NonEmptyString): TE.TaskEither<Error, true> => {
+  (subscriptionId: NonEmptyString): TE.TaskEither<Error, true> => {
     return pipe(
-      createDeleteSql(serviceId),
+      createDeleteSql(subscriptionId),
       (sql) => queryDataTable(pool, sql),
-      TE.bimap(E.toError, () => true)
+      TE.bimap(E.toError, () => {
+        cli.log(chalk.blue.bold(`Subscription deleted from DB`));
+        return true;
+      })
     );
   };
 export class ListDelete extends Command {
