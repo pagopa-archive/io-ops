@@ -284,7 +284,7 @@ export class ListDelete extends Command {
     tableClient: TableClient,
     subscriptions: NonEmptyString[],
     tableName: string
-  ): TE.TaskEither<Error, string[]> {
+  ): TE.TaskEither<Error, NonEmptyString[]> {
     return pipe(
       existsTable(tableServiceClient, tableName),
       TE.chainW(
