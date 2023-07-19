@@ -5,6 +5,7 @@ import * as fs from "fs";
 import * as cosmos from "@azure/cosmos";
 import * as parse from "csv-parse";
 import * as E from "fp-ts/lib/Either";
+import * as B from "fp-ts/lib/boolean";
 import * as IO from "fp-ts/lib/IOEither";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as T from "fp-ts/lib/Task";
@@ -21,25 +22,39 @@ import {
   flattenAsyncIterator,
   mapAsyncIterable,
 } from "@pagopa/io-functions-commons/dist/src/utils/async";
+import {
+  createTable,
+  deleteTable,
+  existsTable,
+  queryEntities,
+  upsertEntity,
+} from "../../utils/tables";
+import { TableClient, TableServiceClient, odata } from "@azure/data-tables";
 import knex from "knex";
 import getPool, { queryDataTable } from "../../utils/postgre";
 import { Pool } from "pg";
 
-export const createDeleteSql = (serviceId: NonEmptyString): NonEmptyString =>
-  knex({
-    client: "pg",
-  })
-    .withSchema(getRequiredStringEnv("POSTGRE_DB_SCHEMA"))
-    .table(getRequiredStringEnv("POSTGRE_DB_TABLE"))
-    .where("id", serviceId)
-    .delete()
-    .toQuery() as NonEmptyString;
+export const createDeleteSql =
+  (postgreDbSchema: NonEmptyString, postgreDbTable: NonEmptyString) =>
+  (serviceId: NonEmptyString): NonEmptyString =>
+    knex({
+      client: "pg",
+    })
+      .withSchema(postgreDbSchema)
+      .table(postgreDbTable)
+      .where("id", serviceId)
+      .delete()
+      .toQuery() as NonEmptyString;
 
 export const deleteOnPostgresql =
-  (pool: Pool) =>
+  (
+    pool: Pool,
+    postgreDbSchema: NonEmptyString,
+    postgreDbTable: NonEmptyString
+  ) =>
   (subscriptionId: NonEmptyString): TE.TaskEither<Error, true> => {
     return pipe(
-      createDeleteSql(subscriptionId),
+      createDeleteSql(postgreDbSchema, postgreDbTable)(subscriptionId),
       (sql) => queryDataTable(pool, sql),
       TE.bimap(E.toError, () => {
         cli.log(chalk.blue.bold(`Subscription deleted from DB`));
@@ -62,6 +77,12 @@ export class ListDelete extends Command {
       required: true,
       description: "CSV Input file containing subscription list",
     }),
+    delayOnDelete: Args.integer({
+      name: "delayOnDelete",
+      required: false,
+      default: 500,
+      description: "The delay between delete's operations",
+    }),
     ownerEmail: Args.string({
       name: "ownerEmail",
       required: false,
@@ -75,7 +96,6 @@ export class ListDelete extends Command {
     const cosmosConnectionString = getRequiredStringEnv(
       "COSMOS_CONNECTION_STRING"
     );
-    cli.log(cosmosConnectionString);
     cli.log("Creating cosmos client");
     const client = new cosmos.CosmosClient(cosmosConnectionString);
     const database = client.database(getRequiredStringEnv("COSMOSDB_NAME"));
@@ -83,6 +103,16 @@ export class ListDelete extends Command {
       getRequiredStringEnv("COSMOSDB_SERVICES_CONTAINER_NAME")
     );
     const pool = getPool();
+    const [postgreDbSchema, postgreDbTable] = [
+      getRequiredStringEnv("POSTGRE_DB_SCHEMA"),
+      getRequiredStringEnv("POSTGRE_DB_TABLE"),
+    ];
+
+    const deleteOnPostgre = deleteOnPostgresql(
+      pool,
+      postgreDbSchema,
+      postgreDbTable
+    );
 
     cli.log("Done");
 
@@ -104,6 +134,18 @@ export class ListDelete extends Command {
       }
     );
 
+    const tableServiceClient = TableServiceClient.fromConnectionString(
+      getRequiredStringEnv("TABLE_CLIENT_CONNSTRING")
+    );
+    const statefulTableName = args.deleteFilePath
+      .split("/")
+      .reverse()[0]
+      .split(".")[0];
+    const tableClient = TableClient.fromConnectionString(
+      getRequiredStringEnv("TABLE_CLIENT_CONNSTRING"),
+      statefulTableName
+    );
+
     return pipe(
       cli.log(
         chalk.blue.bold(
@@ -114,7 +156,23 @@ export class ListDelete extends Command {
       TE.chain((subscriptionList) =>
         pipe(
           cli.log(
-            chalk.blue.bold(`Parsed subscriptonList: ${subscriptionList}`)
+            chalk.blue.bold(`Parsed subscriptionList: ${subscriptionList}`)
+          ),
+          () =>
+            this.getOrCreateStatefulTableSubscriptionsIfNotExists(
+              tableServiceClient,
+              tableClient,
+              subscriptionList,
+              statefulTableName
+            )
+        )
+      ),
+      TE.chain((subscriptionList) =>
+        pipe(
+          cli.log(
+            chalk.blue.bold(
+              `saved subscriptonList entities into: ${statefulTableName}`
+            )
           ),
           () =>
             subscriptionList.map((subscriptionId) =>
@@ -126,13 +184,18 @@ export class ListDelete extends Command {
                 TE.chain(() =>
                   this.deleteAllServiceVersion(container, subscriptionId)
                 ),
-                TE.chain(() => deleteOnPostgresql(pool)(subscriptionId)),
+                TE.chain(() => deleteOnPostgre(subscriptionId)),
                 TE.map(() =>
                   cli.log(chalk.blue.bold(`Completed! ${subscriptionId}`))
                 ),
                 TE.chain(() =>
+                  upsertEntity(tableClient, statefulTableName, subscriptionId, {
+                    done: true,
+                  })
+                ),
+                TE.chain(() =>
                   pipe(
-                    TE.fromTask(T.delay(500)(T.of(void 0))),
+                    TE.fromTask(T.delay(args.delayOnDelete)(T.of(void 0))),
                     TE.mapLeft(() =>
                       Error("Error while waiting for another delete")
                     )
@@ -141,6 +204,21 @@ export class ListDelete extends Command {
               )
             ),
           AR.sequence(TE.ApplicativeSeq)
+        )
+      ),
+      TE.chain(() =>
+        pipe(
+          cli.log(
+            chalk.blue.bold(`Deleting stateful table ${statefulTableName}`)
+          ),
+          () => deleteTable(tableServiceClient, statefulTableName),
+          TE.map(() =>
+            cli.log(
+              chalk.blue.bold(
+                `Done Stateful Table deletion! ${statefulTableName}`
+              )
+            )
+          )
         )
       ),
       TE.bimap(
@@ -214,6 +292,47 @@ export class ListDelete extends Command {
         )
       ),
       TE.map(() => true)
+    );
+  }
+
+  public getOrCreateStatefulTableSubscriptionsIfNotExists(
+    tableServiceClient: TableServiceClient,
+    tableClient: TableClient,
+    subscriptions: NonEmptyString[],
+    tableName: string
+  ): TE.TaskEither<Error, NonEmptyString[]> {
+    return pipe(
+      existsTable(tableServiceClient, tableName),
+      TE.chainW(
+        B.fold(
+          () =>
+            pipe(
+              createTable(tableServiceClient, tableName),
+              TE.map(() => subscriptions),
+              TE.chain((subscriptions) =>
+                pipe(
+                  subscriptions.map((subscription) =>
+                    upsertEntity(tableClient, tableName, subscription, {
+                      done: false,
+                    })
+                  ),
+                  AR.sequence(TE.ApplicativeSeq)
+                )
+              ),
+              TE.map(() => subscriptions)
+            ),
+          () =>
+            pipe(
+              queryEntities(tableClient, {
+                filter: odata`PartitionKey eq ${tableName} and done eq ${false}`,
+              }),
+              TE.map((results) =>
+                results.map((_) => NonEmptyString.decode(_.rowKey))
+              ),
+              TE.map(AR.rights)
+            )
+        )
+      )
     );
   }
 

@@ -74,7 +74,7 @@ USAGE
 * [`io-ops services:check`](#io-ops-servicescheck)
 * [`io-ops services:details`](#io-ops-servicesdetails)
 * [`io-ops services:list`](#io-ops-serviceslist)
-* [`io-ops subscriptions:list-delete DELETEFILEPATH [OWNEREMAIL]`](#io-ops-subscriptionslist-delete-deletefilepath-owneremail)
+* [`io-ops subscriptions:list-delete DELETEFILEPATH [DELAYONDELETE] [OWNEREMAIL]`](#io-ops-subscriptionslist-delete-deletefilepath-delayondelete-owneremail)
 * [`io-ops users:create`](#io-ops-userscreate)
 * [`io-ops users:get EMAIL`](#io-ops-usersget-email)
 * [`io-ops users:get-all`](#io-ops-usersget-all)
@@ -681,16 +681,17 @@ DESCRIPTION
 
 _See code: [src/commands/services/list.ts](https://github.com/pagopa/io-ops/blob/v1.0.0/src/commands/services/list.ts)_
 
-## `io-ops subscriptions:list-delete DELETEFILEPATH [OWNEREMAIL]`
+## `io-ops subscriptions:list-delete DELETEFILEPATH [DELAYONDELETE] [OWNEREMAIL]`
 
 Migrate metadata or logos from github
 
 ```
 USAGE
-  $ io-ops subscriptions:list-delete DELETEFILEPATH [OWNEREMAIL]
+  $ io-ops subscriptions:list-delete DELETEFILEPATH [DELAYONDELETE] [OWNEREMAIL]
 
 ARGUMENTS
   DELETEFILEPATH  CSV Input file containing subscription list
+  DELAYONDELETE   [default: 500] The delay between delete's operations
   OWNEREMAIL      Email of the subscriptions owner
 
 DESCRIPTION

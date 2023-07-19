@@ -4,8 +4,8 @@ import { Pool, QueryResult } from "pg";
 import { isRight } from "fp-ts/lib/Either";
 
 const fakeSubscriptionId = "AA11BB22CC33DD44" as NonEmptyString;
-const fakeSchema = "SCHEMATEST";
-const fakeTable = "TABLETEST";
+const fakeSchema = "SCHEMATEST" as NonEmptyString;
+const fakeTable = "TABLETEST" as NonEmptyString;
 
 const mockQueryResult = {
   command: "DELETE",
@@ -16,13 +16,17 @@ const mockPool = {
 } as any as Pool;
 describe("PostgreSQL delete suite test", () => {
   it("should create a valid SQL delete statement", () => {
-    const res = createDeleteSql(fakeSubscriptionId);
+    const res = createDeleteSql(fakeSchema, fakeTable)(fakeSubscriptionId);
     const expectedSqlStatement = `delete from "${fakeSchema}"."${fakeTable}" where "id" = '${fakeSubscriptionId}'`;
     expect(res).toBe(expectedSqlStatement);
   });
 
   it("should delete a subscription on PostgreSQL", async () => {
-    const res = await deleteOnPostgresql(mockPool)(fakeSubscriptionId)();
+    const res = await deleteOnPostgresql(
+      mockPool,
+      fakeSchema,
+      fakeTable
+    )(fakeSubscriptionId)();
     expect(isRight(res)).toBe(true);
     if (isRight(res)) {
       expect(res.right).toBe(true);

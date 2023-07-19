@@ -70,7 +70,7 @@
     "@azure/abort-controller" "^1.0.0"
     tslib "^2.2.0"
 
-"@azure/core-client@^1.4.0", "@azure/core-client@^1.6.1":
+"@azure/core-client@^1.0.0", "@azure/core-client@^1.4.0", "@azure/core-client@^1.6.1":
   version "1.7.3"
   resolved "https://registry.yarnpkg.com/@azure/core-client/-/core-client-1.7.3.tgz#f8cb2a1f91e8bc4921fa2e745cfdfda3e6e491a3"
   integrity sha512-kleJ1iUTxcO32Y06dH9Pfi9K4U+Tlb111WXEnbt7R/ne+NLRwppZiTGJuTD5VVoxTMK5NTbEtm5t2vcdNCFe2g==
@@ -93,7 +93,7 @@
     "@azure/logger" "^1.0.0"
     tslib "^2.2.0"
 
-"@azure/core-paging@^1.2.0":
+"@azure/core-paging@^1.1.1", "@azure/core-paging@^1.2.0":
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/@azure/core-paging/-/core-paging-1.5.0.tgz#5a5b09353e636072e6a7fc38f7879e11d0afb15f"
   integrity sha512-zqWdVIt+2Z+3wqxEOGzR5hXFZ8MGKK52x4vFLw8n58pR6ZfKRx3EXYTxTaYxYHc/PexPUTyimcTWFJbji9Z6Iw==
@@ -130,6 +130,14 @@
     "@azure/abort-controller" "^1.0.0"
     tslib "^2.2.0"
 
+"@azure/core-xml@^1.0.0":
+  version "1.3.4"
+  resolved "https://registry.yarnpkg.com/@azure/core-xml/-/core-xml-1.3.4.tgz#516092f948b1b609b6c2afb8437acd204527e323"
+  integrity sha512-B1xI79Ur/u+KR69fGTcsMNj8KDjBSqAy0Ys6Byy4Qm1CqoUy7gCT5A7Pej0EBWRskuH6bpCwrAnosfmQEalkcg==
+  dependencies:
+    fast-xml-parser "^4.2.4"
+    tslib "^2.2.0"
+
 "@azure/cosmos@^3.17.1", "@azure/cosmos@^3.17.3":
   version "3.17.3"
   resolved "https://registry.yarnpkg.com/@azure/cosmos/-/cosmos-3.17.3.tgz#380398496af8ef3473ae0a9ad8cdbab32d91eb08"
@@ -147,6 +155,21 @@
     semaphore "^1.0.5"
     tslib "^2.2.0"
     universal-user-agent "^6.0.0"
+    uuid "^8.3.0"
+
+"@azure/data-tables@^13.2.2":
+  version "13.2.2"
+  resolved "https://registry.yarnpkg.com/@azure/data-tables/-/data-tables-13.2.2.tgz#9aa82992d7317a779ecf66436ffa96b887d8e616"
+  integrity sha512-Dq2Aq0mMMF0BPzYQKdBY/OtO7VemP/foh6z+mJpUO1hRL+65C1rGQUJf20LJHotSyU8wHb4HJzOs+Z50GXSy1w==
+  dependencies:
+    "@azure/core-auth" "^1.3.0"
+    "@azure/core-client" "^1.0.0"
+    "@azure/core-paging" "^1.1.1"
+    "@azure/core-rest-pipeline" "^1.1.0"
+    "@azure/core-tracing" "^1.0.0"
+    "@azure/core-xml" "^1.0.0"
+    "@azure/logger" "^1.0.0"
+    tslib "^2.2.0"
     uuid "^8.3.0"
 
 "@azure/identity@3.2.3":
@@ -3625,6 +3648,13 @@ fast-safe-stringify@^2.0.4:
   version "2.0.7"
   resolved "https://registry.yarnpkg.com/fast-safe-stringify/-/fast-safe-stringify-2.0.7.tgz#124aa885899261f68aedb42a7c080de9da608743"
   integrity sha512-Utm6CdzT+6xsDk2m8S6uL8VHxNwI6Jub+e9NYTcAms28T84pTa25GJQV9j0CY0N1rM8hK4x6grpF2BQf+2qwVA==
+
+fast-xml-parser@^4.2.4:
+  version "4.2.5"
+  resolved "https://registry.yarnpkg.com/fast-xml-parser/-/fast-xml-parser-4.2.5.tgz#a6747a09296a6cb34f2ae634019bf1738f3b421f"
+  integrity sha512-B9/wizE4WngqQftFPmdaMYlXoJlJOYxGQOanC77fq9k8+Z0v5dDSVh+3glErdIROP//s/jgb7ZuxKfB8nVyo0g==
+  dependencies:
+    strnum "^1.0.5"
 
 fastest-levenshtein@^1.0.7:
   version "1.0.16"
@@ -8108,6 +8138,12 @@ strip-json-comments@3.1.1, strip-json-comments@^3.1.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-3.1.1.tgz#31f1281b3832630434831c310c01cccda8cbe006"
   integrity sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==
 
+strnum@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/strnum/-/strnum-1.0.5.tgz#5c4e829fe15ad4ff0d20c3db5ac97b73c9b072db"
+  integrity sha512-J8bbNyKKXl5qYcR36TIO8W3mVGVHrmmxsd5PAItGkmyzwJvybiw2IVq5nqd0i4LSNSkB/sx9VHllbfFdr9k1JA==
+
+supports-color@8.1.1, supports-color@^8.1.0, supports-color@^8.1.1:
 supports-color@8.1.1, supports-color@^8.0.0, supports-color@^8.1.0, supports-color@^8.1.1:
   version "8.1.1"
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-8.1.1.tgz#cd6fc17e28500cff56c1b86c0a7fd4a54a73005c"
