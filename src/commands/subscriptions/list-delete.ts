@@ -34,21 +34,27 @@ import knex from "knex";
 import getPool, { queryDataTable } from "../../utils/postgre";
 import { Pool } from "pg";
 
-export const createDeleteSql = (serviceId: NonEmptyString): NonEmptyString =>
-  knex({
-    client: "pg",
-  })
-    .withSchema(getRequiredStringEnv("POSTGRE_DB_SCHEMA"))
-    .table(getRequiredStringEnv("POSTGRE_DB_TABLE"))
-    .where("id", serviceId)
-    .delete()
-    .toQuery() as NonEmptyString;
+export const createDeleteSql =
+  (postgreDbSchema: NonEmptyString, postgreDbTable: NonEmptyString) =>
+  (serviceId: NonEmptyString): NonEmptyString =>
+    knex({
+      client: "pg",
+    })
+      .withSchema(postgreDbSchema)
+      .table(postgreDbTable)
+      .where("id", serviceId)
+      .delete()
+      .toQuery() as NonEmptyString;
 
 export const deleteOnPostgresql =
-  (pool: Pool) =>
+  (
+    pool: Pool,
+    postgreDbSchema: NonEmptyString,
+    postgreDbTable: NonEmptyString
+  ) =>
   (subscriptionId: NonEmptyString): TE.TaskEither<Error, true> => {
     return pipe(
-      createDeleteSql(subscriptionId),
+      createDeleteSql(postgreDbSchema, postgreDbTable)(subscriptionId),
       (sql) => queryDataTable(pool, sql),
       TE.bimap(E.toError, () => {
         cli.log(chalk.blue.bold(`Subscription deleted from DB`));
@@ -97,6 +103,16 @@ export class ListDelete extends Command {
       getRequiredStringEnv("COSMOSDB_SERVICES_CONTAINER_NAME")
     );
     const pool = getPool();
+    const [postgreDbSchema, postgreDbTable] = [
+      getRequiredStringEnv("POSTGRE_DB_SCHEMA"),
+      getRequiredStringEnv("POSTGRE_DB_TABLE"),
+    ];
+
+    const deleteOnPostgre = deleteOnPostgresql(
+      pool,
+      postgreDbSchema,
+      postgreDbTable
+    );
 
     cli.log("Done");
 
@@ -168,7 +184,7 @@ export class ListDelete extends Command {
                 TE.chain(() =>
                   this.deleteAllServiceVersion(container, subscriptionId)
                 ),
-                TE.chain(() => deleteOnPostgresql(pool)(subscriptionId)),
+                TE.chain(() => deleteOnPostgre(subscriptionId)),
                 TE.map(() =>
                   cli.log(chalk.blue.bold(`Completed! ${subscriptionId}`))
                 ),
